@@ -33,9 +33,6 @@
       "cache": false
     }
   },
-  "globalDependencies": [
-    "**/.env*",
-    "turbo.json",
-    "package.json"
-  ]
+  "globalDependencies": ["**/.env*", "turbo.json", "package.json"],
+  "globalEnv": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 }

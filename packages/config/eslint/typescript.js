@@ -10,6 +10,9 @@ module.exports = {
     },
   },
   plugins: ["@typescript-eslint"],
+  env: {
+    node: true,
+  },
   rules: {
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/no-explicit-any": "warn",
