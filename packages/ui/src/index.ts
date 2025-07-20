@@ -1,13 +1,18 @@
 // Export all UI components
-export { Button, buttonVariants } from "./components/button"
-export type { ButtonProps } from "./components/button"
+export { Button, buttonVariants } from "./components/button";
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "./components/card"
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./components/card";
 
-export { Input } from "./components/input"
-export type { InputProps } from "./components/input"
+export { Input } from "./components/input";
 
-export { Label } from "./components/label"
+export { Label } from "./components/label";
 
 export {
   Dialog,
@@ -20,7 +25,7 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "./components/dialog"
+} from "./components/dialog";
 
 export {
   ToastProvider,
@@ -30,8 +35,8 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
-} from "./components/toast"
-export type { ToastProps, ToastActionElement } from "./components/toast"
+} from "./components/toast";
+export type { ToastProps, ToastActionElement } from "./components/toast";
 
 // Export utilities
-export { cn } from "./lib/utils" 
+export { cn } from "./lib/utils";
