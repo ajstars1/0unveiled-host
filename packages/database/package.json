@@ -1,0 +1,27 @@
+{
+  "name": "@0unveiled/database",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "lint": "eslint src/**/*.ts --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .turbo node_modules dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.29.0",
+    "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "@0unveiled/config": "*",
+    "@types/node": "^20.11.24",
+    "drizzle-kit": "^0.31.4",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.2"
+  }
+}
