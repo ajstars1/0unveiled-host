@@ -5,4 +5,4 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@0unveiled/ui/components/card" 
+} from "@0unveiled/ui";

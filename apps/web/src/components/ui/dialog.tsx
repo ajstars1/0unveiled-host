@@ -9,4 +9,4 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@0unveiled/ui/components/dialog" 
+} from "@0unveiled/ui";

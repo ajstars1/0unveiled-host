@@ -6,5 +6,5 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
-} from "@0unveiled/ui/components/toast"
-export type { ToastProps, ToastActionElement } from "@0unveiled/ui/components/toast" 
+} from "@0unveiled/ui";
+export type { ToastProps, ToastActionElement } from "@0unveiled/ui";
