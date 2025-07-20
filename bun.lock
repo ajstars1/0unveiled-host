@@ -218,7 +218,7 @@
       },
       "devDependencies": {
         "@0unveiled/config": "*",
-        "@repo/tailwind-config": "workspace:*",
+        "@repo/tailwind-config": "0unveiled:*",
         "@tailwindcss/cli": "^4.1.11",
         "@tailwindcss/postcss": "^4.1.11",
         "@types/react": "^18.2.61",
@@ -235,15 +235,15 @@
     },
   },
   "packages": {
-    "@0unveiled/api": ["@0unveiled/api@workspace:apps/api"],
+    "@0unveiled/api": ["@0unveiled/api@0unveiled:apps/api"],
 
-    "@0unveiled/config": ["@0unveiled/config@workspace:packages/config"],
+    "@0unveiled/config": ["@0unveiled/config@0unveiled:packages/config"],
 
-    "@0unveiled/lib": ["@0unveiled/lib@workspace:packages/lib"],
+    "@0unveiled/lib": ["@0unveiled/lib@0unveiled:packages/lib"],
 
-    "@0unveiled/ui": ["@0unveiled/ui@workspace:packages/ui"],
+    "@0unveiled/ui": ["@0unveiled/ui@0unveiled:packages/ui"],
 
-    "@0unveiled/web": ["@0unveiled/web@workspace:apps/web"],
+    "@0unveiled/web": ["@0unveiled/web@0unveiled:apps/web"],
 
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
@@ -649,11 +649,11 @@
 
     "@radix-ui/rect": ["@radix-ui/rect@1.1.1", "", {}, "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="],
 
-    "@repo/eslint-config": ["@repo/eslint-config@workspace:packages/eslint-config"],
+    "@repo/eslint-config": ["@repo/eslint-config@0unveiled:packages/eslint-config"],
 
-    "@repo/tailwind-config": ["@repo/tailwind-config@workspace:packages/tailwind-config"],
+    "@repo/tailwind-config": ["@repo/tailwind-config@0unveiled:packages/tailwind-config"],
 
-    "@repo/typescript-config": ["@repo/typescript-config@workspace:packages/typescript-config"],
+    "@repo/typescript-config": ["@repo/typescript-config@0unveiled:packages/typescript-config"],
 
     "@rollup/rollup-android-arm-eabi": ["@rollup/rollup-android-arm-eabi@4.45.1", "", { "os": "android", "cpu": "arm" }, "sha512-NEySIFvMY0ZQO+utJkgoMiCAjMrGvnbDLHvcmlA33UXJpYBCvlBEbMMtV837uCkS+plG2umfhn0T5mMAxGrlRA=="],
 

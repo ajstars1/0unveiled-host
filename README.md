@@ -40,7 +40,7 @@ This monorepo follows a microservices architecture with clear separation of conc
 
 ### Prerequisites
 
-- **Node.js** 18+ 
+- **Node.js** 18+
 - **Bun** 1.0+ (package manager)
 - **Python** 3.11+ (for AI service)
 - **Docker** (optional, for containerized development)
@@ -48,6 +48,7 @@ This monorepo follows a microservices architecture with clear separation of conc
 ### Installation
 
 1. **Clone and install dependencies:**
+
    ```bash
    git clone <your-repo-url>
    cd 0unveiled
@@ -55,21 +56,24 @@ This monorepo follows a microservices architecture with clear separation of conc
    ```
 
 2. **Build packages:**
+
    ```bash
    bun build
    ```
 
 3. **Set up environment variables:**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 4. **Start development servers:**
+
    ```bash
    # All services
    bun dev
-   
+
    # Or individual services
    bun dev --filter=@0unveiled/web     # Next.js frontend
    bun dev --filter=@0unveiled/api     # Node.js API
@@ -87,6 +91,7 @@ This monorepo follows a microservices architecture with clear separation of conc
 ### 🌐 Apps
 
 #### **apps/web** - Next.js Frontend
+
 - **Framework:** Next.js 14 with App Router
 - **UI:** shadcn/ui + Tailwind CSS v4 + Lucide icons
 - **State:** React Query (TanStack Query)
@@ -94,6 +99,7 @@ This monorepo follows a microservices architecture with clear separation of conc
 - **Database:** Drizzle ORM + Supabase PostgreSQL
 
 **Key Features:**
+
 - ✅ Modern, responsive UI with shadcn/ui components
 - ✅ Dark/light mode support via CSS variables
 - ✅ Form handling with React Hook Form + Zod
@@ -101,6 +107,7 @@ This monorepo follows a microservices architecture with clear separation of conc
 - ✅ Tailwind CSS v4 with advanced features
 
 #### **apps/api** - Node.js Backend
+
 - **Framework:** Express.js + TypeScript
 - **Database:** Supabase PostgreSQL
 - **Logging:** Winston with structured logging
@@ -108,26 +115,31 @@ This monorepo follows a microservices architecture with clear separation of conc
 - **Security:** Helmet, CORS, rate limiting
 
 **Endpoints:**
+
 - `/health` - Health check
 - `/api/auth/*` - Authentication routes
 - `/api/user/*` - User management
 
 #### **apps/ai-service** - FastAPI AI Service
+
 - **Framework:** FastAPI + Python 3.11+
 - **AI/ML:** OpenAI GPT integration, scikit-learn, transformers
 - **Features:** Text generation, summarization, sentiment analysis
 - **Async:** Full async/await support with proper error handling
 
 **Endpoints:**
+
 - `/health` - Service health
 - `/api/ai/generate` - Text generation
-- `/api/ai/summarize` - Text summarization  
+- `/api/ai/summarize` - Text summarization
 - `/api/ai/analyze` - Text analysis
 
 ### 📦 Packages
 
 #### **packages/ui** - shadcn/ui Component Library
+
 Complete shadcn/ui integration with Tailwind CSS v4:
+
 - ✅ Button, Card, Input, Label components
 - ✅ Dialog, Toast notification system
 - ✅ Consistent design tokens via CSS variables
@@ -135,18 +147,21 @@ Complete shadcn/ui integration with Tailwind CSS v4:
 - ✅ Tailwind CSS v4 native integration
 
 #### **packages/lib** - Shared Utilities
+
 - **Supabase:** Client and server-side configurations
 - **Utils:** `cn()` class merger, date formatting, etc.
 - **Constants:** API routes, storage keys, app configuration
 - **Validations:** Shared Zod schemas
 
 #### **packages/config** - Shared Configuration
+
 - **ESLint:** Base, React, Next.js, Node.js configurations
 - **TypeScript:** Shared tsconfig for different environments
 - **Tailwind:** Base configuration with design system
 - **Prettier:** Code formatting with import sorting
 
 #### **packages/tailwind-config** - Shared Tailwind CSS v4
+
 - **Shared Styles:** Centralized design system
 - **CSS Variables:** Consistent theming across apps
 - **PostCSS:** Optimized build configuration
@@ -156,12 +171,14 @@ Complete shadcn/ui integration with Tailwind CSS v4:
 This project features a cutting-edge setup with **Tailwind CSS v4** and **shadcn/ui** in a monorepo:
 
 ### ✨ New Features with Tailwind v4
+
 - **Native CSS imports** - No more complex config files
 - **Better performance** - Faster builds and smaller bundles
 - **CSS-first approach** - More intuitive styling workflow
 - **Enhanced theming** - Better CSS custom property support
 
 ### 🏗️ Monorepo Structure
+
 ```
 packages/
 ├── tailwind-config/          # Shared Tailwind v4 styles
@@ -178,26 +195,26 @@ packages/
 ```
 
 ### 🎯 Using Components
+
 ```tsx
-// Import from the workspace package
-import { Button } from "@workspace/ui/components/button"
-import { Card, CardContent } from "@workspace/ui/components/card"
-import { cn } from "@workspace/ui/lib/utils"
+// Import from the 0unveiled package
+import { Button } from "@0unveiled/ui/components/button";
+import { Card, CardContent } from "@0unveiled/ui/components/card";
+import { cn } from "@0unveiled/ui/lib/utils";
 
 export function MyComponent() {
   return (
     <Card>
       <CardContent>
-        <Button className={cn("w-full", "bg-primary")}>
-          Get Started
-        </Button>
+        <Button className={cn("w-full", "bg-primary")}>Get Started</Button>
       </CardContent>
     </Card>
-  )
+  );
 }
 ```
 
 ### 📱 Adding New Components
+
 ```bash
 # From the web app directory
 cd apps/web
@@ -207,12 +224,14 @@ bunx --bun shadcn@canary add tabs
 ```
 
 The CLI automatically:
+
 - ✅ Installs components in `packages/ui/src/components/`
 - ✅ Updates import paths for monorepo structure
 - ✅ Handles dependencies and configuration
-- ✅ Maintains consistent theming across workspace
+- ✅ Maintains consistent theming across 0unveiled
 
 ### 🎨 Design System
+
 ```css
 /* Centralized in packages/tailwind-config/shared-styles.css */
 :root {
@@ -233,6 +252,7 @@ The CLI automatically:
 ## 🐳 Docker Support
 
 ### Development with Docker
+
 ```bash
 # Start all services
 docker-compose up
@@ -245,11 +265,12 @@ docker-compose logs -f web
 ```
 
 ### Individual Services
+
 ```bash
 # Frontend only
 docker-compose up web
 
-# Backend only  
+# Backend only
 docker-compose up api
 
 # AI service only
@@ -282,12 +303,14 @@ bun test --filter=ui       # Test specific package
 ```
 
 ### Turborepo Benefits
+
 - ⚡ **Incremental builds** - Only rebuild what changed
-- 📦 **Dependency awareness** - Builds packages in correct order  
+- 📦 **Dependency awareness** - Builds packages in correct order
 - 🏠 **Remote caching** - Share build cache across team
 - 🔄 **Parallel execution** - Run tasks across packages simultaneously
 
 ### File Structure Conventions
+
 ```
 apps/*/
   src/
@@ -304,6 +327,7 @@ packages/*/
 ## 🚢 Deployment
 
 ### Environment Variables
+
 Key environment variables needed:
 
 ```env
@@ -320,12 +344,14 @@ JWT_SECRET=your_jwt_secret
 ```
 
 ### Deployment Targets
+
 - **Frontend:** Vercel, Netlify, or any static host
-- **API:** Railway, Fly.io, or any Node.js host  
+- **API:** Railway, Fly.io, or any Node.js host
 - **AI Service:** Railway, Google Cloud Run, or any Python host
 - **Database:** Supabase (managed) or self-hosted PostgreSQL
 
 ### Production Build
+
 ```bash
 # Build all packages for production
 bun run build
@@ -337,6 +363,7 @@ bun start
 ## 📚 Learn More
 
 ### Technologies Used
+
 - **🏗️ Monorepo:** [Turborepo](https://turbo.build/)
 - **⚡ Package Manager:** [Bun](https://bun.sh/)
 - **🌐 Frontend:** [Next.js 14](https://nextjs.org/)
@@ -349,6 +376,7 @@ bun start
 - **🐳 Containers:** [Docker](https://www.docker.com/)
 
 ### Project Structure Benefits
+
 1. **🔄 Code Reuse** - Shared packages prevent duplication
 2. **📦 Independent Deployment** - Deploy services separately
 3. **🎯 Type Safety** - End-to-end TypeScript coverage
@@ -357,6 +385,7 @@ bun start
 6. **🎨 Unified Design** - Shared Tailwind v4 configuration
 
 ### Getting Help
+
 - 📖 **Documentation:** Check individual app README files
 - 🐛 **Issues:** Create GitHub issues for bugs
 - 💬 **Discussions:** Use GitHub Discussions for questions
