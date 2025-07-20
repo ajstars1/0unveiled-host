@@ -1,9 +1,8 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
       <section className="flex min-h-screen items-center justify-center bg-linear-to-b from-background to-muted/20">
         <div className="container mx-auto px-4 py-16 text-center">
           <div className="mx-auto max-w-4xl space-y-8">
@@ -45,11 +44,13 @@ export default function HomePage() {
             {[
               {
                 title: "AI-Powered",
-                description: "Leverage cutting-edge AI technology for better results",
+                description:
+                  "Leverage cutting-edge AI technology for better results",
               },
               {
                 title: "Scalable",
-                description: "Built to grow with your needs and handle any load",
+                description:
+                  "Built to grow with your needs and handle any load",
               },
               {
                 title: "Secure",
@@ -70,5 +71,5 @@ export default function HomePage() {
         </div>
       </section>
     </div>
-  )
-} 
+  );
+}
