@@ -13,8 +13,8 @@
   "aliases": {
     "components": "@0unveiled/ui/components",
     "utils": "@0unveiled/lib/utils",
-    "hooks": "@0unveiled/ui/hooks",
+    "hooks": "src/hooks",
     "lib": "@0unveiled/lib",
     "ui": "src/components"
   }
-} 
+}
