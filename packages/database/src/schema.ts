@@ -726,7 +726,7 @@ export const knowledgeArticles = pgTable("KnowledgeArticle", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   channelMemberships: many(channelMembers),
   clubsOwned: many(clubs, { relationName: "ClubOwner" }),
