@@ -1,0 +1,37 @@
+{
+  "name": "@0unveiled/config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "files": [
+    "eslint",
+    "tailwind",
+    "typescript",
+    "prettier"
+  ],
+  "exports": {
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/react": "./eslint/react.js",
+    "./eslint/next": "./eslint/next.js",
+    "./eslint/node": "./eslint/node.js",
+    "./tailwind": "./tailwind/tailwind.config.js",
+    "./typescript/base": "./typescript/base.json",
+    "./typescript/react": "./typescript/react.json",
+    "./typescript/next": "./typescript/next.json",
+    "./typescript/node": "./typescript/node.json",
+    "./prettier": "./prettier/prettier.config.js"
+  },
+  "devDependencies": {
+    "@vercel/style-guide": "^5.2.0",
+    "eslint-config-turbo": "^2.0.0",
+    "eslint-config-next": "^14.0.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-tailwindcss": "^3.13.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.0",
+    "tailwindcss": "^4.1.11"
+  }
+} 

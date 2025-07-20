@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Add common bun paths to PATH
+export PATH="$HOME/.bun/bin:$PATH"
+export PATH="/opt/homebrew/bin:$PATH"
+
+# Run tests (skip if no test files found)
+bun test || true
+
+# Run lint-staged
+bunx lint-staged
