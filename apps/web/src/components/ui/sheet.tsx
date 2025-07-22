@@ -7,4 +7,4 @@ export {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@0unveiled/ui";
+} from "@0unveiled/ui/components/sheet";

@@ -1,1 +1,1 @@
-export { Skeleton } from "@0unveiled/ui";
+export { Skeleton } from "@0unveiled/ui/components/skeleton";

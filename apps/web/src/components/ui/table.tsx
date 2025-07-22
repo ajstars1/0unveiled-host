@@ -7,4 +7,4 @@ export {
   TableRow,
   TableCell,
   TableCaption,
-} from "@0unveiled/ui";
+} from "@0unveiled/ui/components/table";

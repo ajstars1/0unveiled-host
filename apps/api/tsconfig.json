@@ -1,5 +1,5 @@
 {
-  "extends": "@0unveiled/config/typescript/node",
+  "extends": "@0unveiled/typescript-config/node.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -8,4 +8,4 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", ".turbo"]
-} 
+}

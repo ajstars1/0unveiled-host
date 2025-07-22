@@ -3,4 +3,4 @@ export {
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-} from "@0unveiled/ui";
+} from "@0unveiled/ui/components/tooltip";

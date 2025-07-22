@@ -1,9 +1,11 @@
 {
-  "extends": "@0unveiled/config/typescript/react",
+  "extends": "@0unveiled/typescript-config/react.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
+    "baseUrl": ".",
+    "paths": {
+      "@0unveiled/ui/*": ["./src/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", ".turbo"]
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
 }

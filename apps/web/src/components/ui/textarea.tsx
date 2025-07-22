@@ -1,1 +1,1 @@
-export { Textarea } from "@0unveiled/ui";
+export { Textarea } from "@0unveiled/ui/components/textarea";

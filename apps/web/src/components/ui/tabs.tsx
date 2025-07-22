@@ -1,1 +1,6 @@
-export { Tabs, TabsList, TabsTrigger, TabsContent } from "@0unveiled/ui";
+export {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@0unveiled/ui/components/tabs";

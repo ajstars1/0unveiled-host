@@ -1,1 +1,5 @@
-export { Popover, PopoverTrigger, PopoverContent } from "@0unveiled/ui";
+export {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@0unveiled/ui/components/popover";

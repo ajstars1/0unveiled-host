@@ -1,1 +1,1 @@
-export { Badge, badgeVariants } from "@0unveiled/ui";
+export { Badge, badgeVariants } from "@0unveiled/ui/components/badge";

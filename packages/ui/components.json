@@ -12,9 +12,9 @@
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@0unveiled/ui/components",
-    "utils": "@0unveiled/lib/utils",
-    "hooks": "src/hooks",
-    "lib": "@0unveiled/lib",
-    "ui": "src/components"
+    "utils": "@0unveiled/ui/lib/utils",
+    "hooks": "@0unveiled/ui/hooks",
+    "lib": "@0unveiled/ui/lib",
+    "ui": "@0unveiled/ui/components"
   }
 }

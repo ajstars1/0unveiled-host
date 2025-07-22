@@ -1,1 +1,5 @@
-export { Avatar, AvatarFallback, AvatarImage } from "@0unveiled/ui";
+export {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@0unveiled/ui/components/avatar";

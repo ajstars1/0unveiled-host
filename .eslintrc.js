@@ -1,6 +1,7 @@
+// This configuration only applies to the package manager root.
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
-  extends: ["./packages/config/eslint/base.js"],
+  ignorePatterns: ["apps/**", "packages/**"],
   env: {
     node: true,
   },
@@ -12,4 +13,9 @@ module.exports = {
     "!.eslintrc.js",
     "!commitlint.config.js",
   ],
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaVersion: "latest",
+    sourceType: "module",
+  },
 };

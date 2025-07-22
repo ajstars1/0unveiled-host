@@ -1,1 +1,1 @@
-export { Label } from "@0unveiled/ui";
+export { Label } from "@0unveiled/ui/components/label";

@@ -14,4 +14,4 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
-} from "@0unveiled/ui";
+} from "@0unveiled/ui/components/dropdown-menu";

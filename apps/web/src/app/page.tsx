@@ -1,7 +1,16 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@0unveiled/ui/components/button";
+import { Badge } from "@0unveiled/ui/components/badge";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@0unveiled/ui/components/avatar";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@0unveiled/ui/components/card";
 
 // Define the User type based on our database schema
 interface User {

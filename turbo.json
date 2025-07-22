@@ -1,9 +1,10 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "envMode": "loose",
   "tasks": {
     "build": {
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**", "storybook-static/**"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
       "dependsOn": ["^build"]
     },
     "dev": {

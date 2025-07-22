@@ -1,8 +1,8 @@
 // Re-export all UI components from the UI package
-export * from "@0unveiled/ui";
+export * from "@0unveiled/ui/components/card";
 
 // Also export individual components for convenience
-export { Button, buttonVariants } from "./button";
+export { Button, buttonVariants } from "@0unveiled/ui/components/button";
 export {
   Card,
   CardHeader,
@@ -99,15 +99,6 @@ export {
   DropdownMenuRadioGroup,
 } from "./dropdown-menu";
 export { Calendar } from "./calendar";
-export {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "./form";
 export {
   Sheet,
   SheetClose,

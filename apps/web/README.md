@@ -168,8 +168,8 @@ Components come with multiple variants and sizes:
 ```css
 /* In your CSS files */
 @import "tailwindcss";
-@import "@repo/tailwind-config";
-@import "@repo/ui/styles.css";
+@import "@0unveiled/tailwind-config";
+@import "@0unveiled/ui/styles.css";
 ```
 
 ### 🎨 Utility Classes

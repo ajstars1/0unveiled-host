@@ -1,1 +1,1 @@
-export { Input } from "@0unveiled/ui";
+export { Input } from "@0unveiled/ui/components/input";

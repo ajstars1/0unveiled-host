@@ -20,9 +20,14 @@
   },
   "devDependencies": {
     "@0unveiled/config": "*",
+    "@0unveiled/eslint-config": "*",
+    "@0unveiled/typescript-config": "*",
     "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
     "drizzle-kit": "^0.31.4",
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
     "tsx": "^4.7.1",
     "typescript": "^5.4.2"
   }

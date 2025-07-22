@@ -35,15 +35,20 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
+    "@supabase/ssr": "0.6.1",
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.1",
     "zod": "^3.22.4",
     "date-fns": "^3.3.1"
   },
   "devDependencies": {
-    "@0unveiled/config": "*",
+    "@0unveiled/eslint-config": "*",
+    "@0unveiled/typescript-config": "*",
     "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
     "tsup": "^8.0.2",
     "typescript": "^5.4.2"
   }

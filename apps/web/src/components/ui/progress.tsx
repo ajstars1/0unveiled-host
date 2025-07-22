@@ -1,1 +1,1 @@
-export { Progress } from "@0unveiled/ui";
+export { Progress } from "@0unveiled/ui/components/progress";

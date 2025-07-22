@@ -33,7 +33,6 @@ export default defineConfig({
     "src/components/command.tsx",
     "src/components/context-menu.tsx",
     "src/components/drawer.tsx",
-    "src/components/form.tsx",
     "src/components/hover-card.tsx",
     "src/components/input-otp.tsx",
     "src/components/menubar.tsx",
