@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@0unveiled/ui/components/dialog";
+} from "./dialog.js";
 
 function Command({
   className,

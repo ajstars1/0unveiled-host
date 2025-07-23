@@ -84,7 +84,7 @@ export default async function HomePage() {
               reality.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" className="text-lg">
+              <Button size="lg" className="text-lg" variant="default">
                 Get Started
               </Button>
               <Button variant="outline" size="lg" className="text-lg">
@@ -123,6 +123,7 @@ export default async function HomePage() {
                     <div className="flex justify-center mb-4">
                       <Avatar className="h-16 w-16">
                         <AvatarImage
+                          className="h-16 w-16"
                           src={user.profilePicture || undefined}
                           alt={user.firstName}
                         />
@@ -152,11 +153,14 @@ export default async function HomePage() {
                         variant={
                           user.role === "ADMIN" ? "default" : "secondary"
                         }
+                        className="text-sm"
                       >
                         {user.role}
                       </Badge>
                       {user.onboarded && (
-                        <Badge variant="outline">Onboarded</Badge>
+                        <Badge variant="outline" className="text-sm">
+                          Onboarded
+                        </Badge>
                       )}
                     </div>
 
