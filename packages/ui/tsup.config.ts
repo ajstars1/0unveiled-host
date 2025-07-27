@@ -47,13 +47,23 @@ export default defineConfig({
     "src/components/sonner.tsx",
     "src/components/aspect-ratio.tsx",
     "src/components/chart.tsx",
+    "src/components/form.tsx",
     "src/lib/utils.ts",
     "src/hooks/use-mobile.ts",
+    "src/hooks/use-toast.ts",
   ],
-  format: ["cjs", "esm"],
+  format: ["esm"],
   dts: true,
   splitting: false,
   sourcemap: true,
   clean: true,
   external: ["react", "react-dom"],
+  treeshake: true,
+  minify: false,
+  target: "es2020",
+  outExtension({ format }) {
+    return {
+      js: format === "esm" ? ".mjs" : ".js",
+    };
+  },
 });

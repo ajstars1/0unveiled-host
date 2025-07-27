@@ -1,0 +1,1 @@
+export { AspectRatio } from "@0unveiled/ui/components/aspect-ratio"

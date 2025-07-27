@@ -111,7 +111,7 @@ packages/database/
 │   └── setup.ts      # Database setup script
 ├── drizzle/          # Generated migration files
 ├── drizzle.config.ts # Drizzle configuration
-├── .eslintrc.cjs     # ESLint configuration
+
 ├── tsconfig.json     # TypeScript configuration
 ├── package.json      # Package configuration
 └── README.md         # Documentation

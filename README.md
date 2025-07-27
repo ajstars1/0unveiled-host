@@ -28,7 +28,7 @@ This monorepo follows a microservices architecture with clear separation of conc
 ├── packages/
 │   ├── ui/                  # shadcn/ui component library (Tailwind v4)
 │   ├── lib/                 # Shared utilities (Supabase, utils, constants)
-│   ├── config/              # Shared configurations (ESLint, TypeScript, etc.)
+│   ├── config/              # Shared configurations (TypeScript, etc.)
 │   └── tailwind-config/     # Shared Tailwind CSS v4 configuration
 │
 ├── docker/                  # Dockerfiles for each service
@@ -155,7 +155,7 @@ Complete shadcn/ui integration with Tailwind CSS v4:
 
 #### **packages/config** - Shared Configuration
 
-- **ESLint:** Base, React, Next.js, Node.js configurations
+
 - **TypeScript:** Shared tsconfig for different environments
 - **Tailwind:** Base configuration with design system
 - **Prettier:** Code formatting with import sorting

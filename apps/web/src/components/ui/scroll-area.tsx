@@ -1,0 +1,1 @@
+export { ScrollArea, ScrollBar  } from "@0unveiled/ui/components/scroll-area"

@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import dotenv from "dotenv";
+import * as schema from "./schema";
 
 dotenv.config();
 
@@ -13,8 +14,11 @@ export function createDatabase() {
   }
 
   const client = postgres(connectionString);
-  return drizzle(client);
+  return drizzle(client, { schema });
 }
+
+// Create a default database instance
+export const db = createDatabase();
 
 // Export types and utilities
 export * from "./schema";

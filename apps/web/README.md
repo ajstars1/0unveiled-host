@@ -405,7 +405,7 @@ bun run build:styles       # Build Tailwind styles
 bun run dev:styles         # Watch Tailwind styles
 
 # Quality
-bun lint                   # ESLint check
+
 bun type-check            # TypeScript check
 
 # Components

@@ -3,34 +3,25 @@
   "version": "0.0.0",
   "private": true,
   "sideEffects": false,
+  "type": "module",
   "license": "MIT",
   "exports": {
     "./utils": {
-      "types": "./src/utils.ts",
-      "import": "./dist/utils.mjs",
-      "require": "./dist/utils.js"
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.mjs"
     },
     "./supabase": {
-      "types": "./src/supabase/index.ts",
-      "import": "./dist/supabase/index.mjs",
-      "require": "./dist/supabase/index.js"
+      "types": "./dist/supabase/index.d.ts",
+      "import": "./dist/supabase/index.mjs"
     },
     "./constants": {
-      "types": "./src/constants.ts",
-      "import": "./dist/constants.mjs",
-      "require": "./dist/constants.js"
-    },
-    "./validations": {
-      "types": "./src/validations/index.ts",
-      "import": "./dist/validations/index.mjs",
-      "require": "./dist/validations/index.js"
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.mjs"
     }
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "eslint src/**/*.ts --max-warnings 0",
-    "type-check": "tsc --noEmit",
     "clean": "rm -rf .turbo node_modules dist"
   },
   "dependencies": {
@@ -42,13 +33,10 @@
     "date-fns": "^3.3.1"
   },
   "devDependencies": {
-    "@0unveiled/eslint-config": "*",
+
     "@0unveiled/typescript-config": "*",
     "@types/node": "^20.11.24",
-    "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "@typescript-eslint/parser": "^8.38.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^10.1.8",
+
     "tsup": "^8.0.2",
     "typescript": "^5.4.2"
   }

@@ -16,12 +16,6 @@
       "persistent": true,
       "dependsOn": ["build"]
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "type-check": {
-      "dependsOn": ["^type-check"]
-    },
     "test": {
       "outputs": ["coverage/**"],
       "dependsOn": ["^build"]

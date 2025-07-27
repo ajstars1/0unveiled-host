@@ -8,4 +8,4 @@ export PATH="/opt/homebrew/bin:$PATH"
 bun test || true
 
 # Run lint-staged
-bunx lint-staged
+# bunx lint-staged

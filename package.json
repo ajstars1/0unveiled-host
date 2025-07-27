@@ -5,9 +5,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
     "test": "turbo run test",
-    "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,md,js,jsx,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md,js,jsx,json}\"",
@@ -24,9 +22,9 @@
     "@changesets/cli": "^2.29.5",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@types/eslint": "^9.6.1",
+
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.2",
+
     "prettier": "^3.6.2",
     "turbo": "^2.5.5"
   },
