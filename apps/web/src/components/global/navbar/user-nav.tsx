@@ -15,7 +15,7 @@ import {
 // import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@0unveiled/lib/supabase"
 interface UserNavProps {
   user: {
     id: string
@@ -39,15 +39,15 @@ export function UserNav({ user }: UserNavProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || user.email || ''} />
-            <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarImage className="h-8 w-8" src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || user.email || ''} />
+            <AvatarFallback className="h-8 w-8">{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
+        <DropdownMenuLabel className="font-normal" inset>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || 'User'}</p>
             <p className="text-xs leading-none text-muted-foreground">
@@ -55,43 +55,43 @@ export function UserNav({ user }: UserNavProps) {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="" />
         <DropdownMenuGroup>
           <Link href="/dashboard">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="" inset>
               Dashboard
-              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+              <DropdownMenuShortcut className="">⌘D</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
           <Link href="/profile/edit">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="" inset>
               Edit Profile
-              <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
+              <DropdownMenuShortcut className="">⌘E</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
           <Link href="/dashboard/chat">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="" inset>
               Chats
-              <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+              <DropdownMenuShortcut className="">⌘C</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
           <Link href="/dashboard/notifications">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="" inset>
               Notifications
-              <DropdownMenuShortcut>⌘N</DropdownMenuShortcut>
+              <DropdownMenuShortcut className="">⌘N</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
           <Link href="/dashboard/settings">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="" inset>
               Settings
-              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+              <DropdownMenuShortcut className="">⌘S</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>
+        <DropdownMenuSeparator className="" />
+        <DropdownMenuItem className="" inset onClick={handleSignOut}>
           Log out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+          <DropdownMenuShortcut className="">⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
