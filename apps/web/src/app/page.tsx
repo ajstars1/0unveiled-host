@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@0unveiled/ui/components/button";
 import { Badge } from "@0unveiled/ui/components/badge";
 import {
@@ -87,9 +88,11 @@ export default async function HomePage() {
               <Button size="lg" className="text-lg" variant="default">
                 Get Started
               </Button>
-              <Button variant="outline" size="lg" className="text-lg">
-                Learn More
-              </Button>
+              <Link href="/analyze">
+                <Button variant="outline" size="lg" className="text-lg">
+                  🔍 Analyze Repositories
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
