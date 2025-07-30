@@ -118,7 +118,7 @@ export default function RootLayout({
       <body className={`${inter.className} ${poppins.className} antialiased`} suppressHydrationWarning>
      <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
+      defaultTheme="system"
       enableSystem
       disableTransitionOnChange
     >

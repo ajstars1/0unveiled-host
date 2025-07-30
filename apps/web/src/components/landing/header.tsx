@@ -1,82 +1,156 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@0unveiled/ui/components/button"
 import { Menu, X } from "lucide-react"
-import { useIsMobile } from "@0unveiled/ui/hooks/use-mobile"
+import { motion, AnimatePresence } from "framer-motion"
 
-export default function Header() {
-  const isMobile = useIsMobile()
+export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
-  }
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center">
-          <Link href="/" className="font-bold text-xl">
-            0Unveiled
+    <motion.header
+      className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 transition-all duration-200 ${
+        isScrolled ? "shadow-sm" : ""
+      }`}
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="font-bold text-xl tracking-tight">
+            0unveiled
           </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-8">
+            <Link 
+              href="/pricing" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Pricing
+            </Link>
+            <Link 
+              href="/docs" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Docs
+            </Link>
+            <Link 
+              href="/community" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Community
+            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  Sign in
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm">
+                  Get started
+                </Button>
+              </Link>
+            </div>
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <AnimatePresence mode="wait">
+              {isMenuOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X className="h-5 w-5" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="menu"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Menu className="h-5 w-5" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Button>
         </div>
 
-        {isMobile ? (
-          <>
-            <Button variant="ghost" size="icon" onClick={toggleMenu} aria-label="Toggle menu">
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </Button>
-
-            {isMenuOpen && (
-              <div className="absolute top-16 left-0 right-0 bg-background border-b p-4 flex flex-col gap-4">
-                <Link href="#features" onClick={toggleMenu} className="px-4 py-2 hover:bg-muted rounded-md">
-                  Features
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              className="md:hidden border-t bg-background/95 backdrop-blur-sm"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="px-4 py-6 space-y-4">
+                <Link 
+                  href="/pricing" 
+                  className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Pricing
                 </Link>
-                <Link href="/projects" onClick={toggleMenu} className="px-4 py-2 hover:bg-muted rounded-md">
-                  Explore Projects
+                <Link 
+                  href="/docs" 
+                  className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Docs
                 </Link>
-                <Link href="/profiles" onClick={toggleMenu} className="px-4 py-2 hover:bg-muted rounded-md">
-                  Explore Profiles
+                <Link 
+                  href="/community" 
+                  className="block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Community
                 </Link>
-                <div className="flex flex-col gap-2 mt-2">
-                  <Link href="/login">
-                    <Button variant="outline" className="w-full">
-                      Login
+                <div className="flex flex-col gap-3 pt-4 border-t">
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      Sign in
                     </Button>
                   </Link>
-                  <Link href="/register">
-                    <Button className="w-full">Sign Up</Button>
+                  <Link href="/register" onClick={() => setIsMenuOpen(false)}>
+                    <Button className="w-full justify-start">
+                      Get started
+                    </Button>
                   </Link>
                 </div>
               </div>
-            )}
-          </>
-        ) : (
-          <div className="flex items-center gap-6">
-            <nav className="flex items-center gap-6 text-sm">
-              <Link href="#features" className="transition-colors hover:text-foreground/80">
-                Features
-              </Link>
-              <Link href="/projects" className="transition-colors hover:text-foreground/80">
-                Explore Projects
-              </Link>
-              <Link href="/profiles" className="transition-colors hover:text-foreground/80">
-                Explore Profiles
-              </Link>
-            </nav>
-            <div className="flex items-center gap-2">
-              <Link href="/login">
-                <Button variant="outline">Login</Button>
-              </Link>
-              <Link href="/register">
-                <Button>Sign Up</Button>
-              </Link>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </header>
+    </motion.header>
   )
 }
