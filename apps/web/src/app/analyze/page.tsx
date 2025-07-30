@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@0unveiled/ui/components/button";
+import { Button } from "@/components/ui/button";
 import {
   PieChart,
   Pie,
@@ -31,6 +31,12 @@ interface Repository {
   stargazers_count: number;
   forks_count: number;
   updated_at: string;
+}
+
+interface ProjectOverview {
+  raw_ai_analysis: string;
+  detailed_insights: string;
+  gemini_recommendations: string;
 }
 
 interface AnalysisResult {
@@ -69,6 +75,7 @@ interface AnalysisResult {
       strengths: string[];
       project_maturity: string;
     };
+    project_overview?: ProjectOverview;
     project_summary: string;
     overall_score: number;
     analysis_duration: number;
@@ -79,6 +86,13 @@ interface AnalysisResult {
     }>;
   };
 }
+
+// Add a type for techRelationships entries:
+type TechRelationship = {
+  position: { x: number; y: number };
+  connects: string[];
+  level: "beginner" | "mid-level" | "advanced" | "intermediate";
+};
 
 export default function AnalyzePage() {
   const [user, setUser] = useState<any>(null);
@@ -301,14 +315,14 @@ export default function AnalyzePage() {
         }
       } catch (err) {
         failureCount++;
-        if (err.name === "AbortError") {
+        if (err instanceof Error && err.name === "AbortError") {
           console.error(`⏰ Analysis timed out for ${repo.full_name}`);
         } else {
           console.error(`❌ Error analyzing ${repo.full_name}:`, err);
           console.error(`❌ Error details:`, {
-            message: err.message,
-            stack: err.stack,
-            name: err.name,
+            message: err instanceof Error ? err.message : "Unknown error",
+            stack: err instanceof Error ? err.stack : "Unknown stack",
+            name: err instanceof Error ? err.name : "Unknown error",
           });
         }
       }
@@ -361,10 +375,10 @@ export default function AnalyzePage() {
       string,
       { count: number; repos: string[]; category: string }
     >();
-    const totalScores = [];
-    const totalLinesOfCode = [];
-    const totalSecurity = [];
-    const allStrengths = [];
+    const totalScores: number[] = [];
+    const totalLinesOfCode: number[] = [];
+    const totalSecurity: number[] = [];
+    const allStrengths: string[] = [];
     const projectTypes = new Set<string>();
 
     Object.entries(analyses).forEach(([repoName, analysis]) => {
@@ -1559,7 +1573,7 @@ export default function AnalyzePage() {
                                   repos: tech.repos,
                                   category: tech.category,
                                   color:
-                                    categoryColors[tech.category] ||
+                                    categoryColors[tech.category as keyof typeof categoryColors] ||
                                     categoryColors["default"],
                                 }));
 
@@ -1664,8 +1678,7 @@ export default function AnalyzePage() {
                                 const edges: Edge[] = [];
 
                                 // Define technology relationships and positions for all popular languages
-                                const techRelationships = {
-                                  // JavaScript Ecosystem
+                                const techRelationships: Record<string, TechRelationship> = {
                                   JavaScript: {
                                     position: { x: 200, y: 100 },
                                     connects: [
@@ -1676,6 +1689,7 @@ export default function AnalyzePage() {
                                       "Vue.js",
                                       "Angular",
                                     ],
+                                    level: "advanced",
                                   },
                                   TypeScript: {
                                     position: { x: 400, y: 50 },
@@ -1685,6 +1699,7 @@ export default function AnalyzePage() {
                                       "Angular",
                                       "Next.js",
                                     ],
+                                    level: "advanced",
                                   },
                                   React: {
                                     position: { x: 300, y: 200 },
@@ -1694,10 +1709,12 @@ export default function AnalyzePage() {
                                       "Next.js",
                                       "React Native",
                                     ],
+                                    level: "advanced",
                                   },
                                   "Vue.js": {
                                     position: { x: 150, y: 200 },
                                     connects: ["Frontend", "UI Development"],
+                                    level: "mid-level",
                                   },
                                   Angular: {
                                     position: { x: 450, y: 200 },
@@ -1706,10 +1723,12 @@ export default function AnalyzePage() {
                                       "UI Development",
                                       "TypeScript",
                                     ],
+                                    level: "mid-level",
                                   },
                                   "Next.js": {
                                     position: { x: 350, y: 300 },
                                     connects: ["Frontend", "React", "SSR"],
+                                    level: "mid-level",
                                   },
                                   "Node.js": {
                                     position: { x: 250, y: 350 },
@@ -1718,6 +1737,7 @@ export default function AnalyzePage() {
                                       "Express",
                                       "API Development",
                                     ],
+                                    level: "advanced",
                                   },
                                   Express: {
                                     position: { x: 150, y: 400 },
@@ -1726,9 +1746,8 @@ export default function AnalyzePage() {
                                       "API Development",
                                       "RESTful",
                                     ],
+                                    level: "mid-level",
                                   },
-
-                                  // Python Ecosystem
                                   Python: {
                                     position: { x: 600, y: 200 },
                                     connects: [
@@ -1738,6 +1757,7 @@ export default function AnalyzePage() {
                                       "Data Science",
                                       "Backend",
                                     ],
+                                    level: "advanced",
                                   },
                                   Django: {
                                     position: { x: 550, y: 350 },
@@ -1746,6 +1766,7 @@ export default function AnalyzePage() {
                                       "Web Development",
                                       "Database",
                                     ],
+                                    level: "mid-level",
                                   },
                                   Flask: {
                                     position: { x: 650, y: 350 },
@@ -1754,6 +1775,7 @@ export default function AnalyzePage() {
                                       "API Development",
                                       "Microservices",
                                     ],
+                                    level: "mid-level",
                                   },
                                   "Machine Learning": {
                                     position: { x: 800, y: 150 },
@@ -1765,6 +1787,7 @@ export default function AnalyzePage() {
                                       "TensorFlow",
                                       "Scikit-learn",
                                     ],
+                                    level: "advanced",
                                   },
                                   "Deep Learning": {
                                     position: { x: 900, y: 250 },
@@ -1774,6 +1797,7 @@ export default function AnalyzePage() {
                                       "Computer Vision",
                                       "NLP",
                                     ],
+                                    level: "intermediate",
                                   },
                                   NumPy: {
                                     position: { x: 750, y: 300 },
@@ -1782,21 +1806,23 @@ export default function AnalyzePage() {
                                       "Pandas",
                                       "Matplotlib",
                                     ],
+                                    level: "beginner",
                                   },
                                   Pandas: {
                                     position: { x: 850, y: 300 },
                                     connects: ["Data Science", "Data Analysis"],
+                                    level: "beginner",
                                   },
                                   PyTorch: {
                                     position: { x: 950, y: 350 },
                                     connects: ["Computer Vision", "NLP"],
+                                    level: "beginner",
                                   },
                                   TensorFlow: {
                                     position: { x: 850, y: 400 },
                                     connects: ["Computer Vision", "NLP"],
+                                    level: "beginner",
                                   },
-
-                                  // Java Ecosystem
                                   Java: {
                                     position: { x: 100, y: 500 },
                                     connects: [
@@ -1806,6 +1832,7 @@ export default function AnalyzePage() {
                                       "Android",
                                       "Microservices",
                                     ],
+                                    level: "advanced",
                                   },
                                   Spring: {
                                     position: { x: 200, y: 550 },
@@ -1815,13 +1842,13 @@ export default function AnalyzePage() {
                                       "Microservices",
                                       "API Development",
                                     ],
+                                    level: "intermediate",
                                   },
                                   Android: {
                                     position: { x: 50, y: 600 },
                                     connects: ["Mobile Development", "Kotlin"],
+                                    level: "beginner",
                                   },
-
-                                  // C# / .NET Ecosystem
                                   "C#": {
                                     position: { x: 400, y: 500 },
                                     connects: [
@@ -1831,6 +1858,7 @@ export default function AnalyzePage() {
                                       "Enterprise",
                                       "Unity",
                                     ],
+                                    level: "advanced",
                                   },
                                   ".NET": {
                                     position: { x: 500, y: 550 },
@@ -1839,10 +1867,12 @@ export default function AnalyzePage() {
                                       "Backend",
                                       "Enterprise",
                                     ],
+                                    level: "intermediate",
                                   },
                                   "ASP.NET": {
                                     position: { x: 450, y: 600 },
                                     connects: ["Backend", "Web Development"],
+                                    level: "beginner",
                                   },
                                   Unity: {
                                     position: { x: 350, y: 600 },
@@ -1850,9 +1880,8 @@ export default function AnalyzePage() {
                                       "Game Development",
                                       "3D Graphics",
                                     ],
+                                    level: "beginner",
                                   },
-
-                                  // Go Ecosystem
                                   Go: {
                                     position: { x: 700, y: 500 },
                                     connects: [
@@ -1862,6 +1891,7 @@ export default function AnalyzePage() {
                                       "Cloud",
                                       "Docker",
                                     ],
+                                    level: "advanced",
                                   },
                                   Docker: {
                                     position: { x: 800, y: 550 },
@@ -1870,6 +1900,7 @@ export default function AnalyzePage() {
                                       "Containerization",
                                       "Kubernetes",
                                     ],
+                                    level: "intermediate",
                                   },
                                   Kubernetes: {
                                     position: { x: 850, y: 600 },
@@ -1878,9 +1909,8 @@ export default function AnalyzePage() {
                                       "Cloud",
                                       "Orchestration",
                                     ],
+                                    level: "beginner",
                                   },
-
-                                  // Rust Ecosystem
                                   Rust: {
                                     position: { x: 1000, y: 500 },
                                     connects: [
@@ -1889,6 +1919,7 @@ export default function AnalyzePage() {
                                       "Backend",
                                       "Performance",
                                     ],
+                                    level: "intermediate",
                                   },
                                   WebAssembly: {
                                     position: { x: 1100, y: 550 },
@@ -1896,9 +1927,8 @@ export default function AnalyzePage() {
                                       "Performance",
                                       "Web Development",
                                     ],
+                                    level: "beginner",
                                   },
-
-                                  // PHP Ecosystem
                                   PHP: {
                                     position: { x: 100, y: 100 },
                                     connects: [
@@ -1908,6 +1938,7 @@ export default function AnalyzePage() {
                                       "Web Development",
                                       "WordPress",
                                     ],
+                                    level: "beginner",
                                   },
                                   Laravel: {
                                     position: { x: 50, y: 150 },
@@ -1916,13 +1947,13 @@ export default function AnalyzePage() {
                                       "Web Development",
                                       "API Development",
                                     ],
+                                    level: "beginner",
                                   },
                                   WordPress: {
                                     position: { x: 150, y: 150 },
                                     connects: ["Web Development", "CMS"],
+                                    level: "beginner",
                                   },
-
-                                  // Ruby Ecosystem
                                   Ruby: {
                                     position: { x: 50, y: 300 },
                                     connects: [
@@ -1930,6 +1961,7 @@ export default function AnalyzePage() {
                                       "Backend",
                                       "Web Development",
                                     ],
+                                    level: "beginner",
                                   },
                                   "Ruby on Rails": {
                                     position: { x: 100, y: 350 },
@@ -1938,9 +1970,8 @@ export default function AnalyzePage() {
                                       "Web Development",
                                       "MVC",
                                     ],
+                                    level: "beginner",
                                   },
-
-                                  // Swift / iOS
                                   Swift: {
                                     position: { x: 200, y: 600 },
                                     connects: [
@@ -1948,6 +1979,7 @@ export default function AnalyzePage() {
                                       "Mobile Development",
                                       "macOS",
                                     ],
+                                    level: "beginner",
                                   },
                                   iOS: {
                                     position: { x: 150, y: 650 },
@@ -1955,9 +1987,8 @@ export default function AnalyzePage() {
                                       "Mobile Development",
                                       "App Store",
                                     ],
+                                    level: "beginner",
                                   },
-
-                                  // Kotlin
                                   Kotlin: {
                                     position: { x: 300, y: 650 },
                                     connects: [
@@ -1965,9 +1996,8 @@ export default function AnalyzePage() {
                                       "Mobile Development",
                                       "JVM",
                                     ],
+                                    level: "beginner",
                                   },
-
-                                  // Database Technologies
                                   SQL: {
                                     position: { x: 400, y: 400 },
                                     connects: [
@@ -1976,18 +2006,22 @@ export default function AnalyzePage() {
                                       "MySQL",
                                       "Backend",
                                     ],
+                                    level: "intermediate",
                                   },
                                   PostgreSQL: {
                                     position: { x: 350, y: 450 },
                                     connects: ["Database", "Backend"],
+                                    level: "beginner",
                                   },
                                   MySQL: {
                                     position: { x: 450, y: 450 },
                                     connects: ["Database", "Backend"],
+                                    level: "beginner",
                                   },
                                   MongoDB: {
                                     position: { x: 500, y: 400 },
                                     connects: ["Database", "NoSQL", "Backend"],
+                                    level: "intermediate",
                                   },
                                   Redis: {
                                     position: { x: 550, y: 450 },
@@ -1996,12 +2030,12 @@ export default function AnalyzePage() {
                                       "Caching",
                                       "Backend",
                                     ],
+                                    level: "beginner",
                                   },
-
-                                  // General Categories
                                   Frontend: {
                                     position: { x: 250, y: 50 },
                                     connects: ["UI Development", "CSS", "HTML"],
+                                    level: "beginner",
                                   },
                                   Backend: {
                                     position: { x: 400, y: 300 },
@@ -2010,6 +2044,7 @@ export default function AnalyzePage() {
                                       "Database",
                                       "Server",
                                     ],
+                                    level: "intermediate",
                                   },
                                   "Mobile Development": {
                                     position: { x: 100, y: 700 },
@@ -2019,6 +2054,7 @@ export default function AnalyzePage() {
                                       "React Native",
                                       "Flutter",
                                     ],
+                                    level: "beginner",
                                   },
                                   DevOps: {
                                     position: { x: 700, y: 600 },
@@ -2028,6 +2064,7 @@ export default function AnalyzePage() {
                                       "AWS",
                                       "Cloud",
                                     ],
+                                    level: "intermediate",
                                   },
                                   "Data Science": {
                                     position: { x: 700, y: 100 },
@@ -2036,6 +2073,7 @@ export default function AnalyzePage() {
                                       "Analytics",
                                       "Visualization",
                                     ],
+                                    level: "beginner",
                                   },
                                 };
 
@@ -2051,18 +2089,13 @@ export default function AnalyzePage() {
                                       (t) => t.name === tech,
                                     );
                                   const relationship = techRelationships[
-                                    tech
+                                    tech as keyof typeof techRelationships
                                   ] || {
                                     position: {
                                       x: 100 + (index % 4) * 200,
                                       y: 100 + Math.floor(index / 4) * 150,
                                     },
-                                    level:
-                                      techData?.percentage > 60
-                                        ? "advanced"
-                                        : techData?.percentage > 30
-                                          ? "mid-level"
-                                          : "beginner",
+                                    level: "beginner",
                                     connects: [],
                                   };
 
@@ -2087,7 +2120,7 @@ export default function AnalyzePage() {
                                             className="text-xs mt-1 px-2 py-1 rounded-full text-white"
                                             style={{
                                               backgroundColor:
-                                                levelColors[relationship.level],
+                                                levelColors[relationship.level as keyof typeof levelColors],
                                             }}
                                           >
                                             {relationship.level}
@@ -2112,7 +2145,7 @@ export default function AnalyzePage() {
                                   const relationship = techRelationships[tech];
                                   if (relationship?.connects) {
                                     relationship.connects.forEach(
-                                      (connectedTech) => {
+                                      (connectedTech: string) => {
                                         if (
                                           availableTechs.includes(connectedTech)
                                         ) {
