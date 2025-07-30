@@ -6,8 +6,9 @@ node_modules
 dist
 dist-ssr
 *.local
-# .env
 .cache
 server/dist
 public/dist
 storybook-static/
+venv/
+__pycache__/

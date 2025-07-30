@@ -11,13 +11,18 @@
   },
   "dependencies": {
     "@0unveiled/lib": "*",
-    "express": "^4.18.2",
+    "@octokit/oauth-app": "^8.0.1",
+    "@octokit/rest": "^22.0.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "@types/pg": "^8.15.5",
+    "axios": "^1.11.0",
     "cors": "^2.8.5",
-    "helmet": "^7.1.0",
     "dotenv": "^16.4.5",
-    "zod": "^3.22.4",
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
+    "pg": "^8.16.3",
     "winston": "^3.11.0",
-    "@supabase/supabase-js": "^2.39.0"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
 

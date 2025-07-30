@@ -13,10 +13,10 @@ services:
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - API_URL=http://api:3001
-      - AI_SERVICE_URL=http://ai-service:8000
+      - ANALYZER_SERVICE_URL=http://analyzer-service:8002
     depends_on:
       - api
-      - ai-service
+      - analyzer-service
     networks:
       - app-network
     volumes:
@@ -38,9 +38,9 @@ services:
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - JWT_SECRET=${JWT_SECRET}
-      - AI_SERVICE_URL=http://ai-service:8000
+      - ANALYZER_SERVICE_URL=http://analyzer-service:8002
     depends_on:
-      - ai-service
+      - analyzer-service
     networks:
       - app-network
     volumes:
@@ -48,23 +48,23 @@ services:
       - api-logs:/app/logs
     restart: unless-stopped
 
-  # FastAPI AI Service
-  ai-service:
+  # FastAPI GitHub Analyzer Service
+  analyzer-service:
     build:
       context: .
-      dockerfile: docker/ai-service.Dockerfile
+      dockerfile: docker/analyzer-service.Dockerfile
     ports:
-      - "8000:8000"
+      - "8002:8002"
     environment:
       - ENVIRONMENT=development
-      - PORT=8000
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_ORGANIZATION=${OPENAI_ORGANIZATION}
+      - PORT=8002
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - CORS_ORIGINS=["http://localhost:3000", "http://localhost:3001"]
     networks:
       - app-network
     volumes:
-      - ./apps/ai-service:/app
+      - ./apps/github-analyzer-service:/app
     restart: unless-stopped
 
   # Development database (optional)

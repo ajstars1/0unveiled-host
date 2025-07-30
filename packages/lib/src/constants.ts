@@ -1,14 +1,14 @@
-export const APP_NAME = "0Unveiled"
+export const APP_NAME = "0Unveiled";
 
-export const APP_DESCRIPTION = "AI-Powered Platform for the Future"
+export const APP_DESCRIPTION = "AI-Powered Platform for the Future";
 
-export const CONTACT_EMAIL = "hello@0unveiled.com"
+export const CONTACT_EMAIL = "hello@0unveiled.com";
 
 export const SOCIAL_LINKS = {
   twitter: "https://twitter.com/0unveiled",
   github: "https://github.com/0unveiled",
   linkedin: "https://linkedin.com/company/0unveiled",
-} as const
+} as const;
 
 export const API_ROUTES = {
   auth: {
@@ -26,13 +26,26 @@ export const API_ROUTES = {
     summarize: "/api/ai/summarize",
     analyze: "/api/ai/analyze",
   },
-} as const
+  github: {
+    auth: "/api/github/auth",
+    callback: "/api/github/callback",
+    user: "/api/github/user",
+    repositories: "/api/github/repositories",
+    sync: "/api/github/sync",
+    // Supabase-based endpoints
+    supabase: {
+      user: "/api/github/supabase/user",
+      repositories: "/api/github/supabase/repositories",
+      status: "/api/github/supabase/status",
+    },
+  },
+} as const;
 
 export const STORAGE_KEYS = {
   authToken: "0unveiled_auth_token",
   userPreferences: "0unveiled_user_preferences",
   theme: "0unveiled_theme",
-} as const
+} as const;
 
 export const ROUTES = {
   home: "/",
@@ -47,10 +60,10 @@ export const ROUTES = {
     signUp: "/auth/signup",
     resetPassword: "/auth/reset-password",
   },
-} as const
+} as const;
 
 export const LIMITS = {
   maxFileSize: 10 * 1024 * 1024, // 10MB
   maxFiles: 10,
   maxTextLength: 10000,
-} as const 
+} as const;
