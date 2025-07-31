@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Loader2, Check, X } from "lucide-react"
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ApplicationStatus } from "@prisma/client";
+import { applicationStatusEnum } from "@0unveiled/database/schema";
 import { getApplicationsForProject, projectPositionApplicationUpdate } from '@/actions/project';
 
 interface ListApplicantsProps {

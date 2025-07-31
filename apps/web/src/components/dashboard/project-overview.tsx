@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Users, CheckSquare, AlertCircle, Edit, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { getProjectById } from "@/data/projects"
-import { ProjectStatus } from "@prisma/client"
+import { ProjectStatus } from "@0unveiled/database/schema"
 import { Skeleton } from "@/components/ui/skeleton"
 
 type ProjectData = NonNullable<Awaited<ReturnType<typeof getProjectById>>>;

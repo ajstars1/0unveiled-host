@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { becomeProjectLeader } from "@/actions/projectActions";
 import { ApplyRoleDialog } from "@/components/project/ApplyRoleDialog"; // Ensure this path is correct
-import type { ProjectRole } from "@prisma/client";
+import type { ProjectRole } from "@0unveiled/database/schema"
 import {
   Dialog,
   DialogTrigger,

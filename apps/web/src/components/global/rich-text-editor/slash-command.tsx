@@ -12,7 +12,7 @@ import {
   TextQuote,
   Video,
 } from "lucide-react"
-import { Command, createSuggestionItems, renderItems } from "novel/extensions"
+import { Command, createSuggestionItems, renderItems } from "novel"
 
 export const suggestionItems = createSuggestionItems([
   // {

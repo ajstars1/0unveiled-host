@@ -24,7 +24,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { CalendarView, type CalendarEvent } from "@/components/dashboard/calendar/calendar-view"
 import { WeekView } from "@/components/dashboard/calendar/week-view"
 import { DayView } from "@/components/dashboard/calendar/day-view"
-import { TaskStatus, type Task } from "@0unveiled/database/schema"
+import { taskStatusEnum, type Task } from "@0unveiled/database/schema"
 import { isSameDay, addDays, subDays, addWeeks, subWeeks } from 'date-fns'
 
 // Define the prop type for the fetched tasks
@@ -55,7 +55,7 @@ export default function Calendar({ fetchedTasks, currentProjectId, currentProjec
             // Determine the event type based on task status or other logic
             // Example: If it's done, it's a 'task', otherwise it's a 'deadline'
             // This logic can be expanded (e.g., check for specific tags, etc.)
-            const type: CalendarEvent['type'] = task.status === TaskStatus.DONE ? 'task' : 'deadline'; 
+            const type: CalendarEvent['type'] = task.status === "DONE" ? 'task' : 'deadline'; 
             
             return {
                 id: task.id,

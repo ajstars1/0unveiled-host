@@ -14,7 +14,7 @@ import { useEffect } from "react"
 import { toast } from "sonner" // Using sonner for feedback
 
 // Define the expected type for the settings prop based on the schema
-import type { EmailFrequency } from "@prisma/client" // Import the enum type
+import type { EmailFrequency } from "@0unveiled/database/schema" // Import the enum type
 
 interface NotificationSettingsProps {
   settings: {

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { User as PrismaUser } from "@prisma/client" // Import Prisma User type
+import { User as PrismaUser } from "@0unveiled/database/schema"
 import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"

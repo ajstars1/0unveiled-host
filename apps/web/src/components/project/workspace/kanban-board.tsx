@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query' // Assuming TanStack Query is set up
-import { TaskStatus, Prisma, User } from '@prisma/client' // Import Prisma and User types
+import { TaskStatus, Prisma, User } from "@0unveiled/database/schema"
 import { getTasksByProjectId } from '@/data/tasks'
 import { updateTaskStatus, updateTaskOrder } from '@/actions/tasks' // Import the action and updateTaskOrder
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'

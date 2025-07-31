@@ -13,6 +13,7 @@ export default defineConfig({
     "src/components/avatar.tsx",
     "src/components/accordion.tsx",
     "src/components/alert.tsx",
+    "src/components/alert-dialog.tsx",
     "src/components/checkbox.tsx",
     "src/components/select.tsx",
     "src/components/switch.tsx",

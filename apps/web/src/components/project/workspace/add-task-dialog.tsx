@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { createTask } from '@/actions/tasks'
 import { CreateTaskSchema } from '@/schemas/task'
-import { TaskStatus } from '@prisma/client'
+import { TaskStatus } from "@0unveiled/database/schema"
 // Optional: For assignee selection
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getProjectById } from '@/data/projects' // To fetch members for assignee dropdown

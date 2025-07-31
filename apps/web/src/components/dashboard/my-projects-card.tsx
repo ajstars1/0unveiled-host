@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils"
 
 import type { DashboardData } from "@/data/dashboard"
-import { ProjectStatus, ProjectVisibility, MemberRole } from "@prisma/client"
+import { ProjectStatus, ProjectVisibility, MemberRole } from "@0unveiled/database/schema"
 
 // Define the props interface
 interface MyProjectsCardProps {

@@ -12,7 +12,7 @@ import {
   EditorRoot,
   JSONContent,
 } from "novel"
-import { CharacterCount, handleCommandNavigation } from "novel/extensions"
+import { CharacterCount, handleCommandNavigation } from "novel"
 import { useState } from "react"
 import { FieldErrors } from "react-hook-form"
 import { HtmlParser } from "../html-parser"
@@ -87,21 +87,15 @@ const BlockTextEditor = ({
               },
             }}
             extensions={[
-              // @ts-ignore
               ...defaultExtensions,
-              // @ts-ignore
               slashCommand,
-              // @ts-ignore
               CharacterCount.configure({
                 limit: max,
               }),
-              // @ts-ignore
               Placeholder.configure({
                 placeholder: "Type / to insert element...",
               }),
-              // @ts-ignore
               Video,
-              // @ts-ignore
               Image,
             ]}
             onUpdate={({ editor }) => {

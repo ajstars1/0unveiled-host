@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import NextImage from "next/image"
 import { Github, Link as LinkIcon, ExternalLink, GitCommitVertical, Code2, Dribbble, Pin, PinOff, Loader2 } from "lucide-react"
-import { IntegrationProvider, Prisma } from "@prisma/client"
+import { IntegrationProvider, Prisma } from "@0unveiled/database/schema"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 

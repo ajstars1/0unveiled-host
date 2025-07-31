@@ -30,7 +30,7 @@ import { getAllUsers } from "@/data/user"
 // import { Loader } from "@/components/global/loader"
 import ProfileCard from "@/components/global/userCardv"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Role } from "@prisma/client"
+import { memberRoleEnum } from "@0unveiled/database/schema"
 
 const ProfileCardSkeleton = () => (
   <div className="flex flex-col overflow-hidden h-full">

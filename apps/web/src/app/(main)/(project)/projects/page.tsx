@@ -2,7 +2,7 @@ import { getAllProjects } from "@/data/projects"
 import { Metadata } from "next"
 import ProjectsClientPage from "./_components/ProjectsClientPage" // Import the client component
 // import { getCurrentUser } from "@/lib/auth" // Removed - Path unknown / Not used currently
-import { Role } from "@prisma/client" // Keep for potential future use
+
 
 export const metadata: Metadata = {
   title: "Explore Projects",

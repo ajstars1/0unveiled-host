@@ -2,7 +2,7 @@
 // import { cookies } from "next/headers"
 import CreateProject from "./createForm"
 import { getUserBySupabaseId } from "@/data/user"
-import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
 
 import { redirect } from "next/navigation"
 import { ArrowLeft } from "lucide-react"

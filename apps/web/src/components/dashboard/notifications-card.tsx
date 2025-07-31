@@ -5,7 +5,7 @@ import { Bell, MessageSquare, UserPlus, Briefcase, MailCheck, AlertTriangle, Git
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { formatDistanceToNow } from 'date-fns'
-import { NotificationType } from "@prisma/client"
+import { NotificationType } from "@0unveiled/database/schema"
 import { cn } from "@/lib/utils"
 
 import type { DashboardData } from "@/data/dashboard"

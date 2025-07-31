@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProjectProp } from "@/data/projects" // Assuming ProjectProp includes needed fields
 import { cn } from "@/lib/utils"
-import { ProjectStatus } from "@prisma/client"
+import { projectStatusEnum } from "@0unveiled/database/schema"
 
 interface ProjectCardProps {
   project: ProjectProp

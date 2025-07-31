@@ -10,4 +10,4 @@ export {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
-} from "@0unveiled/ui/components/alert-dialog";
+} from "@0unveiled/ui/components/alert-dialog"

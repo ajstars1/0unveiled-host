@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { getTaskById } from '@/data/tasks'
 import { updateTask, deleteTask } from '@/actions/tasks'
 import { UpdateTaskSchema, DeleteTaskSchema } from '@/schemas/task'
-import { TaskStatus, User } from '@prisma/client'
+import { TaskStatus, User } from "@0unveiled/database/schema"
 import { getProjectById } from '@/data/projects' // For members list
 import type { MemberSummary } from '@/data/projects'
 import { Skeleton } from "@/components/ui/skeleton"

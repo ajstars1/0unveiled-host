@@ -3,9 +3,9 @@ import { MainNav } from "./main-nav"
 import MobileNav from "./mobile-nav"
 import { UserNav } from "./user-nav"
 import { Button } from "@/components/ui/button"
-import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
 import { getUnreadNotificationCount, getRecentNotifications } from '@/actions/notifications'
-import type { Notification } from '@prisma/client'
+import type { Notification } from '@0unveiled/database/schema'
 import { NotificationBell } from './notification-bell'
 
 import Link from "next/link"
@@ -63,7 +63,8 @@ const Navbar = async () => {
                   href={"/login"}
                   className="font-medium text-muted-foreground transition-colors hover:text-primary"
                 >
-                  <Button
+                    <Button
+                      size="default"
                     variant={"link"}
                     className=" hover:no-underline p-0 text-xs md:px-6   md:border md:border-input   md:text-black md:bg-white md:shadow-xs md:hover:bg-accent md:hover:text-accent-foreground gap-1 "
                   >
@@ -75,7 +76,8 @@ const Navbar = async () => {
                   href={"/register"}
                   className="font-medium text-muted-foreground transition-colors hover:text-primary"
                 >
-                  <Button
+                    <Button
+                      size="default"
                     variant={"default"}
                     className="inline-flex h-full animate-shimmer items-center justify-center rounded-md border md:bg-white border-slate-800 md:bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] font-medium text-gray-800 md:text-slate-300 hover:text-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-xs px-2 md:px-6 md:text-sm ml-0 md:ml-2"
                   >

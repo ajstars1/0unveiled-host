@@ -4,7 +4,7 @@ import { db } from "@/lib/drizzle"
 import { projects, projectMembers, projectRoles, projectSkills, userSkills, skills, projectApplications, users } from "@0unveiled/database"
 import { eq, desc, asc } from "drizzle-orm"
 import { getUserBySupabaseId } from "./user"
-import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
 
 // Define enum values as constants for Drizzle compatibility
 const ProjectStatusValues = ["DRAFT", "ACTIVE", "COMPLETED", "ARCHIVED"] as const;

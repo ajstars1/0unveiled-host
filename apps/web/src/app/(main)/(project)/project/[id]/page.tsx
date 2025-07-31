@@ -20,15 +20,15 @@ import { getProjectById, getCurrentUserApplicationsForProject, MemberSummary } f
 import { getUserBySupabaseId } from "@/data/user"
 import { notFound } from "next/navigation"
 
-import { ProjectStatus, ProjectVisibility, MemberRole, ApplicationStatus, ProjectApplication, Role as UserRolePrisma } from "@prisma/client"
+import { ProjectStatus, ProjectVisibility, MemberRole, ApplicationStatus, ProjectApplication, memberRoleEnum as UserRolePrisma } from "@0unveiled/database/schema"
 import { HtmlParser } from "@/components/global/html-parser"
 import { Separator } from "@/components/ui/separator"
-import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
 import ListApplicants from "./_components/listAppliedUsers"
 import { Metadata } from "next"
 import { formatDistanceToNow, format } from "date-fns"
 import ProjectActionsClient from "@/components/project/project-actions-client"
-import { db } from "@/lib/prisma"
+import { db } from "@0unveiled/database"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

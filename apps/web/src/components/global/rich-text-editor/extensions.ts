@@ -4,14 +4,13 @@ import {
   StarterKit,
   TaskItem,
   TaskList,
-  TiptapImage,
-  TiptapLink,
+  Image as TiptapImage,
+  Link as TiptapLink,
   UpdatedImage,
-} from "novel/extensions"
+  UploadImagesPlugin,
+} from "novel"
 
 import { cx } from "class-variance-authority"
-
-import { UploadImagesPlugin } from "novel/plugins"
 
 const tiptapImage = TiptapImage.extend({
   addProseMirrorPlugins() {

@@ -43,7 +43,7 @@ import MultipleSelector, { Option } from "@/components/ui/multiple-selector"
 // Project Specific Imports
 import { SKILLS_Beta } from "@/constants/skills"
 import { getPortfolio, createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from "@/actions/settings"
-import { IntegrationProvider } from "@prisma/client"
+import { IntegrationProvider } from "@0unveiled/database/schema"
 import { portfolioItemSchema as basePortfolioItemSchema, optionSchema } from "@/schemas"
 
 // --- Schema and Types ---

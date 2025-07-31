@@ -13,7 +13,7 @@ import { Mail } from "lucide-react" // Icon for the card
 import { formatDistanceToNow } from 'date-fns';
 
 import type { DashboardData } from "@/data/dashboard"
-import { ApplicationStatus } from "@prisma/client"
+import { ApplicationStatus } from "@0unveiled/lib/supabase"
 
 // Define the props interface
 interface MyApplicationsCardProps {

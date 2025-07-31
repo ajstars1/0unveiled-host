@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, Dispatch, SetStateAction } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, Resolver, useFieldArray } from "react-hook-form"
 import { z } from "zod"
-import { User, ProjectStatus, ProjectVisibility } from "@prisma/client"
+import { User, ProjectStatus, ProjectVisibility } from "@0unveiled/database/schema"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2 } from "lucide-react"
 
