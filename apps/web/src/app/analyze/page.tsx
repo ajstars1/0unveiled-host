@@ -705,6 +705,8 @@ export default function AnalyzePage() {
               className="flex-1 px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-black focus:border-transparent text-lg"
             />
             <Button
+              variant="outline"
+              size="sm"
               onClick={() => userId && loadRepositories()}
               disabled={!userId || loading}
               className="px-8 py-4 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-300 text-lg font-medium"
@@ -735,6 +737,8 @@ export default function AnalyzePage() {
                   </h2>
                   <div className="flex space-x-3">
                     <Button
+                      variant="outline"
+                      size="sm"
                       onClick={loadRepositories}
                       disabled={loading || scanningAll}
                       className="px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 text-gray-700"
@@ -746,6 +750,8 @@ export default function AnalyzePage() {
                         {!scanningAll ? (
                           <>
                             <Button
+                              variant="outline"
+                              size="sm"
                               onClick={scanAllRepositories}
                               disabled={loading}
                               className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-300"
@@ -754,6 +760,8 @@ export default function AnalyzePage() {
                             </Button>
                             {selectedRepos.size > 0 && (
                               <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={scanSelectedRepositories}
                                 disabled={loading}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-gray-300"
@@ -765,6 +773,8 @@ export default function AnalyzePage() {
                         ) : (
                           <Button
                             onClick={cancelScan}
+                            variant="outline"
+                            size="sm"
                             className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700"
                           >
                             Cancel Scan
@@ -786,6 +796,8 @@ export default function AnalyzePage() {
                       </div>
                       <Button
                         onClick={cancelScan}
+                        variant="outline"
+                        size="sm"
                         className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 border border-red-300"
                       >
                         Cancel
@@ -819,12 +831,16 @@ export default function AnalyzePage() {
                         {selectedRepos.size > 0 && (
                           <Button
                             onClick={clearSelection}
+                            variant="outline"
+                            size="sm"
                             className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-600"
                           >
                             Clear
                           </Button>
                         )}
                         <Button
+                          variant="outline"
+                          size="sm"
                           onClick={selectAllRepos}
                           disabled={selectedRepos.size === repositories.length}
                           className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-600 disabled:opacity-50"
@@ -889,6 +905,8 @@ export default function AnalyzePage() {
                 {selectedRepo && (
                   <div className="mt-6 pt-4 border-t border-gray-200 text-center">
                     <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => analyzeRepository(selectedRepo)}
                       disabled={analyzing || scanningAll}
                       className="px-8 py-3 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-300 font-medium"
@@ -912,6 +930,8 @@ export default function AnalyzePage() {
                   {/* Back to Summary Button */}
                   {Object.keys(allAnalyses).length > 0 && (
                     <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         setAnalysis(null);
                         setSelectedRepo(null);
@@ -2255,6 +2275,8 @@ export default function AnalyzePage() {
                             </div>
 
                             <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => {
                                 setAnalysis(analysis);
                                 setSelectedRepo(
