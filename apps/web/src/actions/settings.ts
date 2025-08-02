@@ -16,7 +16,7 @@ import {
 import { getUserBySupabaseId } from "@/data/user"
 import { isSkillExist } from "@/data/skills"
 import { db } from "@/lib/drizzle"
-import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { 
   users, 
   showcasedItems, 

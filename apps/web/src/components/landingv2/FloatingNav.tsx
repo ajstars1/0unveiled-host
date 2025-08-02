@@ -5,15 +5,39 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, FileText, Users, DollarSign, LogIn, Sparkles } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";;
+import type { User } from "@supabase/supabase-js";
+import { UserNav } from "../global/navbar/user-nav";
+import Link from "next/link";
 
 export function FloatingNav() {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeItem, setActiveItem] = useState("home");
+  const [sessionUser, setSessionUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 500);
-    return () => clearTimeout(timer);
+    const supabase = createClient();
+    
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setSessionUser(user);
+      setLoading(false);
+    };
+
+    checkUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      clearTimeout(timer);
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -33,10 +57,66 @@ export function FloatingNav() {
     { id: "community", icon: Users, label: "Community", href: "#community" },
   ];
 
-  const authItems = [
-    { id: "signin", icon: LogIn, label: "Sign in", variant: "ghost" as const },
-    { id: "getstarted", icon: Sparkles, label: "Get started", variant: "default" as const },
-  ];
+  const renderAuthContent = () => {
+    if (loading) {
+      return <div className="w-28 h-8 rounded-full bg-white/10 animate-pulse" />;
+    }
+
+    if (sessionUser) {
+      return (
+        <motion.div 
+          key="user-nav"
+          whileHover={{ scale: 1.05, y: -1 }} 
+          whileTap={{ scale: 0.95 }}
+        >
+          <UserNav user={sessionUser} />
+        </motion.div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-1">
+        <Link href="/login">
+          <motion.div 
+            key="signin" 
+            whileHover={{ scale: 1.05, y: -1 }} 
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={cn(
+                "text-xs h-7 px-3 rounded-full backdrop-blur-sm",
+                "hover:bg-white/10 text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <LogIn className="w-3 h-3 sm:mr-1" />
+              <span className="hidden sm:inline">Sign in</span>
+            </Button>
+          </motion.div>
+        </Link>
+        <Link href="/register">
+          <motion.div 
+            key="getstarted" 
+            whileHover={{ scale: 1.05, y: -1 }} 
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button 
+              variant="default" 
+              size="sm" 
+              className={cn(
+                "text-xs h-7 px-3 rounded-full backdrop-blur-sm",
+                "bg-white/20 hover:bg-white/30 text-foreground shadow-lg"
+              )}
+            >
+              <Sparkles className="w-3 h-3 sm:mr-1" />
+              <span className="hidden sm:inline">Get started</span>
+            </Button>
+          </motion.div>
+        </Link>
+      </div>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -124,27 +204,7 @@ export function FloatingNav() {
                 >
                   <div className="w-px h-5 bg-white/20 mx-1" />
                   <div className="flex items-center gap-1">
-                    {authItems.map((item) => (
-                      <motion.div 
-                        key={item.id} 
-                        whileHover={{ scale: 1.05, y: -1 }} 
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Button 
-                          variant={item.variant} 
-                          size="sm" 
-                          className={cn(
-                            "text-xs h-7 px-3 rounded-full backdrop-blur-sm",
-                            item.variant === "ghost" 
-                              ? "hover:bg-white/10 text-muted-foreground hover:text-foreground" 
-                              : "bg-white/20 hover:bg-white/30 text-foreground shadow-lg"
-                          )}
-                        >
-                          <item.icon className="w-3 h-3 sm:mr-1" />
-                          <span className="hidden sm:inline">{item.label}</span>
-                        </Button>
-                      </motion.div>
-                    ))}
+                    {renderAuthContent()}
                   </div>
                 </motion.div>
               )}

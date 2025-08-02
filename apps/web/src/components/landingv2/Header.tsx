@@ -1,80 +1,89 @@
-// "use client";
-
-// import { useState, useEffect } from "react";
+import { MainNav } from "../global/navbar/main-nav";
+import MobileNav from "../global/navbar/mobile-nav";
+import { UserNav } from "../global/navbar/user-nav";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { createSupabaseServerClient } from "@/lib/supabase/server";;
+import { getUnreadNotificationCount, getRecentNotifications } from '@/actions/notifications';
+import type { Notification } from '@0unveiled/database/schema';
+import { NotificationBell } from '../global/navbar/notification-bell';
 import Link from "next/link";
-import logo from "@/public/abstrack_logo_light.svg";
+import Image from "next/image";
 
-// import { cn } from "@/lib/utils";
+export const Header = async () => {
+  let sessionUser = null;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    sessionUser = user;
+  } catch (error) {
+    console.warn("Could not create Supabase client for header:", error);
+  }
 
-export function Header() {
-  // const [isScrolled, setIsScrolled] = useState(false);
-
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     setIsScrolled(window.scrollY > 10);
-  //   };
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => window.removeEventListener("scroll", handleScroll);
-  // }, []);
+  let initialCount = 0;
+  let initialNotifications: Notification[] = [];
+  if (sessionUser) {
+    try {
+      const [count, notifications] = await Promise.all([
+        getUnreadNotificationCount(),
+        getRecentNotifications(5)
+      ]);
+      initialCount = count;
+      initialNotifications = notifications || [];
+    } catch (error) {
+        console.error("Error fetching initial notifications for header:", error);
+    }
+  }
 
   return (
-    <header
-      className={
-        " top-0 z-50 w-full transition-all duration-300 bg-background/80 backdrop-blur-sm"
-      }
-    >
-      <div className="container mx-auto px-4 lg:px-6">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-                <div className="px-3 ">
-                    <Link href="/dashboard" className="flex items-center gap-2 h-10 mb-2 px-2 justify-start">
-                        <Image
-                            src={logo}
-                            alt="0Unveiled Logo"
-                            width={24}
-                            height={24}
-                            className="shrink-0"
-                            priority
-                        />
-                        <span className="font-semibold text-lg whitespace-nowrap">0Unveiled</span>
-                    </Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+        <div className="flex h-16 justify-between items-center px-4">
+            <MobileNav className="lg:hidden flex" />
+            <Link href={"/"}>
+              <Image src="/logo/0unveiled_logo_light.svg" alt="0Unveiled Logo" width={160} height={30} className="invert dark:invert-0 min-w-24 "/>
+            </Link>
+          <div className="flex w-full items-center justify-center">
+            <MainNav className="mx-6 items-center justify-center hidden lg:flex" />
           </div>
-
-          {/* Navigation */}
-          {/* <nav className="hidden md:flex items-center space-x-8">
-            <a
-              href="#pricing"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Pricing
-            </a>
-            <a
-              href="#docs"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Docs
-            </a>
-            <a
-              href="#community"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Community
-            </a>
-          </nav> */}
-
-          {/* Auth buttons */}
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="sm" className="text-sm">
-              Sign in
-            </Button>
-            <Button size="sm" className="text-sm" variant="default">
-              Get started
-            </Button>
+          <div className="flex items-center space-x-4">
+            {sessionUser !== null ? (
+              <>
+                <NotificationBell 
+                    userId={sessionUser.id} 
+                    initialCount={initialCount} 
+                    initialNotifications={initialNotifications} 
+                 />
+                <UserNav user={sessionUser} />
+              </>
+            ) : (
+              <>
+                <Link
+                  href={"/login"}
+                  className="font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                    <Button
+                      size="default"
+                    variant={"link"}
+                    className=" hover:no-underline p-0 text-xs md:px-6   md:border md:border-input   md:text-black md:bg-white md:shadow-xs md:hover:bg-accent md:hover:text-accent-foreground gap-1 "
+                  >
+                    Login
+                  </Button>
+                </Link>
+                <Link
+                  href={"/register"}
+                  className="font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                    <Button
+                      size="default"
+                    variant={"default"}
+                    className="inline-flex h-full animate-shimmer items-center justify-center rounded-md border md:bg-white border-slate-800 md:bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] font-medium text-gray-800 md:text-slate-300 hover:text-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-xs px-2 md:px-6 md:text-sm ml-0 md:ml-2"
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
-      </div>
     </header>
   );
-}
+};

@@ -23,7 +23,7 @@ import { notFound } from "next/navigation"
 import { ProjectStatus, ProjectVisibility, MemberRole, ApplicationStatus, ProjectApplication, memberRoleEnum as UserRolePrisma } from "@0unveiled/database/schema"
 import { HtmlParser } from "@/components/global/html-parser"
 import { Separator } from "@/components/ui/separator"
-import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import ListApplicants from "./_components/listAppliedUsers"
 import { Metadata } from "next"
 import { formatDistanceToNow, format } from "date-fns"

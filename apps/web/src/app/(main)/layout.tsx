@@ -1,5 +1,5 @@
 // import { onAuthenticatedUser } from "@/actions/auth"
-import Navbar from "@/components/global/navbar/Navbar"
+// import Navbar from "@/components/global/navbar/Navbar"
 // import { Metadata } from "next"
 
 type Props = {
@@ -21,7 +21,7 @@ const MainLayout = async ({ children }: Props) => {
 
   return (
     <div>
-              <Navbar />
+              {/* <Navbar /> */}
             {children}
     </div>
   )

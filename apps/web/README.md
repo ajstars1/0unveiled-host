@@ -239,7 +239,7 @@ export function UserProfile() {
 ### Server-side Usage
 
 ```tsx
-import { createClient } from "@0unveiled/lib/supabase";
+import { createClient } from "@/lib/supabase/client";;
 import { cookies } from "next/headers";
 import { Card, CardContent } from "@0unveiled/ui/components/card";
 

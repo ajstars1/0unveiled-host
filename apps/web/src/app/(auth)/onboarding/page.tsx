@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import MultipleSelector, { Option } from "@/components/ui/multiple-selector"
 
 // Backend & Utils
-import { createClient } from "@0unveiled/lib/supabase"
+import { createClient } from "@/lib/supabase/client";
 import { onboarding as submitOnboardingData } from "@/actions/settings"
 import { SKILLS_Beta } from "@/constants/skills"
 import { toast } from "@/hooks/use-toast"
