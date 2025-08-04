@@ -15,7 +15,7 @@ import {
 // import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import Link from "next/link"
-import { createClient } from "@0unveiled/lib/supabase"
+// import { createClient } from "@0unveiled/lib/supabase"
 interface UserNavProps {
   user: {
     id: string
@@ -28,13 +28,13 @@ interface UserNavProps {
 }
 
 export function UserNav({ user }: UserNavProps) {
-  const router = useRouter()
-  // const supabase = createClientComponentClient()
-  const supabase = createClient()
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.refresh()
-  }
+  // const router = useRouter()
+  // // const supabase = createClientComponentClient()
+  // const supabase = createClient()
+  // const handleSignOut = async () => {
+  //   await supabase.auth.signOut()
+  //   router.refresh()
+  // }
 
   return (
     <DropdownMenu>
@@ -89,7 +89,7 @@ export function UserNav({ user }: UserNavProps) {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="" />
-        <DropdownMenuItem className="" inset onClick={handleSignOut}>
+        <DropdownMenuItem className="" inset onClick={() => {}}>
           Log out
           <DropdownMenuShortcut className="">⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
