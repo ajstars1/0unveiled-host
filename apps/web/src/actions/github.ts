@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@0unveiled/database";
-import { createSupabaseServerClient } from "@0unveiled/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getUserBySupabaseId } from "@/data/user";
 import { accounts, showcasedItems } from "@0unveiled/database";
 import { eq, and } from "drizzle-orm";

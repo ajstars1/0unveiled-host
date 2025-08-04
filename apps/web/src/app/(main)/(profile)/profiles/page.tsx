@@ -30,7 +30,7 @@ import { getAllUsers } from "@/data/user"
 // import { Loader } from "@/components/global/loader"
 import ProfileCard from "@/components/global/userCardv"
 import { Skeleton } from "@/components/ui/skeleton"
-import { memberRoleEnum } from "@0unveiled/database/schema"
+import { roleEnum } from "@0unveiled/database/schema"
 
 const ProfileCardSkeleton = () => (
   <div className="flex flex-col overflow-hidden h-full">
@@ -81,7 +81,7 @@ export default function Profiles() {
 
     return allUsers
       ?.filter((profile) => {
-        if (profile.role === Role.ADMIN || !profile.onboarded) {
+        if (profile.role === "ADMIN" || !profile.onboarded) {
           return false;
         }
 
@@ -116,10 +116,11 @@ export default function Profiles() {
         <div className="relative w-full max-w-lg mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            type="text"
             placeholder="Search by name, skills, college, location, or headline..."
             className="pl-10 h-10 rounded-full bg-muted border-transparent focus:border-primary focus:bg-background focus:ring-0"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
           />
         </div>
 
@@ -148,7 +149,7 @@ export default function Profiles() {
             <div className="sm:hidden w-full max-w-xs mx-auto">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between rounded-full">
+                  <Button size="sm" variant="outline" className="w-full justify-between rounded-full">
                     {selectedCategory}
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -156,6 +157,8 @@ export default function Profiles() {
                 <DropdownMenuContent align="center" className="w-(--radix-dropdown-menu-trigger-width)">
                   {filterCategories.map((category) => (
                     <DropdownMenuItem
+                      inset={false}
+                      className="cursor-pointer"
                       key={category}
                       onSelect={() => setSelectedCategory(category)}
                     >

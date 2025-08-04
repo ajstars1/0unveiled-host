@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/drizzle" // Updated to use Drizzle client
-import { createSupabaseServerClient } from "@0unveiled/lib/supabase" // Use the server utility
+import { createSupabaseServerClient } from "@/lib/supabase/server"; // Use the server utility
 import { 
   users, 
   accounts, 
@@ -296,8 +296,8 @@ export const onSignInUser = async (
  * Assumes Supabase session is handled by middleware/server client setup.
  */
 export const getAuthenticatedUser = async () => {
-  const supabase = await createSupabaseServerClient()
   try {
+    const supabase = await createSupabaseServerClient()
     const { data: { user: authUserWithMeta }, error: metaError } = await supabase.auth.getUser();
     
     if (metaError || !authUserWithMeta) {
@@ -383,7 +383,7 @@ export const getAuthenticatedUser = async () => {
 
     return { data: combinedUserProfile }
   } catch (error) {
-    return { error: "An unexpected error occurred." }
+    return { error: "Could not create Supabase client or an unexpected error occurred." }
   }
 }
 

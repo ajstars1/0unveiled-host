@@ -2,7 +2,7 @@
 // import { NextResponse } from 'next/server'
 // import { cookies } from 'next/headers'
 
-import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server"
 import { onSignUpUser } from "@/actions/auth"
 import { onSignInUser } from "@/actions/auth"

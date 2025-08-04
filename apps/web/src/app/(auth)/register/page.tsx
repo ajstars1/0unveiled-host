@@ -11,7 +11,7 @@ import {
   useGithubAuth,
 } from "@/hooks/authentication"
 import { useToast } from "@/hooks/use-toast"
-import { createClient } from "@0unveiled/lib/supabase" // Import Supabase client
+import { createClient } from "@/lib/supabase/client"; // Import Supabase client
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

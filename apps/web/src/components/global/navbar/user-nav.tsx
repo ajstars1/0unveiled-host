@@ -15,7 +15,7 @@ import {
 // import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import Link from "next/link"
-// import { createClient } from "@0unveiled/lib/supabase"
+import { createClient } from "@/lib/supabase/client";
 interface UserNavProps {
   user: {
     id: string

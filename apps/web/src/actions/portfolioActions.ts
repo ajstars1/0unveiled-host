@@ -16,7 +16,7 @@ import {
   type Skill
 } from "@0unveiled/database"
 import { eq, and, desc, asc } from "drizzle-orm"
-import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getUserBySupabaseId, getUserByUsername } from "@/data/user"
 import { getRepoCodeContents } from "@/actions/github"
 

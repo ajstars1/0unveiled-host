@@ -17,7 +17,7 @@ import {
 } from "@/components/forms/sign-up/schema"
 
 // Import the Supabase client utility
-import { createClient } from "@0unveiled/lib/supabase"
+import { createClient } from "@/lib/supabase/client";
 
 // Import the server actions we'll update later
 import { onSignInUser, onSignUpUser } from "@/actions/auth"
