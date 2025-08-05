@@ -16,6 +16,9 @@
       "persistent": true,
       "dependsOn": ["build"]
     },
+    "setup": {
+      "cache": false
+    },
     "test": {
       "outputs": ["coverage/**"],
       "dependsOn": ["^build"]

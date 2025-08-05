@@ -1,38 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = process.env.API_BASE_URL || "http://localhost:3001";
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
     const { userId } = await params;
-    const searchParams = request.nextUrl.searchParams;
+    
+    // This API route is deprecated - functionality moved to server actions
+    // Return a helpful message for any remaining calls
+    return NextResponse.json({
+      success: false,
+      error: "This API endpoint has been deprecated. Please use server actions instead.",
+      deprecated: true,
+      redirectTo: "Server actions in /actions/analyze.ts"
+    }, { status: 410 }); // 410 Gone - indicates the resource is no longer available
 
-    // Forward query parameters
-    const queryString = searchParams.toString();
-    const url = `${API_BASE}/api/github/supabase/repositories/${userId}${queryString ? `?${queryString}` : ""}`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
-
-    return NextResponse.json(data);
   } catch (error) {
-    console.error("Repository fetch error:", error);
+    console.error("Deprecated API route called:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to fetch repositories" },
-      { status: 500 },
+      { success: false, error: "API route deprecated" },
+      { status: 410 },
     );
   }
 }
