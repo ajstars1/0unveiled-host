@@ -4,8 +4,8 @@
   "private": true,
   "description": "FastAPI GitHub repository analyzer service",
   "scripts": {
-    "dev": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8002 --reload",
-    "start": "python -m uvicorn src.main:app --host 0.0.0.0 --port 8002",
+    "dev": "source venv/bin/activate && python -m uvicorn src.main:app --host 0.0.0.0 --port 8002 --reload",
+    "start": "source venv/bin/activate && python -m uvicorn src.main:app --host 0.0.0.0 --port 8002",
     "install": "python -m venv venv --system-site-packages && source venv/bin/activate && pip install --no-build-isolation fastapi uvicorn pydantic pydantic-settings httpx requests loguru python-dotenv google-generativeai python-multipart",
     "install:tools": "source venv/bin/activate && pip install --no-build-isolation astunparse radon lizard gitpython pygments chardet || echo 'Some analysis tools skipped due to compatibility issues'",
     "setup": "bun run install && bun run install:tools",
