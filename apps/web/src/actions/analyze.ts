@@ -1,13 +1,5 @@
 'use server';
 
-interface RepositoryActionResult {
-  success: boolean;
-  data?: any[];
-  error?: string;
-}
-
-'use server';
-
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getUserBySupabaseId, getUserByUserId } from "@/data/user";
 import { fetchUserGithubRepos } from "@/actions/github";
@@ -182,282 +174,117 @@ export async function analyzeRepositoryAction(
       };
     }
 
-    // Use the existing getRepoCodeContents function to fetch real repository data
-    const repoFullName = `${owner}/${repoName}`;
-    const { getRepoCodeContents } = await import("@/actions/github");
-    const codeResult = await getRepoCodeContents(repoFullName, userId);
+    const githubAccountData = githubAccount[0];
 
-    let analysisData;
-
-    if ('error' in codeResult) {
-      // If we can't fetch the code, return a basic analysis with error info
-      analysisData = {
-        repository: {
-          full_name: repoFullName,
-          description: `Analysis attempted for ${repoFullName}`,
-          stars: 0,
-          forks: 0,
-          language: "Unknown",
-          size: 0
-        },
-        metrics: {
-          lines_of_code: 0,
-          total_lines: 0,
-          complexity: 0,
-          maintainability: 0,
-          technical_debt: 0,
-          files_analyzed: 0
-        },
-        quality: {
-          documentation_coverage: 0,
-          architecture_score: 0,
-          test_files: 0
-        },
-        security: {
-          security_score: 0,
-          critical_issues: 0,
-          security_hotspots: 0
-        },
-        ai_insights: {
-          overall_score: 0,
-          code_assessment: `Unable to analyze ${repoFullName}: ${codeResult.error}`,
-          architecture_assessment: "Code access required for architecture analysis",
-          strengths: [],
-          project_maturity: "Unknown"
-        },
-        project_summary: `Analysis failed for ${repoFullName}: ${codeResult.error}`,
-        overall_score: 0,
-        analysis_duration: 0.5,
-        files_discovered: []
-      };
-    } else {
-      // We have the code, perform basic analysis
-      const codeContent = codeResult.code;
-      const lines = codeContent.split('\n').length;
-      
-      // Basic language detection from file extensions and content
-      const languageDetection = analyzeLanguages(codeContent);
-      const frameworkDetection = analyzeFrameworks(codeContent);
-      
-      // Calculate overall score based on various factors
-      const overallScore = Math.round(
-        (languageDetection.primary ? 80 : 60) + // Has primary language
-        (frameworkDetection.frameworks.length > 0 ? 10 : 0) + // Uses frameworks
-        (lines > 100 ? 10 : Math.max(0, lines / 10)) // Code size factor
-      );
-      
-      analysisData = {
-        repository: {
-          full_name: repoFullName,
-          description: `Repository analysis completed for ${repoFullName}`,
-          stars: 0, // Would need real GitHub data
-          forks: 0, // Would need real GitHub data
-          language: languageDetection.primary || "JavaScript",
-          size: codeContent.length
-        },
-        metrics: {
-          lines_of_code: lines,
-          total_lines: lines,
-          complexity: Math.min(100, Math.max(1, lines / 100)), // Simple complexity based on size
-          maintainability: Math.min(100, Math.max(1, 100 - (lines / 1000))), // Inverse relationship with size
-          technical_debt: Math.min(100, Math.max(0, lines / 500)), // Increases with size
-          files_analyzed: (codeContent.match(/--- FILE:/g) || []).length
-        },
-        quality: {
-          documentation_coverage: codeContent.includes('README') || codeContent.includes('readme') ? 75 : 25,
-          architecture_score: frameworkDetection.frameworks.length > 0 ? 80 : 60,
-          test_files: (codeContent.match(/test|spec/gi) || []).length
-        },
-        security: {
-          security_score: 75, // Default score
-          critical_issues: 0,
-          security_hotspots: analyzeCodeIssues(codeContent).length
-        },
-        ai_insights: {
-          overall_score: overallScore,
-          code_assessment: `Analysis of ${repoFullName}: This repository contains ${lines} lines of code across multiple files. Primary language detected: ${languageDetection.primary}. ${frameworkDetection.summary}`,
-          architecture_assessment: `The project ${frameworkDetection.frameworks.length > 0 ? 'follows modern' : 'uses basic'} architectural patterns. ${frameworkDetection.patterns.join(', ')}`,
-          strengths: generateRecommendations(languageDetection, frameworkDetection, lines).slice(0, 3),
-          project_maturity: lines > 10000 ? "Mature" : lines > 1000 ? "Developing" : "Early Stage"
-        },
-        project_summary: `${repoFullName} is a ${languageDetection.primary || 'mixed-language'} project with ${lines} lines of code. ${frameworkDetection.summary}`,
-        overall_score: overallScore,
-        analysis_duration: Math.random() * 5 + 2, // Random duration between 2-7 seconds
-        files_discovered: (codeContent.match(/--- FILE: ([^---]+) ---/g) || []).map(match => {
-          const filePath = match.replace(/--- FILE: (.+) ---/, '$1');
-          return {
-            path: filePath,
-            name: filePath.split('/').pop() || filePath,
-            analyzed: true
-          };
-        })
+    if (!githubAccountData?.installationId) {
+      return { 
+        success: false, 
+        error: `User ${targetUser.firstName} ${targetUser.lastName} has not completed GitHub App installation` 
       };
     }
 
+    const installationId = parseInt(githubAccountData.installationId, 10);
+    if (isNaN(installationId)) {
+      return { 
+        success: false, 
+        error: 'Invalid GitHub App installation data for target user' 
+      };
+    }
+
+    // Use GitHub App authentication to get installation token
+    const appId = process.env.GITHUB_APP_ID;
+    const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\n/g, '\n');
+
+    if (!appId || !privateKey) {
+      return { success: false, error: "Server configuration error: GitHub App credentials missing." };
+    }
+
+    // Authenticate as GitHub App Installation for the target user
+    const { App } = await import("octokit");
+    const app = new App({
+      appId: appId,
+      privateKey: privateKey,
+    });
+
+    const octokit = await app.getInstallationOctokit(installationId);
+
+    // Get the installation access token for the Python service
+    const tokenResponse = await octokit.rest.apps.createInstallationAccessToken({
+      installation_id: installationId,
+    });
+
+    // Call the Python FastAPI analyzer service
+    const analyzerServiceUrl = process.env.ANALYZER_SERVICE_URL || 'http://localhost:8002';
+    
+    const analysisPayload = {
+      access_token: tokenResponse.data.token,
+      owner: owner,
+      repo: repoName,
+      max_files: maxFiles
+    };
+
+    console.log(`Calling analyzer service at ${analyzerServiceUrl}/api/auth/analyze-repository`);
+
+    const response = await fetch(`${analyzerServiceUrl}/api/auth/analyze-repository`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(analysisPayload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Analyzer service error (${response.status}):`, errorText);
+      
+      if (response.status === 404) {
+        return { 
+          success: false, 
+          error: 'Analysis endpoint not found. Please check if the analyzer service is running properly.' 
+        };
+      } else if (response.status === 401 || response.status === 403) {
+        return { 
+          success: false, 
+          error: 'GitHub access token is invalid or expired. Please reconnect your GitHub account.' 
+        };
+      } else {
+        return { 
+          success: false, 
+          error: `Analysis service error: ${errorText || 'Unknown error'}` 
+        };
+      }
+    }
+
+    const analysisResult = await response.json();
+
+    if (!analysisResult.success) {
+      return { 
+        success: false, 
+        error: analysisResult.detail || 'Analysis failed' 
+      };
+    }
+
+    // Return the comprehensive analysis data from the Python service
     return {
       success: true,
-      data: analysisData
+      data: analysisResult
     };
 
   } catch (error: any) {
     console.error(`Error analyzing repository ${owner}/${repoName}:`, error);
+    
+    // Handle network/connection errors
+    if (error.code === 'ECONNREFUSED') {
+      return {
+        success: false,
+        error: 'Analyzer service is not available. Please try again later.'
+      };
+    }
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Analysis failed'
     };
   }
-}
-
-// Helper functions for basic code analysis
-function analyzeLanguages(code: string) {
-  const languages: Record<string, number> = {};
-  let totalLines = 0;
-
-  // Count lines by file type based on file markers
-  const fileMatches = code.match(/--- FILE: ([^---]+) ---/g) || [];
-  
-  fileMatches.forEach(match => {
-    const fileName = match.replace(/--- FILE: (.+) ---/, '$1');
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    
-    if (ext) {
-      const langMap: Record<string, string> = {
-        'js': 'JavaScript',
-        'jsx': 'JavaScript',
-        'ts': 'TypeScript', 
-        'tsx': 'TypeScript',
-        'py': 'Python',
-        'java': 'Java',
-        'go': 'Go',
-        'rb': 'Ruby',
-        'php': 'PHP',
-        'css': 'CSS',
-        'scss': 'SCSS',
-        'html': 'HTML',
-        'md': 'Markdown',
-        'json': 'JSON',
-        'yml': 'YAML',
-        'yaml': 'YAML'
-      };
-      
-      const language = langMap[ext] || ext.toUpperCase();
-      languages[language] = (languages[language] || 0) + 1;
-      totalLines++;
-    }
-  });
-
-  // Convert counts to percentages
-  const breakdown: Record<string, number> = {};
-  Object.entries(languages).forEach(([lang, count]) => {
-    breakdown[lang] = Math.round((count / totalLines) * 100);
-  });
-
-  const primary = Object.entries(breakdown).sort(([,a], [,b]) => b - a)[0]?.[0];
-
-  return { breakdown, primary };
-}
-
-function analyzeFrameworks(code: string) {
-  const frameworks: string[] = [];
-  const tools: string[] = [];
-  const databases: string[] = [];
-  const deployment: string[] = [];
-  const patterns: string[] = [];
-  const topics: string[] = [];
-
-  // Framework detection
-  if (code.includes('react') || code.includes('React')) {
-    frameworks.push('React');
-    topics.push('react');
-  }
-  if (code.includes('next') || code.includes('Next')) {
-    frameworks.push('Next.js');
-    topics.push('nextjs');
-  }
-  if (code.includes('vue') || code.includes('Vue')) {
-    frameworks.push('Vue.js');
-    topics.push('vuejs');
-  }
-  if (code.includes('angular') || code.includes('Angular')) {
-    frameworks.push('Angular');
-    topics.push('angular');
-  }
-  if (code.includes('express') || code.includes('Express')) {
-    frameworks.push('Express.js');
-    topics.push('express');
-  }
-
-  // Tool detection
-  if (code.includes('eslint') || code.includes('ESLint')) tools.push('ESLint');
-  if (code.includes('prettier') || code.includes('Prettier')) tools.push('Prettier');
-  if (code.includes('webpack') || code.includes('Webpack')) tools.push('Webpack');
-  if (code.includes('vite') || code.includes('Vite')) tools.push('Vite');
-
-  // Database detection
-  if (code.includes('mongodb') || code.includes('MongoDB')) databases.push('MongoDB');
-  if (code.includes('postgresql') || code.includes('postgres')) databases.push('PostgreSQL');
-  if (code.includes('mysql') || code.includes('MySQL')) databases.push('MySQL');
-  if (code.includes('supabase') || code.includes('Supabase')) databases.push('Supabase');
-
-  // Deployment detection
-  if (code.includes('docker') || code.includes('Docker')) deployment.push('Docker');
-  if (code.includes('vercel') || code.includes('Vercel')) deployment.push('Vercel');
-  if (code.includes('netlify') || code.includes('Netlify')) deployment.push('Netlify');
-
-  // Pattern detection
-  if (frameworks.includes('React') || frameworks.includes('Vue.js')) {
-    patterns.push('Component-based architecture');
-  }
-  if (frameworks.includes('Next.js')) {
-    patterns.push('Server-side rendering');
-  }
-
-  const summary = `Detected frameworks: ${frameworks.join(', ') || 'None'}. Tools: ${tools.join(', ') || 'None'}.`;
-
-  return { frameworks, tools, databases, deployment, patterns, topics, summary };
-}
-
-function generateRecommendations(languages: any, frameworks: any, lines: number): string[] {
-  const recommendations: string[] = [];
-
-  if (lines > 10000) {
-    recommendations.push("Consider breaking down large files into smaller, more manageable modules");
-  }
-  
-  if (frameworks.frameworks.includes('React')) {
-    recommendations.push("Consider implementing React testing with Jest and React Testing Library");
-  }
-  
-  if (!frameworks.tools.includes('ESLint')) {
-    recommendations.push("Add ESLint for code quality and consistency");
-  }
-  
-  if (!frameworks.tools.includes('Prettier')) {
-    recommendations.push("Add Prettier for code formatting");
-  }
-  
-  recommendations.push("Implement comprehensive unit tests");
-  recommendations.push("Add automated CI/CD pipeline");
-  recommendations.push("Document API endpoints and component interfaces");
-
-  return recommendations;
-}
-
-function analyzeCodeIssues(code: string): string[] {
-  const issues: string[] = [];
-
-  // Basic issue detection
-  if (code.includes('console.log')) {
-    issues.push("Debug console.log statements found - consider removing for production");
-  }
-  
-  if (code.includes('TODO') || code.includes('FIXME')) {
-    issues.push("TODO/FIXME comments found - consider addressing these items");
-  }
-  
-  if (!code.includes('test') && !code.includes('spec')) {
-    issues.push("No test files detected - consider adding unit tests");
-  }
-
-  return issues;
 }
