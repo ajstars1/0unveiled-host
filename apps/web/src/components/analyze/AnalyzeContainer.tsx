@@ -84,6 +84,12 @@ export function AnalyzeContainer() {
   const analyzeRepository = async (repo: Repository) => {
     if (!repo) return;
 
+    // Safety check for full_name property
+    if (!repo.full_name) {
+      setAnalysisError("Repository full name is not available. Please refresh the repository list.");
+      return;
+    }
+
     setAnalyzing(true);
     setAnalysisError("");
     setAnalysis(null);

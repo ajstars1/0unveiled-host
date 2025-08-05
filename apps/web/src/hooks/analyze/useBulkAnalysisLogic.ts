@@ -40,6 +40,13 @@ export function useBulkAnalysisLogic() {
       );
 
       try {
+        // Safety check for full_name property
+        if (!repo.full_name) {
+          console.error(`❌ Repository ${repo.name} is missing full_name property`);
+          failureCount++;
+          continue;
+        }
+
         const [owner, repoName] = repo.full_name.split("/");
 
         console.log(`🔍 Starting analysis for ${repo.full_name}...`);
