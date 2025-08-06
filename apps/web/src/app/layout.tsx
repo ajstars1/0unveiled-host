@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@vercel/analytics/react"
 import { GoogleAnalytics } from "@next/third-parties/google"
 import { AuthProvider } from "@/providers/auth-provider"
-import { ThemeProvider } from "@/components/theme"
+// import { ThemeProvider } from "@/components/theme"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -116,12 +116,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${poppins.className} antialiased`} suppressHydrationWarning>
-     <ThemeProvider
+     {/* <ThemeProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
-    >
+    > */}
         {/* <ReduxProvider> */}
           <ReactQueryProvider>
             <AuthProvider>
@@ -132,7 +132,7 @@ export default function RootLayout({
         {/* </ReduxProvider> */}
         <Analytics />
         <GoogleAnalytics gaId="G-SDFGMZ0PBE" />
-    </ThemeProvider>
+    {/* </ThemeProvider> */}
       </body>
     </html>
   )
