@@ -696,22 +696,6 @@ export const showcasedItems = pgTable(
   }),
 );
 
-// ShowcasedItemSkills table (many-to-many)
-export const showcasedItemSkills = pgTable(
-  "ShowcasedItemSkills",
-  {
-    showcasedItemId: text("showcasedItemId").notNull(),
-    skillId: text("skillId").notNull(),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.showcasedItemId, table.skillId] }),
-    showcasedItemIdIdx: index("ShowcasedItemSkills_showcasedItemId_idx").on(
-      table.showcasedItemId,
-    ),
-    skillIdIdx: index("ShowcasedItemSkills_skillId_idx").on(table.skillId),
-  }),
-);
-
 // KnowledgeArticles table
 export const knowledgeArticles = pgTable("KnowledgeArticle", {
   id: text("id")
@@ -770,9 +754,6 @@ export const skillsRelations = relations(skills, ({ many }) => ({
   projectRoles: many(projectRoleSkills),
   projects: many(projectSkills),
   users: many(userSkills),
-  showcasedItems: many(showcasedItemSkills, {
-    relationName: "ShowcasedItemSkills",
-  }),
 }));
 
 export const userSkillsRelations = relations(userSkills, ({ one }) => ({
@@ -1050,7 +1031,7 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
 
 export const showcasedItemsRelations = relations(
   showcasedItems,
-  ({ many, one }) => ({
+  ({ one }) => ({
     project: one(projects, {
       fields: [showcasedItems.internalProjectId],
       references: [projects.id],
@@ -1058,22 +1039,6 @@ export const showcasedItemsRelations = relations(
     user: one(users, {
       fields: [showcasedItems.userId],
       references: [users.id],
-    }),
-    skills: many(showcasedItemSkills, { relationName: "ShowcasedItemSkills" }),
-  }),
-);
-
-export const showcasedItemSkillsRelations = relations(
-  showcasedItemSkills,
-  ({ one }) => ({
-    showcasedItem: one(showcasedItems, {
-      fields: [showcasedItemSkills.showcasedItemId],
-      references: [showcasedItems.id],
-    }),
-    skill: one(skills, {
-      fields: [showcasedItemSkills.skillId],
-      references: [skills.id],
-      relationName: "ShowcasedItemSkills",
     }),
   }),
 );
@@ -1135,7 +1100,5 @@ export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
 export type ShowcasedItem = typeof showcasedItems.$inferSelect;
 export type NewShowcasedItem = typeof showcasedItems.$inferInsert;
-export type ShowcasedItemSkill = typeof showcasedItemSkills.$inferSelect;
-export type NewShowcasedItemSkill = typeof showcasedItemSkills.$inferInsert;
 export type KnowledgeArticle = typeof knowledgeArticles.$inferSelect;
 export type NewKnowledgeArticle = typeof knowledgeArticles.$inferInsert;
