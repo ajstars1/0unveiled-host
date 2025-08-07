@@ -5,26 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
       "when": 1754582404347,
       "tag": "20250807160004_mighty_living_tribunal",
-=======
-=======
->>>>>>> Stashed changes
-      "when": 1754575510601,
-      "tag": "0000_powerful_smiling_tiger",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1754576222389,
-      "tag": "0001_romantic_la_nuit",
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
       "breakpoints": true
     }
   ]

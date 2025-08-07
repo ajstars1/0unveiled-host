@@ -34,30 +34,14 @@
     "db:setup": "tsx src/setup.ts"
   },
   "dependencies": {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     "drizzle-orm": "0.30.10",
-=======
-    "drizzle-orm": "^0.33.0",
->>>>>>> Stashed changes
-=======
-    "drizzle-orm": "^0.33.0",
->>>>>>> Stashed changes
     "postgres": "^3.4.0"
   },
   "devDependencies": {
     "@0unveiled/config": "*",
     "@0unveiled/typescript-config": "*",
     "@types/node": "^20.11.24",
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     "drizzle-kit": "0.20.18",
-=======
-    "drizzle-kit": "^0.24.0",
->>>>>>> Stashed changes
-=======
-    "drizzle-kit": "^0.24.0",
->>>>>>> Stashed changes
     "tsx": "^4.7.1",
     "typescript": "^5.4.2"
   }
