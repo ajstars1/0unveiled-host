@@ -39,6 +39,9 @@
     "db:studio": {
       "cache": false,
       "persistent": true
+    },
+    "update-leaderboards": {
+      "cache": false
     }
   },
   "globalDependencies": ["**/.env*", "turbo.json", "package.json"],

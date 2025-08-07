@@ -7,6 +7,7 @@ import { logger } from "./lib/logger.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { healthRoutes } from "./routes/health.js";
 import { githubRoutes } from "./routes/github.js";
+import { leaderboardRoutes } from "./routes/leaderboard.js";
 
 // Load environment variables
 dotenv.config();
@@ -37,6 +38,7 @@ app.use((req, res, next) => {
 // Routes
 app.use("/health", healthRoutes);
 app.use("/api/github", githubRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {

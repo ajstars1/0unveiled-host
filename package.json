@@ -23,6 +23,7 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "health:check": "echo 'Checking service health...' && curl -s http://localhost:3001/health && curl -s http://localhost:8002/health && curl -s http://localhost:3000/api/health",
+    "leaderboard:update": "turbo run update-leaderboards --filter=@0unveiled/api",
     "prepare": "husky"
   },
   "devDependencies": {
