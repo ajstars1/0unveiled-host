@@ -164,7 +164,7 @@ export const sendConnectionRequest = async (
     try {
         const senderName = `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() || currentUser.username || 'A user';
         const notificationContent = `${senderName} sent you a connection request.`;
-        const notificationLink = '/dashboard/connections?tab=requests';
+        const notificationLink = '/connections?tab=requests';
 
         await createNotification(
             recipientId,
@@ -264,8 +264,8 @@ export const acceptConnectionRequest = async (
     }
 
     // Revalidate relevant paths (e.g., dashboard, connections page)
-    revalidatePath('/dashboard');
-    revalidatePath('/dashboard/connections');
+    revalidatePath('');
+    revalidatePath('/connections');
     // Potentially revalidate profiles of both users
     // revalidatePath(`/profile/${currentUser.username}`);
     // We need the requester's username for their profile path
@@ -334,8 +334,8 @@ export const rejectOrWithdrawConnectionRequest = async (
     // TODO: Consider sending a notification upon rejection/withdrawal?
 
     // Revalidate relevant paths
-    revalidatePath('/dashboard');
-    revalidatePath('/dashboard/connections');
+    revalidatePath('');
+    revalidatePath('/connections');
     // Potentially revalidate profiles
 
     return { success: true };
@@ -349,7 +349,7 @@ export const rejectOrWithdrawConnectionRequest = async (
 /**
  * Removes an existing connection between the current user and another user.
  * @param connectedUserId - The ID of the user to disconnect from.
- * @param connectionsPath - The path to revalidate (e.g., '/dashboard/connections').
+ * @param connectionsPath - The path to revalidate (e.g., '/connections').
  * @returns Object indicating success or error.
  */
 export const removeConnection = async (
@@ -386,7 +386,7 @@ export const removeConnection = async (
      }
 
      revalidatePath(connectionsPath);
-     revalidatePath('/dashboard'); // Revalidate dashboard metrics
+     revalidatePath(''); // Revalidate dashboard metrics
      // Potentially revalidate profiles
 
      return { success: true }; 

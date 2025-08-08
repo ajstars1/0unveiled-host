@@ -135,7 +135,7 @@ export default function OnboardingPage() {
           title: "Success",
           description: "Your profile is set up. Redirecting...",
         });
-        router.push("/dashboard"); // Redirect to dashboard or appropriate page
+        router.push("/profile/edit"); // Redirect to profile edit page
         router.refresh();
       }
     } catch (error) {

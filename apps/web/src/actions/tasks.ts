@@ -82,7 +82,7 @@ export const createTask = async (formData: FormData) => {
       order: nextOrder,
     }).returning()
 
-    revalidatePath(`/dashboard/projects/${projectId}`)
+    revalidatePath(`/projects/${projectId}`)
     return { success: true, task: newTask }
   } catch (error) {
     console.error('Error creating task:', error)
@@ -158,7 +158,7 @@ export const updateTask = async (taskId: string, formData: FormData) => {
       .where(eq(tasks.id, taskId))
       .returning()
 
-    revalidatePath(`/dashboard/projects/${existingTask.projectId}`)
+    revalidatePath(`/projects/${existingTask.projectId}`)
     return { success: true, task: updatedTask }
   } catch (error) {
     console.error('Error updating task:', error)
@@ -223,7 +223,7 @@ export const updateTaskStatus = async (taskId: string, newStatus: string, projec
       .where(eq(tasks.id, taskId))
       .returning()
 
-    revalidatePath(`/dashboard/projects/${projectId}`)
+    revalidatePath(`/projects/${projectId}`)
     return { success: true, task: updatedTask }
   } catch (error) {
     console.error('Error updating task status:', error)
@@ -277,7 +277,7 @@ export const deleteTask = async (taskId: string) => {
     await db.delete(tasks)
       .where(eq(tasks.id, taskId))
 
-    revalidatePath(`/dashboard/projects/${existingTask.projectId}`)
+    revalidatePath(`/projects/${existingTask.projectId}`)
     return { success: true }
   } catch (error) {
     console.error('Error deleting task:', error)

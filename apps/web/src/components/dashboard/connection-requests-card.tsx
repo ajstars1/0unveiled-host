@@ -92,7 +92,7 @@ export function ConnectionRequestsCard({ requests }: ConnectionRequestsCardProps
             </div>
              <Button size="default" variant="ghost" className="" asChild>
                  {/* Link to the full connections management page */}
-                <Link href="/dashboard/connections">
+                <Link href="/connections">
                      Manage Connections
                     <ChevronRight className="ml-1 h-4 w-4" />
                 </Link>

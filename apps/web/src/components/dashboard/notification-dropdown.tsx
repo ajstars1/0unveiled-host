@@ -145,7 +145,7 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
 
   return (
     <DropdownMenuContent align="end" className="w-80">
-      <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
+      <DropdownMenuLabel inset={true} className="flex items-center justify-between px-3 py-2">
         <span className="font-semibold">Notifications</span>
          {unreadCount > 0 && (
              <Button
@@ -159,7 +159,7 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
              </Button>
          )}
       </DropdownMenuLabel>
-      <DropdownMenuSeparator />
+      <DropdownMenuSeparator className={''} />
       <ScrollArea className="h-[300px]">
         {notifications.length === 0 ? (
             <div className="text-center text-muted-foreground py-10 px-4">
@@ -169,6 +169,7 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
         ) : (
           notifications.map((notification) => (
             <DropdownMenuItem
+              inset={true}
               key={notification.id}
               className={cn(
                 "flex items-start gap-3 data-highlighted:bg-muted/50 relative",
@@ -206,9 +207,9 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
           ))
         )}
       </ScrollArea>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem asChild className="justify-center cursor-pointer">
-        <Link href="/dashboard/notifications">
+      <DropdownMenuSeparator className={''} />
+      <DropdownMenuItem inset={''} asChild className="justify-center cursor-pointer">
+        <Link href="/notifications">
           View All Notifications
         </Link>
       </DropdownMenuItem>

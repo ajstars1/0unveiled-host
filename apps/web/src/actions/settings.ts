@@ -894,7 +894,7 @@ export const updateNotificationSettings = async (formData: FormData) => {
       .where(eq(users.id, currentUser.id))
       .returning()
 
-    revalidatePath('/dashboard/settings')
+    revalidatePath('/settings')
     return { success: true, user: updatedUser }
   } catch (error) {
     console.error('Error updating notification settings:', error)
@@ -926,7 +926,7 @@ export const updatePrivacySettings = async (formData: FormData) => {
       .where(eq(users.id, currentUser.id))
       .returning()
 
-    revalidatePath('/dashboard/settings')
+    revalidatePath('/settings')
     return { success: true, user: updatedUser }
   } catch (error) {
     console.error('Error updating privacy settings:', error)
@@ -959,7 +959,7 @@ export const updateDisplaySettings = async (formData: FormData) => {
       .where(eq(users.id, currentUser.id))
       .returning()
 
-    revalidatePath('/dashboard/settings')
+    revalidatePath('/settings')
     return { success: true, user: updatedUser }
   } catch (error) {
     console.error('Error updating display settings:', error)

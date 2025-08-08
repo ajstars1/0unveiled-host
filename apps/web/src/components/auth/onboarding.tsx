@@ -37,10 +37,10 @@ export default function OnboardingPage() {
         setIsLoading(false)
         toast({
           title: "Onboarding complete",
-          description: "Your profile is now set up. Redirecting to dashboard...",
+          description: "Your profile is now set up. Redirecting to profile edit page...",
         })
-        // Redirect to dashboard
-        window.location.href = "/dashboard"
+        // Redirect to profile edit page
+        window.location.href = "/profile/edit"
       }, 1000)
     }
   }

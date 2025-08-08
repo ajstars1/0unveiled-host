@@ -102,7 +102,7 @@ export const useAuthSignIn = () => {
         // Check for redirect_to param from middleware
         const searchParams = new URLSearchParams(window.location.search)
         const redirectTo = searchParams.get("redirect_to")
-        router.push(redirectTo || "/dashboard") // Redirect to intended page or dashboard
+        router.push(redirectTo || "/profile/edit") // Redirect to intended page or profile edit
       }
       router.refresh() // Refresh server components
     } catch (error) {

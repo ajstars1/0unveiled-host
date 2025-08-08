@@ -6,18 +6,18 @@ import { NextResponse, type NextRequest } from 'next/server'
 const protectedRoutes = [
   '/profile/edit',
   '/project/create', // Corrected path
-  '/dashboard', // Base dashboard
+   // Base dashboard
   // Specific dashboard sections - use :path* for broader matching if needed
-  '/dashboard/tasks',
-  '/dashboard/projects', // Matches /dashboard/projects and /dashboard/projects/
-  '/dashboard/projects/:projectId', // Matches project detail
-  '/dashboard/projects/:projectId/workspace', // Matches workspace base
-  '/dashboard/projects/:projectId/workspace/:subpath*', // Matches workspace subpaths (chat, kanban, etc.)
-  '/dashboard/notifications',
-  '/dashboard/connections',
-  '/dashboard/settings',
-  '/dashboard/chat', // Matches /dashboard/chat and /dashboard/chat/
-  '/dashboard/chat/:chatId', // Matches specific chat IDs
+  '/tasks',
+  '/projects', // Matches /projects and /projects/
+  '/projects/:projectId', // Matches project detail
+  '/projects/:projectId/workspace', // Matches workspace base
+  '/projects/:projectId/workspace/:subpath*', // Matches workspace subpaths (chat, kanban, etc.)
+  '/notifications',
+  '/connections',
+  '/settings',
+  '/chat', // Matches /chat and /chat/
+  '/chat/:chatId', // Matches specific chat IDs
   // Add other protected routes as needed
   '/onboarding', // Example: If onboarding is protected after first login
 ]
@@ -57,7 +57,7 @@ function isProtectedRoute(pathname: string): boolean {
     }
     
     // If we reached here, all defined route segments match
-    // Check if route is exactly matched or if it's a base path match (e.g., /dashboard matches /dashboard/settings)
+    // Check if route is exactly matched or if it's a base path match (e.g.,  matches /settings)
     return pathSegments.length >= routeSegments.length || route === pathname; 
   });
 }
@@ -105,7 +105,7 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.some(route => path.startsWith(route));
   if (user && isAuthRoute) {
      // Redirect logged-in users away from auth pages
-    return NextResponse.redirect(new URL('/dashboard', request.url)) // Redirect to dashboard or '/'
+    return NextResponse.redirect(new URL('/profile/edit', request.url)) // Redirect to dashboard or '/'
   } 
 
   // Check if user is onboarded
@@ -117,7 +117,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/onboarding', request.url))
     } else if (isOnboarded && path === '/onboarding') {
       // If onboarded and trying to access onboarding page, redirect to dashboard
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/profile/edit', request.url))
     }
   }
 

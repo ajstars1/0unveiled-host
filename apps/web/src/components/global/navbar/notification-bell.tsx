@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import type { Notification } from ".prisma/client"
+import type { Notification } from "@0unveiled/database/schema"
 import { NotificationDropdown } from "@/components/dashboard/notification-dropdown" // Re-use the existing dropdown
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { getNotificationSummaryForClient, getUnreadNotificationCount } from '@/actions/notifications'

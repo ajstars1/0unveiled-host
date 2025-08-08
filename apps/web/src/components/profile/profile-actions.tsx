@@ -56,7 +56,7 @@ export function ProfileActions({
   const [loadingAction, setLoadingAction] = React.useState<{ type: 'accept' | 'decline' | 'remove' | 'chat'; id: string } | null>(null);
   const [actionType, setActionType] = React.useState<'connect' | 'accept' | 'decline' | 'cancel' | 'remove' | null>(null);
 
-  const connectionsDashboardPath = '/dashboard/connections';
+  const connectionsDashboardPath = '/connections';
 
   const handleConnect = () => {
     if (!isUserLoggedIn) {
@@ -238,7 +238,7 @@ export function ProfileActions({
         try {
             const result = await getOrCreateDmChannel(otherUserId);
             if (result.channelId) {
-                router.push(`/dashboard/chat/${result.channelId}`);
+                router.push(`/chat/${result.channelId}`);
             } else {
                 toast({ title: 'Error', description: result.error || 'Could not start chat.', variant: 'destructive' });
             }
@@ -299,15 +299,15 @@ export function ProfileActions({
                <LogOut className="mr-2 h-4 w-4"/> Cancel Request
              </DropdownMenuItem>
            </AlertDialogTrigger>
-           <AlertDialogContent>
-             <AlertDialogHeader>
-               <AlertDialogTitle>Cancel Connection Request?</AlertDialogTitle>
-               <AlertDialogDescription>
+           <AlertDialogContent className={''}>
+             <AlertDialogHeader className={''}>
+               <AlertDialogTitle className={''}>Cancel Connection Request?</AlertDialogTitle>
+               <AlertDialogDescription className={''}>
                  Are you sure you want to cancel your connection request?
                </AlertDialogDescription>
              </AlertDialogHeader>
-             <AlertDialogFooter>
-               <AlertDialogCancel>Keep Request</AlertDialogCancel>
+             <AlertDialogFooter className={''}>
+               <AlertDialogCancel className={''}>Keep Request</AlertDialogCancel>
                <AlertDialogAction onClick={handleCancelRequest} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Cancel Request</AlertDialogAction>
              </AlertDialogFooter>
            </AlertDialogContent>
@@ -321,15 +321,15 @@ export function ProfileActions({
                <Trash2 className="mr-2 h-4 w-4"/> Remove Connection
              </DropdownMenuItem>
            </AlertDialogTrigger>
-           <AlertDialogContent>
-             <AlertDialogHeader>
-               <AlertDialogTitle>Remove Connection?</AlertDialogTitle>
-               <AlertDialogDescription>
+           <AlertDialogContent className="">
+             <AlertDialogHeader className="">
+               <AlertDialogTitle className="">Remove Connection?</AlertDialogTitle>
+               <AlertDialogDescription className="">
                  Are you sure you want to remove this connection?
                </AlertDialogDescription>
              </AlertDialogHeader>
-             <AlertDialogFooter>
-               <AlertDialogCancel>Cancel</AlertDialogCancel>
+             <AlertDialogFooter className="">
+               <AlertDialogCancel className="">Cancel</AlertDialogCancel>
                <AlertDialogAction onClick={handleRemoveConnection} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remove</AlertDialogAction>
              </AlertDialogFooter>
            </AlertDialogContent>
@@ -397,15 +397,15 @@ export function ProfileActions({
                 Decline
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Decline Connection Request?</AlertDialogTitle>
-                <AlertDialogDescription>
+            <AlertDialogContent className="">
+              <AlertDialogHeader className="">
+                <AlertDialogTitle className="">Decline Connection Request?</AlertDialogTitle>
+                <AlertDialogDescription className="">
                   Are you sure you want to decline this connection request?
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogFooter className="">
+                <AlertDialogCancel className="">Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDecline} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Decline</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

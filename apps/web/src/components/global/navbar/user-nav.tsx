@@ -69,19 +69,19 @@ export function UserNav({ user }: UserNavProps) {
               <DropdownMenuShortcut className="">⌘E</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
-          <Link href="/dashboard/chat">
+          <Link href="/chat">
             <DropdownMenuItem className="" inset>
               Chats
               <DropdownMenuShortcut className="">⌘C</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
-          <Link href="/dashboard/notifications">
+          <Link href="/notifications">
             <DropdownMenuItem className="" inset>
               Notifications
               <DropdownMenuShortcut className="">⌘N</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
-          <Link href="/dashboard/settings">
+          <Link href="/settings">
             <DropdownMenuItem className="" inset>
               Settings
               <DropdownMenuShortcut className="">⌘S</DropdownMenuShortcut>

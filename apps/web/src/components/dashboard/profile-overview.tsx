@@ -22,7 +22,7 @@ export function ProfileOverview({ userProfile }: ProfileOverviewProps) {
   // Handle loading state or null userProfile
   if (!userProfile) {
     return (
-      <Card>
+      <Card className="animate-pulse">
         <CardHeader className="pb-3">
           <Skeleton className="h-6 w-3/5" />
           <Skeleton className="h-4 w-4/5" />
@@ -62,11 +62,11 @@ export function ProfileOverview({ userProfile }: ProfileOverviewProps) {
   const viewProfileLink = userProfile.username ? `/${userProfile.username}` : "/profile";
 
   return (
-    <Card>
+    <Card className="">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle>Profile Overview</CardTitle>
-          <Button variant="ghost" size="sm" asChild>
+          <CardTitle className={""}>Profile Overview</CardTitle>
+          <Button className={''} variant="ghost" size="sm" asChild>
             {/* Update link to use dynamic username or fallback */}
             <Link href={editProfileLink}>
               Edit Profile
@@ -74,13 +74,13 @@ export function ProfileOverview({ userProfile }: ProfileOverviewProps) {
             </Link>
           </Button>
         </div>
-        <CardDescription>Your profile completeness and visibility</CardDescription>
+        <CardDescription className={''}>Your profile completeness and visibility</CardDescription>
       </CardHeader>
       <CardContent className="pb-4">
         <div className="flex items-center gap-4 mb-4">
           <Avatar className="h-16 w-16 border">
             {/* Use actual profile picture */}
-            <AvatarImage src={userProfile.profilePicture || undefined} alt={userProfile.username || "User avatar"} />
+            <AvatarImage className="" src={userProfile.profilePicture || undefined} alt={userProfile.username || "User avatar"} />
             {/* Use actual initials */}
             <AvatarFallback className="text-lg">{initials}</AvatarFallback>
           </Avatar>
@@ -131,7 +131,7 @@ export function ProfileOverview({ userProfile }: ProfileOverviewProps) {
           {/* Visibility could be dynamic later */}
           <span>Profile is visible</span>
         </div>
-        <Button size="sm" asChild>
+        <Button className={''} variant="outline" size="sm" asChild>
           {/* Update link to use dynamic username */}
           <Link href={viewProfileLink}>View Public Profile</Link>
         </Button>

@@ -53,7 +53,7 @@ import { NextRequest } from "next/server"
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard"; // Default redirect path
+  const next = searchParams.get("next") ?? "/profile/edit"; // Default redirect path
   const installationId = searchParams.get("installation_id"); // Check for GitHub App installation ID
   const setupAction = searchParams.get("setup_action"); // Check for setup action (e.g., 'install')
   const error = searchParams.get("error");
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
         console.error("OAuth Callback Error (onSignInUser):", profileResult.error);
         // Allow login but show error? Or redirect to error page?
         // For now, redirect to dashboard but maybe show a toast client-side later.
-        return NextResponse.redirect(`${origin}/dashboard?warning=profile_sync_error`);
+        return NextResponse.redirect(`${origin}/profile/edit?warning=profile_sync_error`);
     }
 
     // Redirect based on onboarding status or 'next' param

@@ -72,7 +72,7 @@ export const applyToProject = async (projectId: string, message?: string) => {
       status: 'PENDING',
     }).returning()
 
-    revalidatePath(`/dashboard/projects/${projectId}`)
+    revalidatePath(`/projects/${projectId}`)
     return { success: true, application: newApplication }
   } catch (error) {
     console.error('Error applying to project:', error)
@@ -139,7 +139,7 @@ export const acceptProjectApplication = async (applicationId: string) => {
       role: 'MEMBER',
     })
 
-    revalidatePath(`/dashboard/projects/${application.projectId}`)
+    revalidatePath(`/projects/${application.projectId}`)
     return { success: true, application: updatedApplication }
   } catch (error) {
     console.error('Error accepting project application:', error)
@@ -199,7 +199,7 @@ export const rejectProjectApplication = async (applicationId: string) => {
       .where(eq(projectApplications.id, applicationId))
       .returning()
 
-    revalidatePath(`/dashboard/projects/${application.projectId}`)
+    revalidatePath(`/projects/${application.projectId}`)
     return { success: true, application: updatedApplication }
   } catch (error) {
     console.error('Error rejecting project application:', error)
@@ -239,7 +239,7 @@ export const withdrawProjectApplication = async (applicationId: string) => {
     await db.delete(projectApplications)
       .where(eq(projectApplications.id, applicationId))
 
-    revalidatePath(`/dashboard/projects/${application.projectId}`)
+    revalidatePath(`/projects/${application.projectId}`)
     return { success: true }
   } catch (error) {
     console.error('Error withdrawing project application:', error)

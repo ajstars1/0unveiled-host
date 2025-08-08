@@ -5,7 +5,7 @@ import { Bell, MessageSquare, UserPlus, Briefcase, MailCheck, AlertTriangle, Git
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { formatDistanceToNow } from 'date-fns'
-import { NotificationType } from "@0unveiled/database/schema"
+import { notificationTypeEnum } from "@0unveiled/database/schema"
 import { cn } from "@/lib/utils"
 
 import type { DashboardData } from "@/data/dashboard"
@@ -17,22 +17,34 @@ interface NotificationsCardProps {
 // Define type for a single notification from DashboardData
 type NotificationItemData = DashboardData['notifications'][number];
 
-const getNotificationIcon = (type: NotificationType) => {
+const getNotificationIcon = (type: string) => {
   switch (type) {
-    case NotificationType.NEW_MESSAGE:
+    case 'NEW_MESSAGE':
       return MessageSquare
-    case NotificationType.NEW_FOLLOWER:
-        return UserPlus
-    case NotificationType.PROJECT_INVITE:
-        return Briefcase
-    case NotificationType.PROJECT_UPDATE:
-    case NotificationType.INTEGRATION_UPDATE:
-        return GitBranch
-    case NotificationType.APPLICATION_RECEIVED:
-    case NotificationType.APPLICATION_STATUS_UPDATE:
-        return MailCheck
-    case NotificationType.SYSTEM_ALERT:
+    case 'NEW_FOLLOWER':
+      return UserPlus
+    case 'PROJECT_INVITE':
+      return Briefcase
+    case 'PROJECT_UPDATE':
+    case 'INTEGRATION_UPDATE':
+      return GitBranch
+    case 'APPLICATION_RECEIVED':
+    case 'APPLICATION_STATUS_UPDATE':
+      return MailCheck
+    case 'SYSTEM_ALERT':
       return AlertTriangle
+    case 'CONNECTION_REQUEST':
+    case 'CONNECTION_REQUEST_RECEIVED':
+    case 'CONNECTION_REQUEST_ACCEPTED':
+      return UserPlus
+    case 'TASK_ASSIGNMENT':
+    case 'TASK_ASSIGNED':
+    case 'TASK_UPDATED':
+      return Briefcase
+    case 'MENTION':
+      return MessageSquare
+    case 'GENERAL':
+      return Bell
     default:
       return Bell
   }
@@ -66,20 +78,20 @@ const NotificationContent = ({ notification }: { notification: NotificationItemD
 
 export function NotificationsCard({ notifications }: NotificationsCardProps) {
   return (
-    <Card>
+    <Card className="">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             Notifications
           </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/dashboard/notifications">View all</Link>
+          <Button className="" variant="ghost" size="sm" asChild>
+            <Link href="/notifications">View all</Link>
           </Button>
         </div>
-        <CardDescription>Your {notifications.length > 0 ? `most recent unread notifications` : 'recent notifications'}</CardDescription>
+        <CardDescription className="" >Your {notifications.length > 0 ? `most recent unread notifications` : 'recent notifications'}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="">
         {notifications && notifications.length > 0 ? (
           <div className="space-y-2">
             {notifications.map((notification, index) => {

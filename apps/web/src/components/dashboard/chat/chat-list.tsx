@@ -62,13 +62,13 @@ export function ChatList({ initialChannels, currentUserId }: ChatListProps) {
           const user = channel.otherUser;
           const lastMsg = channel.lastMessage;
           const lastMessageIsOwn = lastMsg?.authorId === currentUserId;
-          const isActive = pathname === `/dashboard/chat/${channel.channelId}`;
+          const isActive = pathname === `/chat/${channel.channelId}`;
           // Check if the other user is online using the presence state
           const isOnline = !isLoadingPresence && !!user?.id && !!globalPresenceState[user.id];
           
           return (
             <Link 
-              href={`/dashboard/chat/${channel.channelId}`}
+              href={`/chat/${channel.channelId}`}
               key={channel.channelId}
               className={cn(
                 "flex items-center gap-3 p-3 rounded-md hover:bg-muted/80 transition-colors cursor-pointer",

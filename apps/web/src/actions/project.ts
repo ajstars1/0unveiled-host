@@ -87,7 +87,7 @@ export const createProject = async (formData: FormData) => {
       role: 'LEADER',
     })
 
-    revalidatePath('/dashboard/projects')
+    revalidatePath('/projects')
     return { success: true, project: newProject }
   } catch (error) {
     console.error('Error creating project:', error)
@@ -182,8 +182,8 @@ export const updateProject = async (projectId: string, formData: FormData) => {
       }
     }
 
-    revalidatePath('/dashboard/projects')
-    revalidatePath(`/dashboard/projects/${projectId}`)
+    revalidatePath('/projects')
+    revalidatePath(`/projects/${projectId}`)
     return { success: true, project: updatedProject }
   } catch (error) {
     console.error('Error updating project:', error)
@@ -219,7 +219,7 @@ export const deleteProject = async (projectId: string) => {
     await db.delete(projects)
       .where(eq(projects.id, projectId))
 
-    revalidatePath('/dashboard/projects')
+    revalidatePath('/projects')
     return { success: true }
   } catch (error) {
     console.error('Error deleting project:', error)
@@ -282,7 +282,7 @@ export const addProjectMember = async (projectId: string, userId: string, role: 
       role: role as any,
     }).returning()
 
-    revalidatePath(`/dashboard/projects/${projectId}`)
+    revalidatePath(`/projects/${projectId}`)
     return { success: true, member: newMember }
   } catch (error) {
     console.error('Error adding project member:', error)
@@ -339,7 +339,7 @@ export const updateProjectMemberRole = async (projectId: string, userId: string,
       return { error: 'Project member not found' }
     }
 
-    revalidatePath(`/dashboard/projects/${projectId}`)
+    revalidatePath(`/projects/${projectId}`)
     return { success: true, member: updatedMember }
   } catch (error) {
     console.error('Error updating project member role:', error)
@@ -394,7 +394,7 @@ export const removeProjectMember = async (projectId: string, userId: string) => 
         eq(projectMembers.userId, userId)
       ))
 
-    revalidatePath(`/dashboard/projects/${projectId}`)
+    revalidatePath(`/projects/${projectId}`)
     return { success: true }
   } catch (error) {
     console.error('Error removing project member:', error)

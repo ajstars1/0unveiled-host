@@ -91,8 +91,8 @@ export const markNotificationAsRead = async (
     }
 
     // Revalidate paths that display notification counts or lists
-    revalidatePath('/dashboard/notifications');
-    revalidatePath('/dashboard/layout'); // To update header count (might need more specific path if layout changes)
+    revalidatePath('/notifications');
+    revalidatePath('/layout'); // To update header count (might need more specific path if layout changes)
 
     return { success: true };
   } catch (error) {
@@ -123,8 +123,8 @@ export const markAllNotificationsAsRead = async (): Promise<{
       ));
 
     // Revalidate relevant paths
-    revalidatePath('/dashboard/notifications');
-    revalidatePath('/dashboard/layout'); // To update header count
+    revalidatePath('/notifications');
+    revalidatePath('/layout'); // To update header count
 
     return { success: true };
   } catch (error) {
@@ -210,8 +210,8 @@ export const createNotification = async (
     }).returning();
 
     // Revalidate the recipient's notification paths
-    revalidatePath('/dashboard/notifications');
-    revalidatePath('/dashboard/layout'); 
+    revalidatePath('/notifications');
+    revalidatePath('/layout'); 
 
     return { success: true, notification: newNotification };
 
