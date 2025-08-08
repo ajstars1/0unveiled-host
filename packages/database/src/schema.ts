@@ -709,6 +709,36 @@ export const knowledgeArticles = pgTable("KnowledgeArticle", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 
+// Leaderboard
+export const leaderboardTypeEnum = pgEnum("leaderboard_type", [
+  "GENERAL",
+  "TECH_STACK",
+  "DOMAIN",
+]);
+
+export const leaderboardScores = pgTable(
+  "LeaderboardScore",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("userId").notNull(),
+    leaderboardType: leaderboardTypeEnum("leaderboardType").notNull(),
+    score: integer("score").notNull(),
+    rank: integer("rank").notNull(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    techStack: text("techStack"), // e.g., 'PYTHON', 'TYPESCRIPT'
+    domain: text("domain"), // e.g., 'FRONTEND', 'BACKEND'
+  },
+  (table) => ({
+    userIdx: index("LeaderboardScore_userId_idx").on(table.userId),
+    leaderboardTypeIdx: index("LeaderboardScore_leaderboardType_idx").on(
+      table.leaderboardType,
+    ),
+    rankIdx: index("LeaderboardScore_rank_idx").on(table.rank),
+  }),
+);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -741,6 +771,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   assignedTasks: many(tasks, { relationName: "AssignedTasks" }),
   badges: many(userBadges),
   skills: many(userSkills),
+  leaderboardScores: many(leaderboardScores),
 }));
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
