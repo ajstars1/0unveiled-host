@@ -7,7 +7,6 @@ import { db } from "@/lib/drizzle"
 import { 
   showcasedItems, 
   skills, 
-  showcasedItemSkills,
   accounts,
   users,
   experience,
@@ -131,44 +130,12 @@ export async function addPortfolioItem(formData: FormData) {
       externalId: `custom-${Date.now()}`,
     }).returning();
 
-    // Process skills - create if they don't exist and link to the item
-    if (skillNames.length > 0) {
-      for (const skillName of skillNames) {
-        // Find or create the skill
-        let skill = await db.query.skills.findFirst({
-          where: eq(skills.name, skillName)
-        })
+    // Process skills - since skills relation was removed, we'll skip this
+    // TODO: If skills functionality is needed, implement a different approach
 
-        if (!skill) {
-          const [newSkill] = await db.insert(skills).values({
-            name: skillName
-          }).returning();
-          skill = newSkill;
-        }
-
-        // Connect skill to showcased item
-        await db.insert(showcasedItemSkills).values({
-          showcasedItemId: showcasedItem.id,
-          skillId: skill.id,
-        });
-      }
-    }
-
-    // Fetch the complete item with skills
+    // Fetch the complete item (without skills since relation was removed)
     const completeItem = await db.query.showcasedItems.findFirst({
       where: eq(showcasedItems.id, showcasedItem.id),
-      with: {
-        skills: {
-          with: {
-            skill: {
-              columns: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
     });
 
     // Revalidate paths and tags
@@ -197,44 +164,12 @@ export async function importGithubShowcasedItem(repoData: GithubRepoDataType) {
       roleInItem: "Developer", // Default role
     }).returning();
 
-    // Process languages as skills
-    if (repoData.languages) {
-      for (const language of Object.keys(repoData.languages)) {
-        // Find or create the skill
-        let skill = await db.query.skills.findFirst({
-          where: eq(skills.name, language)
-        })
+    // Process languages as skills - since skills relation was removed, we'll skip this
+    // TODO: If skills functionality is needed, implement a different approach
 
-        if (!skill) {
-          const [newSkill] = await db.insert(skills).values({
-            name: language
-          }).returning();
-          skill = newSkill;
-        }
-
-        // Connect skill to showcased item
-        await db.insert(showcasedItemSkills).values({
-          showcasedItemId: showcasedItem.id,
-          skillId: skill.id,
-        });
-      }
-    }
-
-    // Fetch the complete item with skills
+    // Fetch the complete item (without skills since relation was removed)
     const completeItem = await db.query.showcasedItems.findFirst({
       where: eq(showcasedItems.id, showcasedItem.id),
-      with: {
-        skills: {
-          with: {
-            skill: {
-              columns: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
     });
 
     // Revalidate paths and tags
@@ -255,13 +190,6 @@ export async function updatePortfolioItem(itemId: string, formData: FormData) {
     // Check if the item belongs to the user
     const existingItem = await db.query.showcasedItems.findFirst({
       where: eq(showcasedItems.id, itemId),
-      with: {
-        skills: {
-          with: {
-            skill: true
-          }
-        }
-      }
     });
 
     if (!existingItem) {
@@ -300,48 +228,15 @@ export async function updatePortfolioItem(itemId: string, formData: FormData) {
       .where(eq(showcasedItems.id, itemId))
       .returning();
 
-    // Remove existing skill connections
-    await db.delete(showcasedItemSkills)
-      .where(eq(showcasedItemSkills.showcasedItemId, itemId));
+    // Remove existing skill connections - since skills relation was removed, we'll skip this
+    // TODO: If skills functionality is needed, implement a different approach
 
-    // Process skills - create if they don't exist and link to the item
-    if (skillNames.length > 0) {
-      for (const skillName of skillNames) {
-        // Find or create the skill
-        let skill = await db.query.skills.findFirst({
-          where: eq(skills.name, skillName)
-        })
+    // Process skills - since skills relation was removed, we'll skip this
+    // TODO: If skills functionality is needed, implement a different approach
 
-        if (!skill) {
-          const [newSkill] = await db.insert(skills).values({
-            name: skillName
-          }).returning();
-          skill = newSkill;
-        }
-
-        // Connect skill to showcased item
-        await db.insert(showcasedItemSkills).values({
-          showcasedItemId: itemId,
-          skillId: skill.id,
-        });
-      }
-    }
-
-    // Fetch the complete item with skills
+    // Fetch the complete item (without skills since relation was removed)
     const completeItem = await db.query.showcasedItems.findFirst({
       where: eq(showcasedItems.id, itemId),
-      with: {
-        skills: {
-          with: {
-            skill: {
-              columns: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
     });
 
     // Revalidate paths and tags
@@ -411,18 +306,6 @@ export async function fetchUserPortfolioForBenchmark(limit = 4) {
         asc(showcasedItems.order),
         desc(showcasedItems.showcasedAt)
       ],
-      with: {
-        skills: {
-          with: {
-            skill: {
-              columns: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
       limit: limit,
     });
 
@@ -473,18 +356,6 @@ export async function fetchPublicUserProfile(username: string) {
         asc(showcasedItems.order),
         desc(showcasedItems.showcasedAt)
       ],
-      with: {
-        skills: {
-          with: {
-            skill: {
-              columns: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
     });
 
     return {

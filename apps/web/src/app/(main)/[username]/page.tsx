@@ -116,7 +116,7 @@ async function ProfileDetail({
     ...(user.projectsOwned?.filter(p => p.status === 'ACTIVE' || p.status === 'PLANNING')
       .map(p => ({ ...p, role: 'Founder', type: 'ownedProject' })) || []),
     ...(user.projectsMemberOf?.filter(m => m.project && (m.project.status === 'ACTIVE' || m.project.status === 'PLANNING'))
-      .map(m => ({ ...m.project!, role: m.role || 'Member', type: 'memberProject' })) || [])
+      .map(m => ({ ...m.project, role: m.role || 'Member', type: 'memberProject' })) || [])
   ].filter((p, index, self) => index === self.findIndex((t) => t.id === p.id))
 
   return (
@@ -129,7 +129,7 @@ async function ProfileDetail({
         <Card className="mb-6 shadow-lg border border-border/10 overflow-visible">
           <CardContent className="p-4 md:p-6 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 relative">
             <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-md mt-[-48px] md:mt-[-60px] shrink-0">
-              <AvatarImage src={user.profilePicture ?? undefined} alt={`${fullName}'s profile picture`} />
+              <AvatarImage className={''} src={user.profilePicture ?? undefined} alt={`${fullName}'s profile picture`} />
               <AvatarFallback className="text-4xl">
                 {user.firstName?.charAt(0) || ''}
                 {user.lastName?.charAt(0) || ''}
@@ -187,7 +187,7 @@ async function ProfileDetail({
                 </Button>
               </Link> */}
                 <Link href="/profile/edit" passHref>
-                   <Button size="sm">
+                   <Button size="sm" variant="default" className="">
                      <Edit className="h-4 w-4 mr-1.5" /> Edit Profile
                    </Button>
                 </Link>
@@ -208,17 +208,17 @@ async function ProfileDetail({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             {user.bio && (
-              <Card>
-                <CardHeader>
+              <Card className="">
+                <CardHeader className="">
                   <CardTitle className="text-lg font-semibold">About</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="">
                   <p className="text-muted-foreground text-sm whitespace-pre-wrap">{user.bio}</p>
                 </CardContent>
               </Card>
             )}
 
-            <Card>
+            <Card className="">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-semibold">Skills</CardTitle>
                 {allSkills.length > topSkills.length && (
@@ -227,11 +227,11 @@ async function ProfileDetail({
                   </Button>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="">
                 {topSkills.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {topSkills.map((userSkill) => (
-                      <Badge key={userSkill.skillId} variant="secondary">
+                      <Badge className={''} key={userSkill.skillId} variant="secondary">
                         {userSkill.skill.name}
                       </Badge>
                     ))}
@@ -243,8 +243,8 @@ async function ProfileDetail({
             </Card>
 
             {currentProjects.length > 0 && (
-              <Card>
-                <CardHeader>
+              <Card className={''}>
+                <CardHeader className={''}>
                   <CardTitle className="text-lg font-semibold">Currently Working On</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -267,21 +267,24 @@ async function ProfileDetail({
           <div className="lg:col-span-2 space-y-6">
             <Tabs defaultValue="pinned" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="pinned">
+                <TabsTrigger className={''} value="pinned">
                   <Pin className="h-4 w-4 mr-1.5"/> Pinned
                 </TabsTrigger>
-                <TabsTrigger value="all">
+                <TabsTrigger className={''} value="all">
                   <List className="h-4 w-4 mr-1.5"/> All Projects
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="pinned">
+              <TabsContent className={''} value="pinned">
                 {pinnedPortfolioItems.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {pinnedPortfolioItems.map((item) => (
                       <PortfolioCard
                         key={item.id}
-                        item={item}
+                        item={{
+                          ...item,
+                          skills: item.skills || []
+                        }}
                         isOwnProfile={isOwnProfile}
                         isPinned={item.isPinned}
                         username={username}
@@ -289,7 +292,7 @@ async function ProfileDetail({
                     ))}
                   </div>
                 ) : (
-                  <Card>
+                  <Card className="">
                     <CardContent className="p-6 text-center text-muted-foreground">
                       <p className="text-sm">{isOwnProfile ? "Pin items from the 'All Projects' tab to feature them here." : "No pinned items yet."}</p>
                     </CardContent>
@@ -297,13 +300,16 @@ async function ProfileDetail({
                 )}
               </TabsContent>
 
-              <TabsContent value="all">
+              <TabsContent className={''} value="all">
                 {allPortfolioItems.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {allPortfolioItems.map((item) => (
                       <PortfolioCard
                         key={item.id}
-                        item={item}
+                        item={{
+                          ...item,
+                          skills: item.skills || []
+                        }}
                         isOwnProfile={isOwnProfile}
                         isPinned={item.isPinned}
                         username={username}
@@ -311,7 +317,7 @@ async function ProfileDetail({
                     ))}
                   </div>
                 ) : (
-                  <Card>
+                  <Card className={''}>
                     <CardContent className="p-6 text-center text-muted-foreground">
                       <p className="text-sm">No portfolio items or projects to display yet.</p>
                     </CardContent>
@@ -320,8 +326,8 @@ async function ProfileDetail({
               </TabsContent>
             </Tabs>
 
-            <Card>
-              <CardHeader>
+            <Card className={''}>
+              <CardHeader className={''}>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <BriefcaseIcon className="h-5 w-5 text-primary"/> Experience
                 </CardTitle>
@@ -353,8 +359,8 @@ async function ProfileDetail({
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className={''}>
+              <CardHeader className={''}>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                    <GraduationCap className="h-5 w-5 text-primary"/> Education
                 </CardTitle>

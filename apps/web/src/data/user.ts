@@ -23,13 +23,21 @@ import {
   type Connection,
   type ConnectionRequest
 } from "@0unveiled/database";
-import { eq, and, or, desc, asc } from "drizzle-orm";
+import { eq, and, or, desc, asc, inArray } from "drizzle-orm";
 
 // Define and export ConnectionStatus type
 export type ConnectionStatus = 'NOT_CONNECTED' | 'PENDING_SENT' | 'PENDING_RECEIVED' | 'CONNECTED' | 'SELF';
 
 // Type for UserSkill relation
 type DetailedUserSkill = UserSkill & { skill: Skill };
+
+// Type for ProjectMember with project relation
+type DetailedProjectMember = ProjectMember & { project: Project };
+
+// Type for ShowcasedItem with skills
+type DetailedShowcasedItem = ShowcasedItem & { 
+  skills: Skill[];
+};
 
 // The main user profile type, combining base User with selected/included relations
 export type UserProfileDetails = User & {
@@ -38,8 +46,8 @@ export type UserProfileDetails = User & {
     education: Education[];
     experience: Experience[];
     projectsOwned: Project[];
-    projectsMemberOf: ProjectMember[];
-    showcasedItems: ShowcasedItem[];
+    projectsMemberOf: DetailedProjectMember[];
+    showcasedItems: DetailedShowcasedItem[];
     connectionStatus: ConnectionStatus;
     connectionRequestId?: string | null;
     profileCompletionPercentage: number; 
@@ -314,7 +322,10 @@ export const getUserByUsername = async (
         experience: experienceData,
         projectsOwned: projectsOwnedData,
         projectsMemberOf: projectsMemberData,
-        showcasedItems: showcasedItemsData,
+        showcasedItems: showcasedItemsData.map(item => ({
+          ...item,
+          skills: [] // No skills relation since you don't want the junction table
+        })),
         connectionStatus,
         connectionRequestId,
         profileCompletionPercentage,

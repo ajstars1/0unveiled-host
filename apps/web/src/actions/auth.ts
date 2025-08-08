@@ -360,9 +360,6 @@ export const getAuthenticatedUser = async () => {
                lastSyncedAt: true,
                isPinned: true,
            },
-           with: {
-             skills: { columns: { skillId: true } }
-           },
            orderBy: [
                desc(showcasedItems.isPinned),
                asc(showcasedItems.order),

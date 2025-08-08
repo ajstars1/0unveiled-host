@@ -43,7 +43,7 @@ import MultipleSelector, { Option } from "@/components/ui/multiple-selector"
 // Project Specific Imports
 import { SKILLS_Beta } from "@/constants/skills"
 import { getPortfolio, createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from "@/actions/settings"
-import { IntegrationProvider } from "@0unveiled/database/schema"
+import { integrationProviderEnum } from "@0unveiled/database/schema"
 import { portfolioItemSchema as basePortfolioItemSchema, optionSchema } from "@/schemas"
 
 // --- Schema and Types ---
@@ -60,7 +60,7 @@ interface FrontendPortfolioItem {
     imageUrls: string[];
     isGithubRepo?: boolean | null;
     githubRepoUrl?: string | null;
-    provider?: IntegrationProvider;
+    provider?: string;
     metadata?: Record<string, any> | null;
 }
 
@@ -240,7 +240,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
   // --- Loading State UI ---
   if (isLoading) {
     return (
-      <Card>
+      <Card className="">
         <CardContent className="pt-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Portfolio</h2>
@@ -288,13 +288,13 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
           <FormField
             control={form.control}
             name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Project Title*</FormLabel>
+            render={({ field }: { field: any }) => (
+              <FormItem className="">
+                <FormLabel className="">Project Title*</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="e.g., Personal Website Redesign" />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="" />
               </FormItem>
             )}
           />
@@ -302,13 +302,13 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
           <FormField
             control={form.control}
             name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Your Role*</FormLabel>
+            render={({ field }: { field: any }) => (
+              <FormItem className="">
+                <FormLabel className="">Your Role*</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="e.g., Lead Designer, Full Stack Developer" />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="" />
               </FormItem>
             )}
           />
@@ -316,13 +316,13 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
           <FormField
             control={form.control}
             name="description"
-            render={({ field }) => (
+            render={({ field }: { field: any }) => (
               <FormItem className="md:col-span-2">
-                <FormLabel>Description</FormLabel>
+                <FormLabel className="">Description</FormLabel>
                 <FormControl>
                   <Textarea {...field} className="min-h-[100px]" placeholder="Describe the project, your contributions, and outcomes..." value={field.value || ""} />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="" />
               </FormItem>
             )}
           />
@@ -330,13 +330,13 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
           <FormField
             control={form.control}
             name="projectUrl"
-            render={({ field }) => (
+            render={({ field }: { field: any }) => (
               <FormItem className="md:col-span-2">
-                <FormLabel>Project URL (optional)</FormLabel>
+                <FormLabel className="">Project URL (optional)</FormLabel>
                 <FormControl>
                   <Input {...field} type="url" placeholder="https://your-project-live-url.com" value={field.value || ""} />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="" />
               </FormItem>
             )}
           />
@@ -345,9 +345,9 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
             <FormField
               control={form.control}
               name="skillsUsed"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Skills Used</FormLabel>
+              render={({ field }: { field: any }) => (
+                <FormItem className="">
+                  <FormLabel className="">Skills Used</FormLabel>
                   <FormControl>
                     <MultipleSelector
                       value={field.value}
@@ -365,10 +365,10 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                       }
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="">
                     Select skills from the list or type to add new ones.
                   </FormDescription>
-                  <FormMessage />
+                  <FormMessage className="" />
                 </FormItem>
               )}
             />
@@ -381,13 +381,13 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
 
   // --- Main Render ---
   return (
-    <Card>
+    <Card className="">
       <CardContent className="pt-6">
         {/* Header with Add Button */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Portfolio</h2>
           {/* Button to trigger Dialog/Drawer opening */}
-          <Button onClick={handleAddNewProject} size="sm">
+          <Button onClick={handleAddNewProject} size="sm" variant="default" className="">
             <Plus className="h-4 w-4 mr-2" />
             Add Project
           </Button>
@@ -399,9 +399,9 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             {/* DialogTrigger is implicitly handled by the button above */}
             <DialogContent className="sm:max-w-[625px]"> {/* Adjusted width */}
-              <DialogHeader>
-                <DialogTitle>{editingProject ? "Edit Project" : "Add New Project"}</DialogTitle>
-                <DialogDescription>
+              <DialogHeader className="">
+                <DialogTitle className="">{editingProject ? "Edit Project" : "Add New Project"}</DialogTitle>
+                <DialogDescription className="">
                   {editingProject ? "Update the details for your project." : "Fill in the details to add a new project to your portfolio."} Click save when you&apos;re done.
                 </DialogDescription>
               </DialogHeader>
@@ -410,11 +410,11 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                 <ProjectFormFields />
               </div>
               <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} className="" size="default">
                   Cancel
                 </Button>
                 {/* Button submits the form with id="portfolioItemForm" */}
-                <Button form="portfolioItemForm" type="submit" disabled={addItemMutation.isPending || updateItemMutation.isPending}>
+                <Button form="portfolioItemForm" type="submit" disabled={addItemMutation.isPending || updateItemMutation.isPending} className="" variant="default" size="default">
                   {addItemMutation.isPending || updateItemMutation.isPending
                     ? "Saving..."
                     : editingProject
@@ -427,10 +427,10 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
         ) : (
           <Drawer open={isFormOpen} onOpenChange={setIsFormOpen}>
             {/* DrawerTrigger is implicitly handled by the button above */}
-            <DrawerContent>
+            <DrawerContent className="">
               <DrawerHeader className="text-left">
-                <DrawerTitle>{editingProject ? "Edit Project" : "Add New Project"}</DrawerTitle>
-                <DrawerDescription>
+                <DrawerTitle className="">{editingProject ? "Edit Project" : "Add New Project"}</DrawerTitle>
+                <DrawerDescription className="">
                   {editingProject ? "Update the details for your project." : "Fill in the details to add a new project to your portfolio."} Click save when you&apos;re done.
                 </DrawerDescription>
               </DrawerHeader>
@@ -440,7 +440,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
               </div>
               <DrawerFooter className="pt-2">
                 {/* Button submits the form with id="portfolioItemForm" */}
-                <Button form="portfolioItemForm" type="submit" disabled={addItemMutation.isPending || updateItemMutation.isPending}>
+                <Button form="portfolioItemForm" type="submit" disabled={addItemMutation.isPending || updateItemMutation.isPending} className="" variant="default" size="default">
                   {addItemMutation.isPending || updateItemMutation.isPending
                     ? "Saving..."
                     : editingProject
@@ -448,7 +448,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                       : "Add Project"}
                 </Button>
                 <DrawerClose asChild>
-                  <Button type="button" variant="outline">Cancel</Button>
+                  <Button type="button" variant="outline" className="" size="default">Cancel</Button>
                 </DrawerClose>
               </DrawerFooter>
             </DrawerContent>
@@ -475,14 +475,14 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                   {/* Project Title and Provider Badge */}
                   <div className="flex justify-between items-start mb-1">
                     <div className="flex items-center gap-2 grow min-w-0">
-                      {project.provider === IntegrationProvider.GITHUB && <Github className="h-5 w-5 text-gray-600 shrink-0" />}
+                      {project.provider === 'GITHUB' && <Github className="h-5 w-5 text-gray-600 shrink-0" />}
                       <h3 className="text-xl font-semibold truncate" title={project.title}>{project.title}</h3>
-                      {project.provider === IntegrationProvider.GITHUB && isPrivate && <Badge variant="outline" className="ml-2 shrink-0">Private</Badge>}
+                      {project.provider === 'GITHUB' && isPrivate && <Badge variant="outline" className="ml-2 shrink-0">Private</Badge>}
                     </div>
                     {/* Edit/Delete Buttons */}
                     <div className="flex space-x-1 shrink-0">
                       {/* Allow editing for both CUSTOM and GITHUB projects to modify internal record (e.g., add skills) */}
-                      {(project.provider === IntegrationProvider.CUSTOM || project.provider === IntegrationProvider.GITHUB) && (
+                      {(project.provider === 'CUSTOM' || project.provider === 'GITHUB') && (
                         <Button variant="ghost" size="icon" onClick={() => handleEditProject(project)} className="h-8 w-8" title="Edit Project Details / Add Skills">
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -512,17 +512,17 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
 
                   {/* Links */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm my-4">
-                    {project.provider === IntegrationProvider.GITHUB && project.githubRepoUrl && (
+                    {project.provider === 'GITHUB' && project.githubRepoUrl && (
                       <a href={project.githubRepoUrl} target="_blank" rel="noopener noreferrer" title="View on GitHub" className="flex items-center text-gray-700 hover:text-black hover:underline">
                         <Github className="h-4 w-4 mr-1.5" /> GitHub
                       </a>
                     )}
-                    {project.provider === IntegrationProvider.CUSTOM && project.projectUrl && (
+                    {project.provider === 'CUSTOM' && project.projectUrl && (
                       <a href={project.projectUrl} target="_blank" rel="noopener noreferrer" title="Visit Project" className="flex items-center text-blue-600 hover:underline">
                         <LinkIcon className="h-4 w-4 mr-1.5" /> Project Link
                       </a>
                     )}
-                    {project.provider === IntegrationProvider.GITHUB && homepage && (
+                    {project.provider === 'GITHUB' && homepage && (
                       <a href={homepage} target="_blank" rel="noopener noreferrer" title="Visit Deployment/Homepage" className="flex items-center text-green-700 hover:text-green-800 hover:underline">
                         <ExternalLink className="h-4 w-4 mr-1.5" /> Deployment
                       </a>
@@ -537,18 +537,18 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                         <Badge key={skill} variant="secondary" className="font-normal">{skill}</Badge>
                       ))}
                       {/* Display GitHub Languages */}
-                      {project.provider === IntegrationProvider.GITHUB && displayLanguages.length > 0 && (
+                      {project.provider === 'GITHUB' && displayLanguages.length > 0 && (
                         displayLanguages.map((lang) => (
                           <Badge key={lang} variant="outline" className="font-normal">{lang}</Badge>
                         ))
                       )}
                       {/* Display GitHub Primary Language (if not in top 3) */}
-                      {project.provider === IntegrationProvider.GITHUB && primaryLang &&
+                      {project.provider === 'GITHUB' && primaryLang &&
                         !displayLanguages.includes(primaryLang) && (
                           <Badge variant="outline" className="font-normal">{primaryLang}</Badge>
                         )}
                       {/* Display Commit Count */}
-                      {project.provider === IntegrationProvider.GITHUB && commitCount !== null && commitCount !== undefined && (
+                      {project.provider === 'GITHUB' && commitCount !== null && commitCount !== undefined && (
                           <Badge variant="outline" className="font-normal bg-gray-50 text-gray-600 border-gray-200">
                               <GitCommitVertical className="h-3 w-3 mr-1.5" />
                               {commitCount}{commitCount === 100 ? '+' : ''} commits
@@ -567,7 +567,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
           <div className="text-center py-10 border border-dashed border-border rounded-lg mt-6">
             <p className="text-muted-foreground mb-4">You haven&apos;t added any projects to your portfolio yet.</p>
             {/* Button triggers Dialog/Drawer opening */}
-            <Button onClick={handleAddNewProject}>
+            <Button onClick={handleAddNewProject} className="" variant="default" size="default">
               <Plus className="h-4 w-4 mr-2" />
               Add Your First Project
             </Button>

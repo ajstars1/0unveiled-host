@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import NextImage from "next/image"
 import { Github, Link as LinkIcon, ExternalLink, GitCommitVertical, Code2, Dribbble, Pin, PinOff, Loader2 } from "lucide-react"
-import { IntegrationProvider, Prisma } from "@0unveiled/database/schema"
+import { integrationProviderEnum } from "@0unveiled/database/schema"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 
@@ -31,7 +31,7 @@ interface PortfolioCardProps {
     provider: string;
     roleInItem: string | null;
     skills: { id: string; name: string }[];
-    metadata?: Prisma.JsonValue | null;
+    metadata?: any | null;
     // isPinned?: boolean; // Add if needed for styling pinned cards
   };
   isOwnProfile: boolean;
@@ -89,7 +89,7 @@ export function PortfolioCard({ item, isOwnProfile, isPinned, username }: Portfo
 const isPrivate = metadataObject.private as boolean | undefined;
   const displayLanguages = formatLanguages(languages);
 
-  const isGitHub = item.provider === IntegrationProvider.GITHUB;
+  const isGitHub = item.provider === 'GITHUB';
   const isInternal = item.provider === 'INTERNAL'; // Check if it represents an internal project
 
   // Implement pin/unpin logic
@@ -177,7 +177,7 @@ const isPrivate = metadataObject.private as boolean | undefined;
                                 )}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="left">
+                        <TooltipContent side="left" className="">
                             <p>{isPinned ? "Unpin" : "Pin to top"}</p>
                         </TooltipContent>
                     </Tooltip>
