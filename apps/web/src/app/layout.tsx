@@ -125,6 +125,7 @@ export default function RootLayout({
         {/* <ReduxProvider> */}
           <ReactQueryProvider>
             <AuthProvider>
+              
               {children}
               <Toaster />
             </AuthProvider>

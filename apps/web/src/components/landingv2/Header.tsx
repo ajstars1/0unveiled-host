@@ -2,55 +2,54 @@ import { MainNav } from "../global/navbar/main-nav";
 import MobileNav from "../global/navbar/mobile-nav";
 import { UserNav } from "../global/navbar/user-nav";
 import { Button } from "@/components/ui/button";
-import { createSupabaseServerClient } from "@/lib/supabase/server";;
-import { getUnreadNotificationCount, getRecentNotifications } from '@/actions/notifications';
-import type { Notification } from '@0unveiled/database/schema';
-import { NotificationBell } from '../global/navbar/notification-bell';
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { Notification } from '@0unveiled/database';
+import { OptimizedNotificationBell } from '../global/navbar/optimized-notification-bell';
 import Link from "next/link";
 import Image from "next/image";
+import logo from "@/public/logo/0unveiled_logo_light.svg";
 
-export const Header = async () => {
-  let sessionUser = null;
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    sessionUser = user;
-  } catch (error) {
-    console.warn("Could not create Supabase client for header:", error);
-  }
+interface HeaderProps {
+  user?: any;
+  initialNotificationCount?: number;
+  initialRecentNotifications?: Notification[];
+}
 
-  let initialCount = 0;
-  let initialNotifications: Notification[] = [];
-  if (sessionUser) {
+export const Header = async ({ 
+  user, 
+  initialNotificationCount = 0, 
+  initialRecentNotifications = [] 
+}: HeaderProps) => {
+  // Use passed user data if available, otherwise fetch from Supabase
+  let sessionUser = user;
+  
+  if (!sessionUser) {
     try {
-      const [count, notifications] = await Promise.all([
-        getUnreadNotificationCount(),
-        getRecentNotifications(5)
-      ]);
-      initialCount = count;
-      initialNotifications = notifications || [];
+      const supabase = await createSupabaseServerClient();
+      const { data: { user: fetchedUser } } = await supabase.auth.getUser();
+      sessionUser = fetchedUser;
     } catch (error) {
-        console.error("Error fetching initial notifications for header:", error);
+      console.warn("Could not create Supabase client for header:", error);
     }
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+    <header className=" w-full bg-background backdrop-blur-sm">
         <div className="flex h-16 justify-between items-center px-4">
             <MobileNav className="lg:hidden flex" />
             <Link href={"/"}>
-              <Image src="/logo/0unveiled_logo_light.svg" alt="0Unveiled Logo" width={160} height={30} className="invert dark:invert-0 min-w-24 "/>
+              <Image src={logo} alt="0Unveiled Logo" width={100} height={30} className="invert dark:invert-0 min-w-24 "/>
             </Link>
-          <div className="flex w-full items-center justify-center">
+          {/* <div className="flex w-full items-center justify-center">
             <MainNav className="mx-6 items-center justify-center hidden lg:flex" />
-          </div>
+          </div> */}
           <div className="flex items-center space-x-4">
             {sessionUser !== null ? (
               <>
-                <NotificationBell 
+                <OptimizedNotificationBell 
                     userId={sessionUser.id} 
-                    initialCount={initialCount} 
-                    initialNotifications={initialNotifications} 
+                    initialCount={initialNotificationCount} 
+                    initialNotifications={initialRecentNotifications} 
                  />
                 <UserNav user={sessionUser} />
               </>

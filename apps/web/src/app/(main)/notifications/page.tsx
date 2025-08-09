@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useState, useEffect, startTransition } from 'react'
-import { getUserNotifications } from '@/actions/notifications'
+import { getUserNotifications } from '@/actions/optimized-notifications'
 import type { Notification } from '@0unveiled/database'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from '@/lib/utils'
 
 // Import mark as read actions
-import { markNotificationAsRead, markAllNotificationsAsRead } from '@/actions/notifications'
+import { markNotificationAsRead, markAllNotificationsAsRead } from '@/actions/optimized-notifications'
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
