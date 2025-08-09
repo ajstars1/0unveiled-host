@@ -19,6 +19,9 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { FaGithub, FaGoogle } from "react-icons/fa6"
 
+import authSideImage from "@/public/images/features/feature4.png"
+import logoGif from "@/public/logo/logo.gif"
+
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function RegisterPage() {
@@ -130,7 +133,7 @@ export default function RegisterPage() {
           <div className="flex flex-col justify-center space-y-6 bg-white text-black p-8 rounded-xl shadow-xl">
             <div className="space-y-2 text-center">
               <Link href="/" className="inline-block text-neutral-600 hover:text-black">
-              <Image src="/logo/logo.gif" alt="Abstrack Logo" width={80} height={80} className="mx-auto" /> 
+              <Image src={logoGif} alt="Abstrack Logo" width={80} height={80} className="mx-auto" /> 
               </Link>
               <h1 className="text-3xl font-bold">Create an account</h1>
               <p className="text-gray-600">Enter your information to get started</p>
@@ -335,7 +338,7 @@ export default function RegisterPage() {
             </div>
             <div className="flex items-center justify-center">
               <Image
-                src="/images/features/feature4.png"
+                src={authSideImage}
                 alt="Community Illustration"
                 width={600}
                 height={600}

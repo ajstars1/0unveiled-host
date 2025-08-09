@@ -1,0 +1,24 @@
+# Allow all crawlers
+User-agent: *
+
+# Sitemap location
+Sitemap: https://0unveiled.com/sitemap.xml
+
+# Prevent crawling of private/auth/API/dashboard pages
+Disallow: /auth/
+Disallow: /api/
+Disallow: /dashboard/chat/
+Disallow: /dashboard/ # Disallow dashboard routes
+
+# Allow crawling of public pages defined in sitemap
+Allow: /$             # Allow the root homepage specifically
+Allow: /features$     # Allow features page specifically
+Allow: /projects$     # Allow projects listing page specifically
+Allow: /profiles$     # Allow profiles listing page specifically
+Allow: /project/      # Allow individual project pages
+Allow: /*             # Allow user profile pages (e.g., /username) - This acts as a fallback for profiles
+
+# Note: The '$' signifies the end of the path for exact matches on static pages.
+# Note: '/project/' allows anything starting with /project/
+# Note: '/*' is broad but necessary for user profiles (`/<username>`). It comes after specific disallows.
+

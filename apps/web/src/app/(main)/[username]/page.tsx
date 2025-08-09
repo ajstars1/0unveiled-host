@@ -38,6 +38,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { username } = await params
   
+  // Filter out non-username routes (favicon.ico, robots.txt, etc.)
+  if (username.includes('.') || username.startsWith('_') || username === 'api') {
+    notFound()
+  }
+  
   // Fetch currentUser first to get the ID for the profile fetch
   const currentUser = await getCurrentUser()
   const user = await getUserByUsername(username, currentUser?.id) // Pass current user ID
@@ -87,6 +92,11 @@ async function ProfileDetail({
   params: Promise<{ username: string }>
 }) {
   const { username } = await params
+
+  // Filter out non-username routes (favicon.ico, robots.txt, etc.)
+  if (username.includes('.') || username.startsWith('_') || username === 'api') {
+    notFound()
+  }
 
   // Fetch currentUser first
   const currentUser = await getCurrentUser()

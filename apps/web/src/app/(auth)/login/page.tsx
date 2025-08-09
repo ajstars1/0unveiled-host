@@ -6,6 +6,7 @@ import Image from "next/image"
 import { ArrowLeft, Eye, EyeOff, Github, Loader2, Chrome } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import authSideImage from "@/public/images/features/feature6.png"
 
 // Import Auth Hooks
 import {
@@ -189,8 +190,7 @@ export default function LoginPage() {
             </div>
             <div className="flex items-center justify-center">
               <Image
-                // src="/images/features/feature6.png"
-                src="/images/features/feature6.png"
+                src={authSideImage}
                 alt="Collaboration Illustration"
                 width={400}
                 height={400}

@@ -214,14 +214,31 @@ export const getUserByUsername = async (
   currentUserId?: string
 ): Promise<UserProfileDetails | null> => {
   try {
-    if (!username) return null
+    if (!username || typeof username !== 'string') {
+      console.warn('getUserByUsername: Invalid username provided:', username);
+      return null;
+    }
 
-    // Get basic user info
-    const profileUser = await db.query.users.findFirst({
-      where: eq(users.username, username.toLowerCase()),
-    });
+    // Validate username format (no file extensions, special chars)
+    if (username.includes('.') || username.includes('/') || username.startsWith('_')) {
+      console.warn('getUserByUsername: Invalid username format:', username);
+      return null;
+    }
 
-    if (!profileUser) return null;
+    // Get basic user info with connection timeout
+    const profileUser = await Promise.race([
+      db.query.users.findFirst({
+        where: eq(users.username, username.toLowerCase()),
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 10000)
+      )
+    ]) as any;
+
+    if (!profileUser) {
+      console.log('getUserByUsername: User not found:', username);
+      return null;
+    }
 
     // Get related data separately
     const userSkillsData = await db.query.userSkills.findMany({

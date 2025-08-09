@@ -297,8 +297,20 @@ export const onSignInUser = async (
  */
 export const getAuthenticatedUser = async () => {
   try {
+    // Add timeout and better error handling
     const supabase = await createSupabaseServerClient()
-    const { data: { user: authUserWithMeta }, error: metaError } = await supabase.auth.getUser();
+    
+    // Add timeout to prevent hanging connections
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Supabase client timeout')), 5000)
+    })
+    
+    const authPromise = supabase.auth.getUser()
+    
+    const { data: { user: authUserWithMeta }, error: metaError } = await Promise.race([
+      authPromise,
+      timeoutPromise
+    ]) as any;
     
     if (metaError || !authUserWithMeta) {
        return { error: "Failed to retrieve user metadata." };

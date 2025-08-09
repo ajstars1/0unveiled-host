@@ -73,12 +73,22 @@ export async function fetchLayoutData(userId?: string): Promise<LayoutData> {
   const { getUnreadNotificationCount, getRecentNotifications } = await import("@/actions/optimized-notifications")
 
   try {
-    // Fetch user data
+    // Fetch user data with timeout protection
     const [fetchedUser, sessionUserResult] = await Promise.allSettled([
-      getCurrentUser(),
+      Promise.race([
+        getCurrentUser(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('getCurrentUser timeout')), 8000))
+      ]),
       (async () => {
         try {
-          const supabase = await createSupabaseServerClient()
+          // Add timeout for Supabase client creation
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Supabase client creation timeout')), 5000)
+          })
+          
+          const clientPromise = createSupabaseServerClient()
+          const supabase = await Promise.race([clientPromise, timeoutPromise]) as any
+          
           const { data: { user } } = await supabase.auth.getUser()
           return user
         } catch (error) {

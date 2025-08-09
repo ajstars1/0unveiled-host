@@ -24,6 +24,8 @@ import { createClient } from "@/lib/supabase/client";
 import { onboarding as submitOnboardingData } from "@/actions/settings"
 import { SKILLS_Beta } from "@/constants/skills"
 import { toast } from "@/hooks/use-toast"
+
+import logoAbstract from "@/public/abstrack_logo_light.svg"
 // Define types based on the schema
 type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
 
@@ -155,7 +157,7 @@ export default function OnboardingPage() {
       <div className="container mx-auto py-12 px-4 md:px-6 flex-1 flex items-center justify-center">
         <div className="max-w-3xl w-full">
           <div className="text-center mb-8">
-            <Image src="/abstrack_logo_light.svg" alt="Abstrack Logo" width={80} height={80} className="mx-auto mb-4" />
+            <Image src={logoAbstract} alt="Abstrack Logo" width={80} height={80} className="mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-white">Complete Your Profile</h1>
             <p className="text-gray-300 mt-2">Fill in your details to get started on Abstrack</p>
           </div>
