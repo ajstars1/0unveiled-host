@@ -43,6 +43,7 @@ router.get("/", async (req, res, next) => {
       .select({
         rank: leaderboardScores.rank,
         score: leaderboardScores.score,
+        userId: leaderboardScores.userId, // Include userId to help with uniqueness
         user: {
           id: users.id,
           username: users.username,
@@ -54,11 +55,28 @@ router.get("/", async (req, res, next) => {
       .from(leaderboardScores)
       .where(and(...conditions))
       .innerJoin(users, eq(leaderboardScores.userId, users.id))
-      .orderBy(desc(leaderboardScores.score))
+      .orderBy(desc(leaderboardScores.score), leaderboardScores.rank)
       .limit(query.limit)
       .offset(query.offset);
 
-    res.json({ success: true, data });
+    // Ensure unique users (remove potential duplicates)
+    const uniqueData = data.reduce((acc, current) => {
+      const existingIndex = acc.findIndex(item => item.user.id === current.user.id);
+      if (existingIndex === -1) {
+        // Remove the userId field from the response
+        const { userId, ...rest } = current;
+        acc.push(rest);
+      } else {
+        // Keep the entry with the higher score if duplicate found
+        if (current.score > acc[existingIndex].score) {
+          const { userId, ...rest } = current;
+          acc[existingIndex] = rest;
+        }
+      }
+      return acc;
+    }, [] as any[]);
+
+    res.json({ success: true, data: uniqueData });
   } catch (error) {
     next(error);
   }

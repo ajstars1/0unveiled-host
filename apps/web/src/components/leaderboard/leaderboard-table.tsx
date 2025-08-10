@@ -51,9 +51,10 @@ export function LeaderboardTable({ data }: { data: LeaderboardEntry[] }) {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-blue-600';
-    if (score >= 40) return 'text-yellow-600';
+    // Scores are now in 0-10000 range, so adjust thresholds accordingly
+    if (score >= 8000) return 'text-green-600';
+    if (score >= 6000) return 'text-blue-600';
+    if (score >= 4000) return 'text-yellow-600';
     return 'text-red-600';
   };
 
@@ -65,12 +66,12 @@ export function LeaderboardTable({ data }: { data: LeaderboardEntry[] }) {
             <TableHead className="w-20">Rank</TableHead>
             <TableHead>Developer</TableHead>
             <TableHead>Username</TableHead>
-            <TableHead className="text-right">CRUISM Score</TableHead>
+            <TableHead className="text-right">Score</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((entry) => (
-            <TableRow key={entry.user.id} className="hover:bg-muted/50">
+          {data.map((entry, index) => (
+            <TableRow key={`${entry.user.id}-${entry.rank}-${index}`} className="hover:bg-muted/50">
               <TableCell>
                 <div className="flex items-center gap-2">
                   {getRankIcon(entry.rank)}
@@ -119,7 +120,7 @@ export function LeaderboardTable({ data }: { data: LeaderboardEntry[] }) {
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
                   <span className={`font-bold text-lg ${getScoreColor(entry.score)}`}>
-                    {entry.score}
+                    {(entry.score / 100).toFixed(1)}
                   </span>
                   <span className="text-sm text-muted-foreground">/100</span>
                 </div>
