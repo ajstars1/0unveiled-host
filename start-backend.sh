@@ -49,7 +49,7 @@ echo ""
 # Check port availability (warn but don't exit)
 echo "Checking port availability..."
 check_port 3001  # Express API
-check_port 8002  # FastAPI Analyzer
+check_port 8080  # FastAPI Analyzer
 
 # Install dependencies if needed
 echo "Installing dependencies..."
@@ -72,9 +72,9 @@ echo "Backend services startup complete!"
 echo ""
 echo "Service Information:"
 echo "   • Express API:       http://localhost:3001"
-echo "   • GitHub Analyzer:   http://localhost:8002"
+echo "   • GitHub Analyzer:   http://localhost:8080"
 echo "   • API Health:        http://localhost:3001/health"
-echo "   • Analyzer Health:   http://localhost:8002/health"
+echo "   • Analyzer Health:   http://localhost:8080/health"
 echo ""
 echo "To start the full application:"
 echo "   bun run dev          # Starts frontend only"

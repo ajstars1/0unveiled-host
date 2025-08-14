@@ -20,7 +20,6 @@
       "version": "0.1.0",
       "dependencies": {
         "@0unveiled/lib": "*",
-        "@octokit/app": "^16.0.1",
         "@octokit/oauth-app": "^8.0.1",
         "@octokit/rest": "^22.0.0",
         "@supabase/supabase-js": "^2.39.0",

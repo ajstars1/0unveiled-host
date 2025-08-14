@@ -214,7 +214,7 @@ export async function analyzeRepositoryAction(
     });
 
     // Call the Python FastAPI analyzer service
-    const analyzerServiceUrl = process.env.ANALYZER_SERVICE_URL || 'http://localhost:8002';
+    const analyzerServiceUrl = process.env.ANALYZER_SERVICE_URL || 'http://localhost:8080';
     
     const analysisPayload = {
       access_token: tokenResponse.data.token,

@@ -67,8 +67,8 @@ if ! curl -s http://localhost:3001/health > /dev/null 2>&1; then
     echo "   Please run './start-backend.sh' first to start backend services"
 fi
 
-if ! curl -s http://localhost:8002/health > /dev/null 2>&1; then
-    echo "   Warning: GitHub Analyzer (port 8002) is not running"
+if ! curl -s http://localhost:8080/health > /dev/null 2>&1; then
+    echo "   Warning: GitHub Analyzer (port 8080) is not running"
     echo "   Please run './start-backend.sh' first to start backend services"
 fi
 
@@ -102,7 +102,7 @@ echo "   • Analyze Page:      http://localhost:3000/analyze"
 echo ""
 echo "Backend Services (should be running):"
 echo "   • Express API:       http://localhost:3001"
-echo "   • GitHub Analyzer:   http://localhost:8002"
+echo "   • GitHub Analyzer:   http://localhost:8080"
 echo ""
 echo "Next Steps:"
 echo "   1. Make sure backend services are running ('./start-backend.sh')"

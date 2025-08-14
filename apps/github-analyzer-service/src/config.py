@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     
     # Server
     host: str = Field(default="0.0.0.0", alias="HOST")
-    port: int = Field(default=8002, alias="PORT")
+    port: int = Field(default=8080, alias="PORT")
     
     # CORS
     cors_origins: List[str] = Field(

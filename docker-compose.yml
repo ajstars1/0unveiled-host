@@ -13,7 +13,7 @@ services:
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - API_URL=http://api:3001
-      - ANALYZER_SERVICE_URL=http://analyzer-service:8002
+      - ANALYZER_SERVICE_URL=http://analyzer-service:8080
     depends_on:
       - api
       - analyzer-service
@@ -38,7 +38,7 @@ services:
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - JWT_SECRET=${JWT_SECRET}
-      - ANALYZER_SERVICE_URL=http://analyzer-service:8002
+      - ANALYZER_SERVICE_URL=http://analyzer-service:8080
     depends_on:
       - analyzer-service
     networks:
@@ -54,10 +54,10 @@ services:
       context: .
       dockerfile: docker/analyzer-service.Dockerfile
     ports:
-      - "8002:8002"
+      - "8080:8080"
     environment:
       - ENVIRONMENT=development
-      - PORT=8002
+      - PORT=8080
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - CORS_ORIGINS=["http://localhost:3000", "http://localhost:3001"]
