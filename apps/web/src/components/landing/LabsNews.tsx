@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
 import { X, ExternalLink } from "lucide-react"
-import { Button } from "@0unveiled/ui/components/button"
+import { Button } from "@/components/ui/button"
 
 interface NewsItem {
   source: string

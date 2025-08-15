@@ -1,5 +1,5 @@
 // Re-export all UI components from the UI package
-export * from "@0unveiled/ui/components/card";
+export * from "@/components/ui/card";
 
 // Also export individual components for convenience
 export { Button, buttonVariants } from "@0unveiled/ui/components/button";

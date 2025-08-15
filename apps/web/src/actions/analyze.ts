@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getUserBySupabaseId, getUserByUserId } from "@/data/user";
+import { getUserByUsername } from "@/data/user";
 import { fetchUserGithubRepos } from "@/actions/github";
 import { db } from "@0unveiled/database";
 import { accounts } from "@0unveiled/database";
@@ -11,6 +12,20 @@ interface RepositoryActionResult {
   success: boolean;
   data?: any[];
   error?: string;
+}
+
+// Resolve a username to the platform userId for analysis flows
+export async function getUserIdByUsernameAction(username: string): Promise<{ success: boolean; userId?: string; error?: string }> {
+  try {
+    if (!username) return { success: false, error: "Username is required" };
+
+    const user = await getUserByUsername(username);
+    if (!user) return { success: false, error: "User not found" };
+
+    return { success: true, userId: user.id };
+  } catch (e: any) {
+    return { success: false, error: e?.message || "Failed to resolve username" };
+  }
 }
 
 export async function getRepositoriesAction(userId: string): Promise<RepositoryActionResult> {

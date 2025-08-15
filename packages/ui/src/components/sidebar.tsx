@@ -9,21 +9,21 @@ import { useIsMobile } from "@0unveiled/ui/hooks/use-mobile.js";
 import { cn } from "@0unveiled/lib/utils";
 import { Button } from "./button.js";
 import { Input } from "./input.js";
-import { Separator } from "@0unveiled/ui/components/separator.js";
+import { Separator } from "@/components/ui/separator.js";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@0unveiled/ui/components/sheet.js";
-import { Skeleton } from "@0unveiled/ui/components/skeleton.js";
+} from "@/components/ui/sheet.js";
+import { Skeleton } from "@/components/ui/skeleton.js";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@0unveiled/ui/components/tooltip.js";
+} from "@/components/ui/tooltip.js";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

@@ -282,32 +282,17 @@ const isPrivate = metadataObject.private as boolean | undefined;
                       className="w-full mt-2 flex items-center justify-center"
                       disabled={analyzingCodeRepoId === (metadataObject.id?.toString?.() || item.id)}
                       onClick={async () => {
-                        await handleCodeAnalysis({
-                          id: (typeof metadataObject.id === "string" || typeof metadataObject.id === "number") ? metadataObject.id : item.id,
-                          full_name: typeof metadataObject.full_name === "string"
-                            ? metadataObject.full_name
-                            : item.url.replace(/^https:\/\/github\.com\//, ""),
-                          name: metadataObject.name !== undefined ? String(metadataObject.name) : item.title,
-                          description: typeof metadataObject.description === "string"
-                            ? metadataObject.description
-                            : item.description ?? undefined,
-                          language: typeof metadataObject.language === "string"
-                            ? metadataObject.language
-                            : typeof metadataObject.language === "number"
-                              ? String(metadataObject.language)
-                              : undefined,
-                        });
-                        setShowBenchmarkDialog(true);
+                        const repoFullName = typeof metadataObject.full_name === "string"
+                          ? metadataObject.full_name
+                          : item.url.replace(/^https:\/\/github\.com\//, "");
+                        // Navigate to analyzing page with repo and username
+                        router.push(`/analyze/${encodeURIComponent(username)}/${encodeURIComponent(repoFullName)}`);
                       }}
                     >
-                      {analyzingCodeRepoId === (metadataObject.id?.toString?.() || item.id) ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <Code2 className="h-4 w-4 mr-2" />
-                      )}
+                      <Code2 className="h-4 w-4 mr-2" />
                       Analyze Code
                     </Button>
-                    <BenchmarkResultsDialog open={showBenchmarkDialog} onOpenChange={setShowBenchmarkDialog} />
+                    {/* <BenchmarkResultsDialog open={showBenchmarkDialog} onOpenChange={setShowBenchmarkDialog} /> */}
                   </>
                 )}
             </div>

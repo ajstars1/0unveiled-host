@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Avatar, AvatarFallback } from "@0unveiled/ui/components/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 const testimonials = [
   {

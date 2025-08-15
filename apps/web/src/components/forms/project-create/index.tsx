@@ -15,7 +15,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@0unveiled/ui/components/form"
+} from "@/components/ui/form"
 import {
   Select,
   SelectContent,

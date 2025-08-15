@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Moon, Sun } from "lucide-react"
-import { Button } from "@0unveiled/ui/components/button"
+import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 
 export function Footer() {

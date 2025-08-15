@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Button } from "@0unveiled/ui/components/button"
+import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 
 export function FinalCTA() {
