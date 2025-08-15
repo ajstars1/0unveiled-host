@@ -2,39 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAnalyzeMutation } from "@/react-query/analysis";
 
 export default function AnalyzeRepoPage() {
   const params = useParams<{ username: string; repo: string }>();
   const router = useRouter();
   const [error, setError] = useState<string>("");
+  const analyze = useAnalyzeMutation();
 
   useEffect(() => {
     async function start() {
       try {
         const username = params.username;
-        const repo = decodeURIComponent(params.repo);
-        const res = await fetch(`/api/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, repo }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data?.success) {
-          const msg = data?.error || "Failed to start analysis";
-          router.replace(`/analyze/error?msg=${encodeURIComponent(msg)}`);
-          return;
-        }
+        const decoded = decodeURIComponent(params.repo);
+        const [owner, repo] = decoded.includes("/") ? decoded.split("/") : [username, decoded];
+        const data = await analyze.mutateAsync({ username, owner, repo });
         // Save result and navigate to results page
         try {
-          sessionStorage.setItem("analysisResult", JSON.stringify(data));
+          sessionStorage.setItem("analysisResult", JSON.stringify({ success: true, data }));
         } catch {}
-        router.replace(`/analyze/${encodeURIComponent(username)}/${encodeURIComponent(repo)}/results`);
+        router.replace(`/analyze/${encodeURIComponent(username)}/${encodeURIComponent(`${owner}/${repo}`)}/results`);
       } catch (e: any) {
         setError(e?.message || "Unexpected error");
       }
     }
     start();
-  }, [params, router]);
+  }, [params, router, analyze]);
 
   return (
     <div className="max-w-xl mx-auto p-12 text-center space-y-4">

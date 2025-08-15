@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -10,6 +10,8 @@ import ReactFlow, { Node, Edge, Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useParams } from 'next/navigation';
+import { useAnalysisQuery } from '@/react-query/analysis';
 
 interface AnalysisResult {
   // New backend shape
@@ -60,48 +62,13 @@ interface AnalysisResult {
 }
 
 const ResultsPage = () => {
-  const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const params = useParams<{ username: string; repo: string }>();
+  const decoded = useMemo(() => decodeURIComponent(params.repo), [params.repo]);
+  const [owner, repo] = useMemo(() => (decoded.includes('/') ? decoded.split('/') : [params.username, decoded]), [decoded, params.username]);
+  const { data, isLoading, error } = useAnalysisQuery(params.username, owner, repo);
+  const analysisData = data as unknown as AnalysisResult | null;
 
-  useEffect(() => {
-    try {
-      // Get data from sessionStorage
-      const storedData = sessionStorage.getItem('analysisResult');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        console.log('Retrieved analysis data:', parsedData);
-        console.log('Data keys:', Object.keys(parsedData));
-        
-        // Check if the data has the expected structure
-        if (parsedData && (parsedData.data || parsedData.repository_info)) {
-          // If data is nested under 'data' property, extract it
-          const actualData = parsedData.data || parsedData;
-          console.log('Using actual data:', actualData);
-          console.log('Actual data keys:', Object.keys(actualData));
-          setAnalysisData(actualData);
-        } else {
-          // Try to use the data as-is if it has some expected properties
-          if (parsedData && typeof parsedData === 'object') {
-            console.log('Using raw parsed data:', parsedData);
-            setAnalysisData(parsedData);
-          } else {
-            setError('Invalid analysis data structure');
-            console.error('Invalid data structure:', parsedData);
-          }
-        }
-      } else {
-        setError('No analysis data found in session storage');
-        console.error('No data in sessionStorage');
-      }
-    } catch (err) {
-      setError('Failed to parse analysis data');
-      console.error('Parse error:', err);
-    }
-    setLoading(false);
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
@@ -116,7 +83,7 @@ const ResultsPage = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 text-lg">{error || 'No data available'}</p>
+          <p className="text-red-600 text-lg">{(error as any)?.message || 'No data available'}</p>
         </div>
       </div>
     );
