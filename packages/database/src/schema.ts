@@ -87,6 +87,78 @@ export const emailFrequencyEnum = pgEnum("email_frequency", [
   "NEVER",
 ]);
 
+export const badgeRarityEnum = pgEnum("badge_rarity", [
+  "COMMON",
+  "RARE",
+  "EPIC",
+  "LEGENDARY",
+]);
+
+export const badgeCategoryEnum = pgEnum("badge_category", [
+  "TECHNICAL",
+  "QUALITY",
+  "SECURITY",
+  "LEADERSHIP",
+  "COMMUNITY",
+  "ACHIEVEMENT",
+]);
+
+export const employmentTypeEnum = pgEnum("employment_type", [
+  "FULL_TIME",
+  "PART_TIME",
+  "CONTRACT",
+  "FREELANCE",
+  "INTERNSHIP",
+]);
+
+export const jobStatusEnum = pgEnum("job_status", [
+  "DRAFT",
+  "ACTIVE",
+  "PAUSED",
+  "CLOSED",
+  "EXPIRED",
+]);
+
+export const candidateMatchStatusEnum = pgEnum("candidate_match_status", [
+  "SUGGESTED",
+  "CONTACTED",
+  "RESPONDED",
+  "INTERVIEWED",
+  "HIRED",
+  "REJECTED",
+  "WITHDRAWN",
+]);
+
+export const outreachStatusEnum = pgEnum("outreach_status", [
+  "PENDING",
+  "SENT",
+  "DELIVERED",
+  "OPENED",
+  "CLICKED",
+  "REPLIED",
+  "BOUNCED",
+  "FAILED",
+]);
+
+export const verificationStatusEnum = pgEnum("verification_status", [
+  "PENDING",
+  "IN_REVIEW",
+  "APPROVED",
+  "REJECTED",
+  "EXPIRED",
+]);
+
+export const verificationTypeEnum = pgEnum("verification_type", [
+  "CODE_QUALITY",
+  "SECURITY_EXPERT",
+  "AI_SPECIALIST",
+  "HIGH_PERFORMER",
+  "COMMUNITY_LEADER",
+  "OPEN_SOURCE_CONTRIBUTOR",
+  "TECHNICAL_WRITER",
+  "MENTOR",
+]);
+
 // Users table
 export const users = pgTable(
   "User",
@@ -537,21 +609,257 @@ export const badges = pgTable("Badge", {
   name: text("name").notNull().unique(),
   description: text("description").notNull(),
   iconUrl: text("iconUrl"),
-  criteria: text("criteria"),
+  criteria: json("criteria"),
+  category: badgeCategoryEnum("category").notNull().default("TECHNICAL"),
+  rarity: badgeRarityEnum("rarity").notNull().default("COMMON"),
+  pointsValue: integer("pointsValue").notNull().default(0),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
 // UserBadges table (many-to-many)
 export const userBadges = pgTable(
   "UserBadge",
   {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text("userId").notNull(),
     badgeId: text("badgeId").notNull(),
+    verificationRequestId: text("verificationRequestId"), // Link to verification request
     awardedAt: timestamp("awardedAt").notNull().defaultNow(),
+    expiresAt: timestamp("expiresAt"), // For time-limited badges
+    isFeatured: boolean("isFeatured").notNull().default(false),
+    evidenceUrl: text("evidenceUrl"), // Link to evidence/proof
   },
   (table) => ({
-    pk: primaryKey({ columns: [table.userId, table.badgeId] }),
+    uniqueUserBadge: uniqueIndex("UserBadge_userId_badgeId_key").on(table.userId, table.badgeId),
     userIdIdx: index("UserBadge_userId_idx").on(table.userId),
     badgeIdIdx: index("UserBadge_badgeId_idx").on(table.badgeId),
+    verificationRequestIdIdx: index("UserBadge_verificationRequestId_idx").on(table.verificationRequestId),
+  }),
+);
+
+// Companies table for recruitment
+export const companies = pgTable(
+  "Company",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    name: text("name").notNull(),
+    description: text("description"),
+    website: text("website"),
+    industry: text("industry"),
+    sizeRange: text("sizeRange"), // e.g., "1-10", "11-50", "51-200", etc.
+    logoUrl: text("logoUrl"),
+    verified: boolean("verified").notNull().default(false),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    nameIdx: index("Company_name_idx").on(table.name),
+    industryIdx: index("Company_industry_idx").on(table.industry),
+  }),
+);
+
+// Company members (recruiters)
+export const companyMembers = pgTable(
+  "CompanyMember",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    companyId: text("companyId").notNull(),
+    userId: text("userId").notNull(),
+    role: text("role").notNull().default("RECRUITER"), // ADMIN, RECRUITER, MEMBER
+    isActive: boolean("isActive").notNull().default(true),
+    joinedAt: timestamp("joinedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCompanyMember: uniqueIndex("CompanyMember_companyId_userId_key").on(table.companyId, table.userId),
+    companyIdIdx: index("CompanyMember_companyId_idx").on(table.companyId),
+    userIdIdx: index("CompanyMember_userId_idx").on(table.userId),
+  }),
+);
+
+// Job postings
+export const jobPostings = pgTable(
+  "JobPosting",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    companyId: text("companyId").notNull(),
+    recruiterId: text("recruiterId").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    requirements: json("requirements"), // Skills, experience level, etc.
+    location: text("location"),
+    salaryRange: json("salaryRange"), // {min: number, max: number, currency: string}
+    employmentType: employmentTypeEnum("employmentType").notNull(),
+    aiMatchingCriteria: json("aiMatchingCriteria"), // AI-specific matching rules
+    status: jobStatusEnum("status").notNull().default("DRAFT"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    expiresAt: timestamp("expiresAt"),
+  },
+  (table) => ({
+    companyIdIdx: index("JobPosting_companyId_idx").on(table.companyId),
+    recruiterIdIdx: index("JobPosting_recruiterId_idx").on(table.recruiterId),
+    statusIdx: index("JobPosting_status_idx").on(table.status),
+    employmentTypeIdx: index("JobPosting_employmentType_idx").on(table.employmentType),
+  }),
+);
+
+// AI candidate matches
+export const candidateMatches = pgTable(
+  "CandidateMatch",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    jobPostingId: text("jobPostingId").notNull(),
+    candidateId: text("candidateId").notNull(),
+    aiMatchScore: integer("aiMatchScore").notNull(), // 0-100 match percentage
+    matchReasoning: json("matchReasoning"), // AI explanation of match
+    recruiterRating: integer("recruiterRating"), // 1-5 star rating from recruiter
+    status: candidateMatchStatusEnum("status").notNull().default("SUGGESTED"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCandidateMatch: uniqueIndex("CandidateMatch_jobPostingId_candidateId_key").on(table.jobPostingId, table.candidateId),
+    jobPostingIdIdx: index("CandidateMatch_jobPostingId_idx").on(table.jobPostingId),
+    candidateIdIdx: index("CandidateMatch_candidateId_idx").on(table.candidateId),
+    statusIdx: index("CandidateMatch_status_idx").on(table.status),
+    aiMatchScoreIdx: index("CandidateMatch_aiMatchScore_idx").on(table.aiMatchScore),
+  }),
+);
+
+// Message templates for outreach
+export const messageTemplates = pgTable(
+  "MessageTemplate",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    recruiterId: text("recruiterId").notNull(),
+    companyId: text("companyId").notNull(),
+    name: text("name").notNull(),
+    subject: text("subject"),
+    content: text("content").notNull(),
+    variables: json("variables"), // Dynamic variables like {candidate_name}, {job_title}
+    type: text("type").notNull().default("INITIAL"), // INITIAL, FOLLOW_UP, INTERVIEW_INVITE
+    isActive: boolean("isActive").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    recruiterIdIdx: index("MessageTemplate_recruiterId_idx").on(table.recruiterId),
+    companyIdIdx: index("MessageTemplate_companyId_idx").on(table.companyId),
+    typeIdx: index("MessageTemplate_type_idx").on(table.type),
+  }),
+);
+
+// Outreach campaigns
+export const outreachCampaigns = pgTable(
+  "OutreachCampaign",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    recruiterId: text("recruiterId").notNull(),
+    jobPostingId: text("jobPostingId").notNull(),
+    name: text("name").notNull(),
+    templateId: text("templateId"),
+    status: text("status").notNull().default("DRAFT"), // DRAFT, ACTIVE, PAUSED, COMPLETED
+    totalCandidates: integer("totalCandidates").notNull().default(0),
+    messagesSent: integer("messagesSent").notNull().default(0),
+    responsesReceived: integer("responsesReceived").notNull().default(0),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    recruiterIdIdx: index("OutreachCampaign_recruiterId_idx").on(table.recruiterId),
+    jobPostingIdIdx: index("OutreachCampaign_jobPostingId_idx").on(table.jobPostingId),
+    statusIdx: index("OutreachCampaign_status_idx").on(table.status),
+  }),
+);
+
+// Outreach activities (individual messages)
+export const outreachActivities = pgTable(
+  "OutreachActivity",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    campaignId: text("campaignId").notNull(),
+    candidateId: text("candidateId").notNull(),
+    messageTemplateId: text("messageTemplateId").notNull(),
+    subject: text("subject"),
+    content: text("content").notNull(),
+    sentAt: timestamp("sentAt"),
+    deliveredAt: timestamp("deliveredAt"),
+    openedAt: timestamp("openedAt"),
+    clickedAt: timestamp("clickedAt"),
+    repliedAt: timestamp("repliedAt"),
+    status: outreachStatusEnum("status").notNull().default("PENDING"),
+    responseText: text("responseText"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    campaignIdIdx: index("OutreachActivity_campaignId_idx").on(table.campaignId),
+    candidateIdIdx: index("OutreachActivity_candidateId_idx").on(table.candidateId),
+    statusIdx: index("OutreachActivity_status_idx").on(table.status),
+    sentAtIdx: index("OutreachActivity_sentAt_idx").on(table.sentAt),
+  }),
+);
+
+// Verification requests
+export const verificationRequests = pgTable(
+  "VerificationRequest",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("userId").notNull(),
+    verificationType: verificationTypeEnum("verificationType").notNull(),
+    status: verificationStatusEnum("status").notNull().default("PENDING"),
+    evidence: json("evidence"), // Portfolio items, certifications, etc.
+    reviewerId: text("reviewerId"), // Admin/reviewer user ID
+    reviewNotes: text("reviewNotes"),
+    submittedAt: timestamp("submittedAt").notNull().defaultNow(),
+    reviewedAt: timestamp("reviewedAt"),
+    expiresAt: timestamp("expiresAt"),
+  },
+  (table) => ({
+    userIdIdx: index("VerificationRequest_userId_idx").on(table.userId),
+    reviewerIdIdx: index("VerificationRequest_reviewerId_idx").on(table.reviewerId),
+    statusIdx: index("VerificationRequest_status_idx").on(table.status),
+    verificationTypeIdx: index("VerificationRequest_verificationType_idx").on(table.verificationType),
+  }),
+);
+
+// Achievements tracking
+export const achievements = pgTable(
+  "Achievement",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("userId").notNull(),
+    achievementType: text("achievementType").notNull(),
+    achievementData: json("achievementData"),
+    pointsAwarded: integer("pointsAwarded").notNull().default(0),
+    earnedAt: timestamp("earnedAt").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("Achievement_userId_idx").on(table.userId),
+    achievementTypeIdx: index("Achievement_achievementType_idx").on(table.achievementType),
+    earnedAtIdx: index("Achievement_earnedAt_idx").on(table.earnedAt),
   }),
 );
 
@@ -715,6 +1023,7 @@ export const leaderboardTypeEnum = pgEnum("leaderboard_type", [
   "TECH_STACK",
   "DOMAIN",
 ]);
+
 
 export const leaderboardScores = pgTable(
   "LeaderboardScore",
@@ -1074,6 +1383,164 @@ export const showcasedItemsRelations = relations(
   }),
 );
 
+// New table relations for recruitment and verification
+export const companiesRelations = relations(companies, ({ many }) => ({
+  members: many(companyMembers),
+  jobPostings: many(jobPostings),
+  messageTemplates: many(messageTemplates),
+}));
+
+export const companyMembersRelations = relations(companyMembers, ({ one }) => ({
+  company: one(companies, {
+    fields: [companyMembers.companyId],
+    references: [companies.id],
+  }),
+  user: one(users, {
+    fields: [companyMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const jobPostingsRelations = relations(jobPostings, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [jobPostings.companyId],
+    references: [companies.id],
+  }),
+  recruiter: one(users, {
+    fields: [jobPostings.recruiterId],
+    references: [users.id],
+  }),
+  candidateMatches: many(candidateMatches),
+  outreachCampaigns: many(outreachCampaigns),
+}));
+
+export const candidateMatchesRelations = relations(candidateMatches, ({ one }) => ({
+  jobPosting: one(jobPostings, {
+    fields: [candidateMatches.jobPostingId],
+    references: [jobPostings.id],
+  }),
+  candidate: one(users, {
+    fields: [candidateMatches.candidateId],
+    references: [users.id],
+  }),
+}));
+
+export const messageTemplatesRelations = relations(messageTemplates, ({ one, many }) => ({
+  recruiter: one(users, {
+    fields: [messageTemplates.recruiterId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [messageTemplates.companyId],
+    references: [companies.id],
+  }),
+  outreachActivities: many(outreachActivities),
+}));
+
+export const outreachCampaignsRelations = relations(outreachCampaigns, ({ one, many }) => ({
+  recruiter: one(users, {
+    fields: [outreachCampaigns.recruiterId],
+    references: [users.id],
+  }),
+  jobPosting: one(jobPostings, {
+    fields: [outreachCampaigns.jobPostingId],
+    references: [jobPostings.id],
+  }),
+  template: one(messageTemplates, {
+    fields: [outreachCampaigns.templateId],
+    references: [messageTemplates.id],
+  }),
+  activities: many(outreachActivities),
+}));
+
+export const outreachActivitiesRelations = relations(outreachActivities, ({ one }) => ({
+  campaign: one(outreachCampaigns, {
+    fields: [outreachActivities.campaignId],
+    references: [outreachCampaigns.id],
+  }),
+  candidate: one(users, {
+    fields: [outreachActivities.candidateId],
+    references: [users.id],
+  }),
+  messageTemplate: one(messageTemplates, {
+    fields: [outreachActivities.messageTemplateId],
+    references: [messageTemplates.id],
+  }),
+}));
+
+export const verificationRequestsRelations = relations(verificationRequests, ({ one, many }) => ({
+  user: one(users, {
+    fields: [verificationRequests.userId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [verificationRequests.reviewerId],
+    references: [users.id],
+  }),
+  userBadges: many(userBadges),
+}));
+
+export const achievementsRelations = relations(achievements, ({ one }) => ({
+  user: one(users, {
+    fields: [achievements.userId],
+    references: [users.id],
+  }),
+}));
+
+// Updated relations for existing tables
+export const usersRelationsUpdated = relations(users, ({ many }) => ({
+  // Existing relations
+  accounts: many(accounts),
+  channelMemberships: many(channelMembers),
+  clubsOwned: many(clubs, { relationName: "ClubOwner" }),
+  clubsMemberOf: many(clubMembers),
+  connectionsAsUserOne: many(connections, { relationName: "ConnectionsAsUserOne" }),
+  connectionsAsUserTwo: many(connections, { relationName: "ConnectionsAsUserTwo" }),
+  receivedConnectionRequests: many(connectionRequests, { relationName: "ReceivedConnectionRequests" }),
+  sentConnectionRequests: many(connectionRequests, { relationName: "SentConnectionRequests" }),
+  education: many(education),
+  experience: many(experience),
+  huddlesOrganized: many(huddles, { relationName: "HuddleOrganizer" }),
+  huddleAttendees: many(huddleAttendees),
+  messagesSent: many(messages, { relationName: "MessageAuthor" }),
+  notifications: many(notifications),
+  posts: many(posts),
+  projectsOwned: many(projects, { relationName: "ProjectOwner" }),
+  applications: many(projectApplications),
+  projectsMemberOf: many(projectMembers),
+  showcasedItems: many(showcasedItems),
+  assignedTasks: many(tasks, { relationName: "AssignedTasks" }),
+  badges: many(userBadges),
+  skills: many(userSkills),
+  leaderboardScores: many(leaderboardScores),
+  
+  // New recruitment and verification relations
+  companyMemberships: many(companyMembers),
+  jobPostingsCreated: many(jobPostings),
+  candidateMatches: many(candidateMatches),
+  messageTemplatesCreated: many(messageTemplates),
+  outreachCampaignsCreated: many(outreachCampaigns),
+  outreachActivitiesReceived: many(outreachActivities),
+  verificationRequestsSubmitted: many(verificationRequests, { relationName: "VerificationRequestsSubmitted" }),
+  verificationRequestsReviewed: many(verificationRequests, { relationName: "VerificationRequestsReviewed" }),
+  achievements: many(achievements),
+}));
+
+export const userBadgesRelationsUpdated = relations(userBadges, ({ one }) => ({
+  badge: one(badges, {
+    fields: [userBadges.badgeId],
+    references: [badges.id],
+  }),
+  user: one(users, {
+    fields: [userBadges.userId],
+    references: [users.id],
+  }),
+  verificationRequest: one(verificationRequests, {
+    fields: [userBadges.verificationRequestId],
+    references: [verificationRequests.id],
+  }),
+}));
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -1133,3 +1600,25 @@ export type ShowcasedItem = typeof showcasedItems.$inferSelect;
 export type NewShowcasedItem = typeof showcasedItems.$inferInsert;
 export type KnowledgeArticle = typeof knowledgeArticles.$inferSelect;
 export type NewKnowledgeArticle = typeof knowledgeArticles.$inferInsert;
+
+// exports for recruitment and verification
+export type Company = typeof companies.$inferSelect;
+export type NewCompany = typeof companies.$inferInsert;
+export type CompanyMember = typeof companyMembers.$inferSelect;
+export type NewCompanyMember = typeof companyMembers.$inferInsert;
+export type JobPosting = typeof jobPostings.$inferSelect;
+export type NewJobPosting = typeof jobPostings.$inferInsert;
+export type CandidateMatch = typeof candidateMatches.$inferSelect;
+export type NewCandidateMatch = typeof candidateMatches.$inferInsert;
+export type MessageTemplate = typeof messageTemplates.$inferSelect;
+export type NewMessageTemplate = typeof messageTemplates.$inferInsert;
+export type OutreachCampaign = typeof outreachCampaigns.$inferSelect;
+export type NewOutreachCampaign = typeof outreachCampaigns.$inferInsert;
+export type OutreachActivity = typeof outreachActivities.$inferSelect;
+export type NewOutreachActivity = typeof outreachActivities.$inferInsert;
+export type VerificationRequest = typeof verificationRequests.$inferSelect;
+export type NewVerificationRequest = typeof verificationRequests.$inferInsert;
+export type Achievement = typeof achievements.$inferSelect;
+export type NewAchievement = typeof achievements.$inferInsert;
+export type LeaderboardScore = typeof leaderboardScores.$inferSelect;
+export type NewLeaderboardScore = typeof leaderboardScores.$inferInsert;

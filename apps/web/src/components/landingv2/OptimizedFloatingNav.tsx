@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, FileText, Users, DollarSign, LogIn, Sparkles, Bell, User, Settings, LogOut } from "lucide-react";
+import { Home, FileText, Users, DollarSign, LogIn, Sparkles, Bell, User, Settings, LogOut, Briefcase } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { User as DatabaseUser, Notification } from "@0unveiled/database";
@@ -141,6 +141,7 @@ export function OptimizedFloatingNav({
     { id: "home", icon: Home, label: "Home", href: "/" },
     { id: "pricing", icon: DollarSign, label: "Pricing", href: "#pricing" },
     { id: "explore", icon: FileText, label: "Explore", href: "/profiles" },
+    { id: "recruitment", icon: Briefcase, label: "Recruitment", href: "/recruitment" },
     { id: "community", icon: Users, label: "Community", href: "#community" },
   ];
 
