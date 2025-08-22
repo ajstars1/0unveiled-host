@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build web app to check types",
+			"type": "shell",
+			"command": "bun x turbo run build --filter=@0unveiled/web",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Rebuild web app after fix",
+			"type": "shell",
+			"command": "bun x turbo run build --filter=@0unveiled/web",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		}
+	]
+}
