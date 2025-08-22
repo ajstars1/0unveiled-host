@@ -12,6 +12,8 @@ type ProgressUpdate = {
   progress?: number;
   complete?: boolean;
   error?: string;
+  // Store terminal result for consumers using polling/non-stream fallbacks
+  result?: any;
 };
 
 const subscribers = new Map<string, Set<(u: ProgressUpdate) => void>>();
@@ -47,6 +49,22 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const jobId = searchParams.get("jobId");
   const stream = searchParams.get("stream");
+  const health = searchParams.get("health");
+
+  // Simple analyzer health probe used by client before kicking off SSE
+  if (health) {
+    try {
+      const analyzerServiceUrl = process.env.ANALYZER_SERVICE_URL || 'http://localhost:8080';
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${analyzerServiceUrl}/health`, { signal: controller.signal });
+      clearTimeout(t);
+      const ok = res.ok;
+      return NextResponse.json({ success: ok }, { status: ok ? 200 : 503 });
+    } catch (e) {
+      return NextResponse.json({ success: false }, { status: 503 });
+    }
+  }
   if (!jobId) {
     return NextResponse.json({ success: false, error: "jobId is required" }, { status: 400 });
   }
@@ -104,8 +122,8 @@ export async function GET(req: NextRequest) {
               push({ status: "Analysis failed", progress: 100, complete: true, error: result.error || "Analysis failed" });
               return;
             }
-            push({ status: "Completed", progress: 100, complete: true });
-            // Include final data payload in a terminal event
+            // Publish and send the terminal result so both SSE and polling consumers can obtain it
+            push({ status: "Completed", progress: 100, complete: true, result: result.data });
             send({ status: "Completed", progress: 100, complete: true, result: result.data });
           } catch (e: any) {
             send({ status: "Unexpected error", progress: 100, complete: true, error: e?.message || "Unexpected error" });

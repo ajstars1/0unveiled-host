@@ -1,5 +1,5 @@
 import { db } from "@0unveiled/database";
-import { showcasedItems, users, accounts } from "@0unveiled/database/schema";
+import { showcasedItems, users, accounts } from "@0unveiled/database";
 import { eq, isNull, or, lt, and } from "drizzle-orm";
 import { logger } from "../lib/logger.js";
 import { updateLeaderboards } from "../services/leaderboard-service.js";

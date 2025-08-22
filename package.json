@@ -3,8 +3,8 @@
   "private": true,
   "description": "0Unveiled v3 - AI-powered platform monorepo",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
+  "build": "turbo run build",
+  "dev": "node ./scripts/dev-all.mjs",
     "dev:frontend": "turbo run dev --filter=@0unveiled/web",
     "dev:api": "turbo run dev --filter=@0unveiled/api",
     "dev:analyzer": "turbo run dev --filter=@0unveiled/github-analyzer-service",

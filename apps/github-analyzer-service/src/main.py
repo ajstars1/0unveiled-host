@@ -2,7 +2,7 @@
 
 import os
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,8 +25,8 @@ class HealthResponse(BaseModel):
 
 
 # Global services
-github_client: GitHubClient | None = None
-analyzer_service: AnalyzerService | None = None
+github_client: Optional[GitHubClient] = None
+analyzer_service: Optional[AnalyzerService] = None
 
 
 @asynccontextmanager

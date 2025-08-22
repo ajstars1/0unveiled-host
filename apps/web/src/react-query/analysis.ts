@@ -32,21 +32,41 @@ export function useAnalyzeMutation() {
 // Cached query wrapper using sessionStorage hydration
 export function useAnalysisQuery(username: string, owner: string, repo: string) {
   const key = analysisKeys.repo(username, owner, repo) as unknown as QueryKey;
+  // Read any cached result stored by the analyze page before redirect
+  const initial = (() => {
+    try {
+      const cached = sessionStorage.getItem("analysisResult");
+      if (!cached) return undefined;
+      const parsed = JSON.parse(cached);
+      return parsed?.data || undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+
   return useQuery({
     queryKey: key,
-  queryFn: async () => postAnalyze(username, owner, repo).then(r => r.data),
-    placeholderData: keepPreviousData,
-    initialData: (() => {
-      try {
-        const cached = sessionStorage.getItem("analysisResult");
-        if (!cached) return undefined;
-        const parsed = JSON.parse(cached);
-        // The loader stored { success, data }. Return data only.
-        return parsed?.data || undefined;
-      } catch {
-        return undefined;
-      }
-    })(),
+    // Only call the backend when there is no cached result
+    queryFn: async () => postAnalyze(username, owner, repo).then((r) => r.data),
+    enabled: !initial,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+    initialData: initial,
     initialDataUpdatedAt: Date.now(),
   });
+}
+
+// Cache-only variant for the results page to avoid any loading state or backend calls.
+export function useAnalysisCacheOnly() {
+  try {
+    const cached = sessionStorage.getItem("analysisResult");
+    if (!cached) return { data: undefined } as const;
+    const parsed = JSON.parse(cached);
+    return { data: parsed?.data } as const;
+  } catch {
+    return { data: undefined } as const;
+  }
 }

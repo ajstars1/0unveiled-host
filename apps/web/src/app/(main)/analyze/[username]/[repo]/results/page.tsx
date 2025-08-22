@@ -11,7 +11,7 @@ import 'reactflow/dist/style.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useParams } from 'next/navigation';
-import { useAnalysisQuery } from '@/react-query/analysis';
+import { useAnalysisCacheOnly } from '@/react-query/analysis';
 
 interface AnalysisResult {
   // New backend shape
@@ -65,25 +65,27 @@ const ResultsPage = () => {
   const params = useParams<{ username: string; repo: string }>();
   const decoded = useMemo(() => decodeURIComponent(params.repo), [params.repo]);
   const [owner, repo] = useMemo(() => (decoded.includes('/') ? decoded.split('/') : [params.username, decoded]), [decoded, params.username]);
-  const { data, isLoading, error } = useAnalysisQuery(params.username, owner, repo);
-  const analysisData = data as unknown as AnalysisResult | null;
+  const { data } = useAnalysisCacheOnly();
+  const analysisData = (data as unknown as AnalysisResult) || null;
 
-  if (isLoading) {
+  if (!analysisData) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading analysis results...</p>
+          <p className="text-gray-700 text-lg">No analysis data found.</p>
+          <p className="text-gray-500 text-sm mt-2">Please run an analysis first.</p>
         </div>
       </div>
     );
   }
 
-  if (error || !analysisData) {
+  // Extra guard: if for any reason data is still missing, avoid accessing fields
+  if (!analysisData) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 text-lg">{(error as any)?.message || 'No data available'}</p>
+          <p className="text-gray-700 text-lg">No analysis data found.</p>
+          <p className="text-gray-500 text-sm mt-2">Please re-run the analysis from the previous page.</p>
         </div>
       </div>
     );

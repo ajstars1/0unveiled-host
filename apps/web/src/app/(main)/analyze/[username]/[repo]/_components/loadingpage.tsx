@@ -40,10 +40,10 @@ interface GameState {
 const GAME_CONFIG = {
   gravity: 0.5, // increased gravity for more challenge
   jumpForce: -9, // increased jump force
-  obstacleWidth: 50, // made obstacles slightly narrower
+  obstacleWidth: 44, // slightly narrower for faster feel
   obstacleGap: 160, // reduced gap for more difficulty
-  obstacleSpacing: 280, // closer obstacles
-  gameSpeed: 2.5, // increased speed
+  obstacleSpacing: 240, // closer obstacles for more action
+  gameSpeed: 4.2, // faster base speed
   playerSize: 24,
 }
 
@@ -63,6 +63,9 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
   const animationRef = useRef<number | null>(null)
   const runStartRef = useRef<number | null>(null)
   const lastFrameRef = useRef<number | null>(null)
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
+  const rainbowGradientRef = useRef<CanvasGradient | null>(null)
+  const stateRef = useRef<GameState | null>(null)
   const [gameState, setGameState] = useState<GameState>({
     playerY: 250,
     velocity: 0,
@@ -82,6 +85,10 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
     slowMoUntil: 0,
     assistModeUntil: 0,
   })
+  // Mirror state into a ref for fast reads in RAF without triggering React work
+  useEffect(() => {
+    stateRef.current = gameState
+  }, [gameState])
 
   const words = ["0Unveiled", "Insight", "Vision", "Analyze", "Discover", "Create", "Build", "Code"]
   const [currentWord, setCurrentWord] = useState(words[0])
@@ -258,7 +265,7 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
   const gameLoop = useCallback(() => {
     if (!gameState.gameActive || gameState.analysisComplete || !gameState.gameStarted) return
 
-    setGameState((prev) => {
+  setGameState((prev) => {
       // Time-based delta for smoother animations
       const now = performance.now()
       const last = lastFrameRef.current ?? now
@@ -274,12 +281,14 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
       // Difficulty scaling: increase speed and reduce gap slightly over time and with progress
       const seconds = runStartRef.current ? (Date.now() - runStartRef.current) / 1000 : 0
       const progressFactor = (newProgress || 0) / 100
-      const baseSpeed = GAME_CONFIG.gameSpeed
-      const speedBoost = 1 + Math.min(0.8, 0.25 * progressFactor + 0.02 * seconds)
-      const assistActive = prev.assistModeUntil > Date.now()
-      const slowMoActive = prev.slowMoUntil > Date.now()
-      let effectiveSpeed = baseSpeed * speedBoost * (assistActive ? 0.8 : 1)
-      if (slowMoActive) effectiveSpeed *= 0.55
+  const baseSpeed = GAME_CONFIG.gameSpeed
+  // Stronger ramp so the game feels snappy early and scales faster
+  const speedBoost = 1 + Math.min(1.0, 0.35 * progressFactor + 0.04 * seconds)
+  const assistActive = prev.assistModeUntil > Date.now()
+  const slowMoActive = prev.slowMoUntil > Date.now()
+  // Keep speed high: no assist penalty; slow-mo effect is milder
+  let effectiveSpeed = baseSpeed * speedBoost
+  if (slowMoActive) effectiveSpeed *= 0.85
       const baseGap = GAME_CONFIG.obstacleGap
       const gapReduction = Math.min(60, 30 * progressFactor + 10 * Math.log10(1 + seconds))
       const effectiveGap = Math.max(110, baseGap - (assistActive ? gapReduction * 0.5 : gapReduction))
@@ -314,7 +323,7 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
             showEasterEgg = true
             easterEggType = "🛡️ Shield +1"
           } else if (obstacle.type === "rainbow") {
-            slowMoUntil = Date.now() + 4000 // 4s slow motion
+            slowMoUntil = Date.now() + 2000 // 2s slow motion (lighter effect)
             showEasterEgg = true
             easterEggType = "🐢 Slow Motion"
           }
@@ -324,7 +333,7 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
       })
 
       // Add new obstacles with varying difficulty
-      if (newObstacles[newObstacles.length - 1].x < 500) {
+  if (newObstacles[newObstacles.length - 1].x < 560) {
         const rand = Math.random()
         let type: "normal" | "golden" | "rainbow" = "normal"
         if (rand < 0.08) type = "rainbow"
@@ -433,7 +442,7 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
       // Update score multiplier based on streak (1x..5x)
       multiplier = Math.min(5, 1 + Math.floor(newStreak / 5))
 
-      return {
+      const nextState: GameState = {
         ...prev,
         playerY: newPlayerY,
         velocity: newVelocity,
@@ -447,13 +456,157 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
         shieldCharges,
         slowMoUntil,
       }
+      // Mirror to ref for draw loop
+      stateRef.current = nextState
+      return nextState
     })
   }, [gameState.gameActive, gameState.analysisComplete, gameState.gameStarted, checkCollision, initializeObstacles, useExternalProgress])
 
-  // Animation loop
+  // Setup canvas context and cached gradient
   useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+    ctxRef.current = ctx
+
+    const setupSize = () => {
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1))
+      const cssWidth = 800
+      const cssHeight = 400
+      if (canvas.width !== cssWidth * dpr || canvas.height !== cssHeight * dpr) {
+        canvas.width = cssWidth * dpr
+        canvas.height = cssHeight * dpr
+        canvas.style.width = cssWidth + "px"
+        canvas.style.height = cssHeight + "px"
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      }
+      // Cache a horizontal rainbow gradient across obstacle width
+      const grad = ctx.createLinearGradient(0, 0, GAME_CONFIG.obstacleWidth, 0)
+      grad.addColorStop(0, "#FF6B6B")
+      grad.addColorStop(0.33, "#4ECDC4")
+      grad.addColorStop(0.66, "#45B7D1")
+      grad.addColorStop(1, "#96CEB4")
+      rainbowGradientRef.current = grad
+    }
+    setupSize()
+    const onResize = () => setupSize()
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [])
+
+  // Combined RAF: advance game logic and draw frame
+  useEffect(() => {
+    const draw = () => {
+      const ctx = ctxRef.current
+      const gs = stateRef.current || gameState
+      const canvas = canvasRef.current
+      if (!ctx || !canvas) return
+
+      // Clear & background
+      const w = 800
+      const h = 400
+      const bg = ctx.createLinearGradient(0, 0, 0, h)
+      bg.addColorStop(0, "#ffffff")
+      bg.addColorStop(1, "#f6f7f9")
+      ctx.fillStyle = bg
+      ctx.fillRect(0, 0, w, h)
+
+      if (!gs.gameStarted) {
+        ctx.fillStyle = "black"
+        ctx.font = "48px system-ui, -apple-system, sans-serif"
+        ctx.textAlign = "center"
+        ctx.fillText("AI Analysis Game", w / 2, h / 2 - 60)
+        ctx.font = "24px system-ui, -apple-system, sans-serif"
+        ctx.fillText("Press SPACE or Tap to Start", w / 2, h / 2 + 20)
+        ctx.font = "16px system-ui, -apple-system, sans-serif"
+        ctx.fillStyle = "gray"
+        ctx.fillText(`High Score: ${gs.highScore}`, w / 2, h / 2 + 60)
+      } else if (!gs.analysisComplete) {
+        // Obstacles
+        for (const obstacle of gs.obstacles) {
+          if (obstacle.type === "golden") {
+            ctx.fillStyle = "#FFD700"
+          } else if (obstacle.type === "rainbow" && rainbowGradientRef.current) {
+            ctx.fillStyle = rainbowGradientRef.current
+          } else {
+            ctx.fillStyle = "black"
+          }
+          // Top
+          ctx.fillRect(obstacle.x, 0, GAME_CONFIG.obstacleWidth, obstacle.gapY)
+          // Bottom
+          const gap = Math.max(110, GAME_CONFIG.obstacleGap)
+          ctx.fillRect(obstacle.x, obstacle.gapY + gap, GAME_CONFIG.obstacleWidth, h - (obstacle.gapY + gap))
+        }
+
+        // Player
+        ctx.shadowBlur = gs.streak >= 10 ? 10 : 0
+        ctx.shadowColor = gs.streak >= 10 ? "#4ECDC4" : "transparent"
+        ctx.fillStyle = "black"
+        ctx.font = "20px system-ui, -apple-system, sans-serif"
+        ctx.textAlign = "center"
+        ctx.fillText(currentWord, 150 + GAME_CONFIG.playerSize / 2, gs.playerY + 15)
+
+        // Shield aura
+        if (gs.shieldCharges > 0) {
+          ctx.strokeStyle = "#FFD700"
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.arc(150 + GAME_CONFIG.playerSize / 2, gs.playerY + 8, 18, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+
+        // HUD
+        ctx.shadowBlur = 0
+        ctx.fillStyle = "#111"
+        ctx.font = "14px system-ui, -apple-system, sans-serif"
+        ctx.textAlign = "left"
+        ctx.fillText(`Score: ${gs.score}`, 12, 22)
+        ctx.fillText(`x${gs.multiplier} combo`, 12, 40)
+        if (gs.shieldCharges > 0) ctx.fillText(`Shield: ${gs.shieldCharges}`, 12, 58)
+        if (gs.slowMoUntil > Date.now()) {
+          ctx.textAlign = "center"
+          ctx.fillStyle = "#0a0a0a"
+          ctx.fillText("SLOW MOTION", w / 2, 28)
+        }
+
+        // Toast
+        if (gs.showEasterEgg) {
+          ctx.fillStyle = "rgba(0,0,0,0.8)"
+          const msg = gs.easterEggType
+          const padX = 10
+          const padY = 6
+          const textW = ctx.measureText(msg).width
+          const boxW = textW + padX * 2
+          const boxH = 28
+          const x = w / 2 - boxW / 2
+          const y = 60
+          ctx.fillRect(x, y, boxW, boxH)
+          ctx.fillStyle = "#fff"
+          ctx.textAlign = "center"
+          ctx.font = "14px system-ui, -apple-system, sans-serif"
+          ctx.fillText(msg, w / 2, y + 18)
+        }
+      } else {
+        ctx.fillStyle = "black"
+        ctx.font = "32px system-ui, -apple-system, sans-serif"
+        ctx.textAlign = "center"
+        ctx.fillText("Analysis Complete!", w / 2, h / 2 - 40)
+        ctx.font = "24px system-ui, -apple-system, sans-serif"
+        ctx.fillText(`Final Score: ${gs.score}`, w / 2, h / 2)
+        if (gs.score === gs.highScore && gs.score > 0) {
+          ctx.fillStyle = "#FFD700"
+          ctx.fillText("🏆 NEW HIGH SCORE! 🏆", w / 2, h / 2 + 40)
+        }
+        ctx.fillStyle = "gray"
+        ctx.font = "18px system-ui, -apple-system, sans-serif"
+        ctx.fillText("Transitioning to results...", w / 2, h / 2 + 80)
+      }
+    }
+
     const animate = () => {
       gameLoop()
+      draw()
       animationRef.current = requestAnimationFrame(animate)
     }
 
@@ -462,11 +615,9 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
     }
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
-  }, [gameLoop, gameState.gameStarted, gameState.analysisComplete])
+  }, [gameLoop, gameState.gameStarted, gameState.analysisComplete, currentWord])
 
   // Hide easter egg after delay
   useEffect(() => {
@@ -478,147 +629,6 @@ export default function AIAnalysisGame({ currentRepo, status, progress, complete
     }
   }, [gameState.showEasterEgg])
 
-  // Canvas drawing (minimal, monochrome)
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    // High-DPI scaling
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1))
-    const cssWidth = 800
-    const cssHeight = 400
-    if (canvas.width !== cssWidth * dpr || canvas.height !== cssHeight * dpr) {
-      canvas.width = cssWidth * dpr
-      canvas.height = cssHeight * dpr
-      canvas.style.width = cssWidth + "px"
-      canvas.style.height = cssHeight + "px"
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    }
-
-    // Clear canvas
-    const w = cssWidth
-    const h = cssHeight
-    // Subtle gradient background
-    const bg = ctx.createLinearGradient(0, 0, 0, h)
-    bg.addColorStop(0, "#ffffff")
-    bg.addColorStop(1, "#f6f7f9")
-    ctx.fillStyle = bg
-    ctx.fillRect(0, 0, w, h)
-
-  if (!gameState.gameStarted) {
-      ctx.fillStyle = "black"
-      ctx.font = "48px system-ui, -apple-system, sans-serif"
-      ctx.textAlign = "center"
-      ctx.fillText("AI Analysis Game", w / 2, h / 2 - 60)
-
-      ctx.font = "24px system-ui, -apple-system, sans-serif"
-      ctx.fillText("Press SPACE or Tap to Start", w / 2, h / 2 + 20)
-
-      ctx.font = "16px system-ui, -apple-system, sans-serif"
-      ctx.fillStyle = "gray"
-      ctx.fillText(`High Score: ${gameState.highScore}`, w / 2, h / 2 + 60)
-  } else if (!gameState.analysisComplete) {
-      gameState.obstacles.forEach((obstacle) => {
-        if (obstacle.type === "golden") {
-          ctx.fillStyle = "#FFD700"
-        } else if (obstacle.type === "rainbow") {
-          const gradient = ctx.createLinearGradient(obstacle.x, 0, obstacle.x + GAME_CONFIG.obstacleWidth, 0)
-          gradient.addColorStop(0, "#FF6B6B")
-          gradient.addColorStop(0.33, "#4ECDC4")
-          gradient.addColorStop(0.66, "#45B7D1")
-          gradient.addColorStop(1, "#96CEB4")
-          ctx.fillStyle = gradient
-        } else {
-          ctx.fillStyle = "black"
-        }
-
-        // Top obstacle
-        ctx.fillRect(obstacle.x, 0, GAME_CONFIG.obstacleWidth, obstacle.gapY)
-        // Bottom obstacle
-        ctx.fillRect(
-          obstacle.x,
-          obstacle.gapY + Math.max(110, GAME_CONFIG.obstacleGap - 0),
-          GAME_CONFIG.obstacleWidth,
-          h - (obstacle.gapY + Math.max(110, GAME_CONFIG.obstacleGap - 0)),
-        )
-      })
-
-      // Draw player (word) with glow effect when streak is high
-      if (gameState.streak >= 10) {
-        ctx.shadowColor = "#4ECDC4"
-        ctx.shadowBlur = 10
-      }
-
-      ctx.fillStyle = "black"
-      ctx.font = "20px system-ui, -apple-system, sans-serif"
-      ctx.textAlign = "center"
-      ctx.fillText(currentWord, 150 + GAME_CONFIG.playerSize / 2, gameState.playerY + 15)
-
-      // Shield aura
-      if (gameState.shieldCharges > 0) {
-        ctx.strokeStyle = "#FFD700"
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.arc(150 + GAME_CONFIG.playerSize / 2, gameState.playerY + 8, 18, 0, Math.PI * 2)
-        ctx.stroke()
-      }
-
-      // HUD: score and multiplier, small and subtle
-      ctx.shadowBlur = 0
-      ctx.fillStyle = "#111"
-      ctx.font = "14px system-ui, -apple-system, sans-serif"
-      ctx.textAlign = "left"
-      ctx.fillText(`Score: ${gameState.score}`, 12, 22)
-      ctx.fillText(`x${gameState.multiplier} combo`, 12, 40)
-      if (gameState.shieldCharges > 0) ctx.fillText(`Shield: ${gameState.shieldCharges}`, 12, 58)
-      if (gameState.slowMoUntil > Date.now()) {
-        ctx.textAlign = "center"
-        ctx.fillStyle = "#0a0a0a"
-        ctx.fillText("SLOW MOTION", w / 2, 28)
-      }
-
-      ctx.shadowBlur = 0
-
-  // Minimal mode: easter egg small toast
-      if (gameState.showEasterEgg) {
-        ctx.fillStyle = "rgba(0,0,0,0.8)"
-        const msg = gameState.easterEggType
-        const padX = 10
-        const padY = 6
-        const textW = ctx.measureText(msg).width
-        const boxW = textW + padX * 2
-        const boxH = 28
-        const x = w / 2 - boxW / 2
-        const y = 60
-        ctx.fillRect(x, y, boxW, boxH)
-        ctx.fillStyle = "#fff"
-        ctx.textAlign = "center"
-        ctx.font = "14px system-ui, -apple-system, sans-serif"
-        ctx.fillText(msg, w / 2, y + 18)
-      }
-    } else {
-      // Analysis complete screen
-      ctx.fillStyle = "black"
-      ctx.font = "32px system-ui, -apple-system, sans-serif"
-      ctx.textAlign = "center"
-      ctx.fillText("Analysis Complete!", w / 2, h / 2 - 40)
-
-      ctx.font = "24px system-ui, -apple-system, sans-serif"
-      ctx.fillText(`Final Score: ${gameState.score}`, w / 2, h / 2)
-
-      if (gameState.score === gameState.highScore && gameState.score > 0) {
-        ctx.fillStyle = "#FFD700"
-        ctx.fillText("🏆 NEW HIGH SCORE! 🏆", w / 2, h / 2 + 40)
-      }
-
-      ctx.fillStyle = "gray"
-      ctx.font = "18px system-ui, -apple-system, sans-serif"
-      ctx.fillText("Transitioning to results...", w / 2, h / 2 + 80)
-    }
-  }, [gameState, currentWord])
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
