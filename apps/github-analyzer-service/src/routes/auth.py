@@ -47,12 +47,22 @@ async def analyze_repository_with_user_token(request: AnalysisRequest):
         except Exception as e:
             logger.warning(f"Failed to build languages breakdown: {e}")
 
-        # Build simplified technology stack (arrays of names)
+        # Build simplified technology stack (arrays of names) - extended to include more categories
         simple_tech_stack = {
             "frameworks": [t.name for t in (result.tech_stack.frameworks or [])] if result.tech_stack else [],
             "databases": [t.name for t in (result.tech_stack.databases or [])] if result.tech_stack else [],
             "tools": [t.name for t in (result.tech_stack.tools or [])] if result.tech_stack else [],
             "languages": [t.name for t in (result.tech_stack.languages or [])] if result.tech_stack else [],
+            # New categories exposed for UI
+            "testing": [t.name for t in (getattr(result.tech_stack, 'testing_frameworks', []) or [])] if result.tech_stack else [],
+            "build_tools": [t.name for t in (getattr(result.tech_stack, 'build_tools', []) or [])] if result.tech_stack else [],
+            "deployment_tools": [t.name for t in (getattr(result.tech_stack, 'deployment_tools', []) or [])] if result.tech_stack else [],
+            "platforms": [t.name for t in (getattr(result.tech_stack, 'platforms', []) or [])] if result.tech_stack else [],
+            # Optional summary scores for future UI use
+            "scores": {
+                "complexity": getattr(result.tech_stack, 'complexity_score', 0.0) if result.tech_stack else 0.0,
+                "modernness": getattr(result.tech_stack, 'modernness_score', 0.0) if result.tech_stack else 0.0,
+            }
         }
 
         # Compute commit analysis (total commits and contributors)

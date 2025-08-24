@@ -1,7 +1,16 @@
-"""AI-powered insights generation using Gemini."""
+"""AI-powered, recruiter-ready insights generation.
 
-from typing import Dict, List
+This analyzer produces concise, industry-standard insights that hiring managers and
+developers actually care about: clear project summary, code/architecture quality,
+actionable improvements, strengths/weaknesses, skill signals, and project maturity.
+
+It can use Gemini for deep code-aware analysis when available, with robust
+rule-based fallbacks designed around modern engineering best practices.
+"""
+
+from typing import Dict, List, Optional
 from datetime import datetime
+import json
 
 from loguru import logger
 
@@ -12,7 +21,16 @@ from ..config import settings
 
 
 class AIInsightsAnalyzer:
-    """Analyzer for generating AI-powered insights about repositories."""
+    """Analyzer for generating AI-powered insights about repositories.
+
+    Outputs are tailored for resume/portfolio reviewers and engineers:
+    - What the project does (2–3 sentences, domain-focused)
+    - Quality/Architecture/Maintainability assessments with concrete observations
+    - Strengths and weaknesses aligned to hiring signals (testing, CI, security, docs)
+    - Actionable next steps with expected impact
+    - Skill indicators derived from metrics and tech stack
+    - Clear project maturity and development stage
+    """
     
     def __init__(self):
         self.gemini_available = bool(settings.gemini_api_key)
@@ -21,6 +39,7 @@ class AIInsightsAnalyzer:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.gemini_api_key)
+                # Use a fast yet capable model by default
                 self.model = genai.GenerativeModel('gemini-1.5-flash')
                 logger.info("Gemini AI model initialized")
             except ImportError:
@@ -50,10 +69,10 @@ class AIInsightsAnalyzer:
             return await self._generate_ai_insights(
                 repository, code_metrics, quality_metrics, security_metrics, tech_stack, files
             )
-        else:
-            return await self._generate_rule_based_insights(
-                repository, code_metrics, quality_metrics, security_metrics, tech_stack
-            )
+        # Fallback: robust rule-based insights
+        return await self._generate_rule_based_insights(
+            repository, code_metrics, quality_metrics, security_metrics, tech_stack
+        )
     
     async def _generate_ai_insights(
         self,
@@ -66,27 +85,27 @@ class AIInsightsAnalyzer:
     ) -> AIInsights:
         """Generate insights using Gemini AI."""
         try:
-            # Prepare context for AI with actual code samples
+            # Prepare context for AI with actual code samples and tech highlights
             context = self._prepare_context_with_code(
                 repository, code_metrics, quality_metrics, security_metrics, tech_stack, files or []
             )
-            
-            # Generate different types of insights
+
+            # Orchestrate targeted prompts for reliability and succinct outputs
             project_summary = await self._get_ai_project_summary(context)
             quality_assessment = await self._get_ai_quality_assessment(context)
             architecture_assessment = await self._get_ai_architecture_assessment(context)
             maintainability_assessment = await self._get_ai_maintainability_assessment(context)
-            
+
             strengths = await self._get_ai_strengths(context)
             weaknesses = await self._get_ai_weaknesses(context)
             improvements = await self._get_ai_improvements(context)
-            
+
             skill_indicators = await self._get_ai_skill_indicators(context)
             coding_patterns = await self._get_ai_coding_patterns(context)
-            
+
             project_maturity = await self._get_ai_project_maturity(context)
             development_stage = await self._get_ai_development_stage(context)
-            
+
             return AIInsights(
                 overall_quality_score=self._calculate_overall_quality_score(
                     code_metrics, quality_metrics, security_metrics
@@ -108,7 +127,7 @@ class AIInsightsAnalyzer:
                 industry_alignment=self._get_industry_alignment(tech_stack),
                 career_impact=self._assess_career_impact(tech_stack, quality_metrics)
             )
-            
+
         except Exception as e:
             logger.error(f"AI insights generation failed: {e}")
             # Fallback to rule-based insights
@@ -125,25 +144,25 @@ class AIInsightsAnalyzer:
         tech_stack: TechStack
     ) -> AIInsights:
         """Generate insights using rule-based logic."""
-        
+
         # Quality assessments
         quality_assessment = self._rule_based_quality_assessment(code_metrics, quality_metrics)
         architecture_assessment = self._rule_based_architecture_assessment(quality_metrics, tech_stack)
         maintainability_assessment = self._rule_based_maintainability_assessment(code_metrics)
-        
-        # Strengths and weaknesses
+
+        # Strengths and weaknesses aligned with hiring signals
         strengths = self._identify_strengths(code_metrics, quality_metrics, security_metrics, tech_stack)
-        weaknesses = self._identify_weaknesses(code_metrics, quality_metrics, security_metrics)
-        improvements = self._suggest_improvements(weaknesses, quality_metrics)
-        
+        weaknesses = self._identify_weaknesses(code_metrics, quality_metrics, security_metrics, tech_stack)
+        improvements = self._suggest_improvements(weaknesses, quality_metrics, tech_stack)
+
         # Developer profiling
         skill_indicators = self._assess_skill_indicators(code_metrics, quality_metrics, tech_stack)
         coding_patterns = self._identify_coding_patterns(code_metrics, tech_stack)
-        
+
         # Project assessment
         project_maturity = self._assess_project_maturity(repository, quality_metrics)
-        development_stage = self._assess_development_stage(repository, code_metrics)
-        
+        development_stage = self._assess_development_stage(repository, code_metrics, tech_stack)
+
         return AIInsights(
             overall_quality_score=self._calculate_overall_quality_score(
                 code_metrics, quality_metrics, security_metrics
@@ -151,7 +170,7 @@ class AIInsightsAnalyzer:
             code_style_assessment=quality_assessment,
             architecture_assessment=architecture_assessment,
             maintainability_assessment=maintainability_assessment,
-            project_summary="Rule-based analysis - project summary not available",
+            project_summary=self._rule_based_project_summary(tech_stack),
             strengths=strengths,
             weaknesses=weaknesses,
             improvement_suggestions=improvements,
@@ -174,40 +193,57 @@ class AIInsightsAnalyzer:
         security_metrics: SecurityMetrics,
         tech_stack: TechStack
     ) -> str:
-        """Prepare context string for AI analysis."""
+        """Prepare concise, signal-rich context for AI analysis."""
+        def names(items: List) -> List[str]:
+            return [t.name for t in (items or [])]
+
+        tech_snapshot = {
+            "primary_language": tech_stack.primary_language,
+            "languages": names(tech_stack.languages),
+            "frameworks": names(tech_stack.frameworks),
+            "libraries": names(tech_stack.libraries),
+            "databases": names(tech_stack.databases),
+            "tools": names(tech_stack.tools),
+            "testing": names(tech_stack.testing_frameworks),
+            "build": names(tech_stack.build_tools),
+            "deployment": names(tech_stack.deployment_tools),
+            "platforms": names(tech_stack.platforms),
+            "modernness_score": tech_stack.modernness_score,
+            "complexity_score": tech_stack.complexity_score,
+            "total_technologies": tech_stack.total_technologies,
+        }
+
         context = f"""
-        Repository Analysis Context:
-        
-        Repository: {repository.full_name}
-        Description: {repository.description or "No description"}
-        Primary Language: {tech_stack.primary_language or "Multiple"}
-        Stars: {repository.stargazers_count}
-        Forks: {repository.forks_count}
-        
-        Code Metrics:
-        - Total Lines: {code_metrics.total_lines}
-        - Lines of Code: {code_metrics.lines_of_code}
-        - Cyclomatic Complexity: {code_metrics.cyclomatic_complexity:.2f}
-        - Maintainability Index: {code_metrics.maintainability_index:.2f}
-        - Technical Debt Ratio: {code_metrics.technical_debt_ratio:.2f}
-        
-        Quality Metrics:
-        - Documentation Coverage: {quality_metrics.docstring_coverage:.1f}%
-        - Test Coverage: {quality_metrics.test_coverage or "Unknown"}
-        - Architecture Score: {quality_metrics.architecture_score:.1f}
-        
-        Security Metrics:
-        - Security Score: {security_metrics.security_score:.1f}
-        - Critical Issues: {security_metrics.critical_issues}
-        - Security Hotspots: {security_metrics.security_hotspots}
-        
-        Technology Stack:
-        - Languages: {len(tech_stack.languages)}
-        - Frameworks: {len(tech_stack.frameworks)}  
-        - Total Technologies: {tech_stack.total_technologies}
-        - Modernness Score: {tech_stack.modernness_score:.1f}
-        """
-        
+Repository Analysis Context
+
+Repository: {repository.full_name}
+Description: {repository.description or "No description"}
+Primary Language: {tech_stack.primary_language or "Multiple"}
+Stars: {repository.stargazers_count} | Forks: {repository.forks_count}
+Created: {repository.created_at}
+
+Code Metrics
+- Total Lines: {code_metrics.total_lines}
+- Lines of Code: {code_metrics.lines_of_code}
+- Cyclomatic Complexity: {code_metrics.cyclomatic_complexity:.2f}
+- Maintainability Index: {code_metrics.maintainability_index:.2f}
+- Technical Debt Ratio: {code_metrics.technical_debt_ratio:.2f}
+
+Quality Metrics
+- Doc Coverage: {quality_metrics.docstring_coverage:.1f}%
+- Test Coverage: {quality_metrics.test_coverage or "Unknown"}
+- Test/Code Ratio: {quality_metrics.test_to_code_ratio:.2f}
+- Architecture Score: {quality_metrics.architecture_score:.1f}
+
+Security Metrics
+- Security Score: {security_metrics.security_score:.1f}
+- Critical Issues: {security_metrics.critical_issues}
+- Security Hotspots: {security_metrics.security_hotspots}
+
+Technology Snapshot (JSON):
+{json.dumps(tech_snapshot, ensure_ascii=False)}
+"""
+
         return context
     
     def _prepare_context_with_code(
@@ -239,7 +275,7 @@ File {i+1}: {file_info.path}
 Language: {file_info.extension}
 Size: {len(file_info.content)} characters
 
-Code Content:
+Code Content (truncated if long):
 ```{file_info.extension}
 {content_preview}
 ```
@@ -337,31 +373,9 @@ Code Content:
         prompt = f"""
         {context}
         
-        You are a senior software engineer analyzing this codebase to understand what this project ACTUALLY DOES functionally. Look at the code content, not just file names.
-
-        **CRITICAL**: Read the actual code content shown above and determine what the application's PURPOSE is:
-
-        **Deep Code Analysis Required:**
-        - What business logic do you see in the functions/methods?
-        - What data is being processed, stored, or manipulated?
-        - What APIs or services are being called?
-        - What user interactions or workflows are implemented?
-        - What specific problems is this code solving?
-
-        **Examples of good summaries:**
-        - "An e-commerce platform that processes online payments, manages product inventory, and handles user authentication with shopping cart functionality"
-        - "A machine learning model training pipeline that processes image data, applies computer vision algorithms, and generates classification results"
-        - "A real-time chat application that handles WebSocket connections, stores messages in a database, and provides user authentication"
-        - "A financial analysis tool that fetches stock market data, calculates risk metrics, and generates investment recommendations"
-
-        **Bad examples (too generic):**
-        - "A web application with React components"
-        - "A TypeScript project with modern development tools"
-        - "A full-stack application using popular frameworks"
-
-        **Your task**: Based on the ACTUAL CODE CONTENT you can see (functions, logic, data flow, API calls), write 2-3 sentences explaining what this project functionally accomplishes and what specific problem domain it addresses.
-
-        Focus on WHAT IT DOES, not HOW it's built.
+        You are a senior engineer. In 2–3 sentences, summarize what the application does
+        based on actual code (functions, data flow, APIs) and the tech snapshot. Focus on
+        the problem domain and primary user value. Avoid generic stack descriptions.
         """
         
         try:
@@ -383,17 +397,9 @@ Code Content:
         prompt = f"""
         {context}
         
-        You are a senior software engineer reviewing this codebase. Analyze the actual code samples provided above and give a detailed assessment covering:
-
-        1. **Code Quality & Patterns**: What specific coding patterns, frameworks, and architectures do you see? Comment on the actual implementation approaches used.
-
-        2. **Language-Specific Observations**: Based on the actual code files shown, what modern language features, libraries, or frameworks are being used effectively or ineffectively?
-
-        3. **Code Structure**: How is the code organized? Comment on the actual file structure, naming conventions, and separation of concerns you observe.
-
-        4. **Specific Improvements**: Based on the actual code you can see, what specific, actionable improvements would you recommend?
-
-        Provide a detailed, technical analysis (4-6 sentences) that shows you've actually read and understood the code samples. Be specific about what you see in the actual implementation.
+        Provide a concise code quality assessment (4–6 sentences) referencing specific
+        implementation details from the code samples: patterns, language features,
+        structure, and 1–2 actionable improvements. Keep it technical and specific.
         """
         
         try:
@@ -418,19 +424,9 @@ Code Content:
         prompt = f"""
         {context}
         
-        You are a software architect reviewing this codebase. Based on the actual code files and directory structure shown above, provide a detailed architectural analysis:
-
-        1. **Architecture Pattern**: What architectural patterns do you identify from the actual code structure? (MVC, microservices, layered, etc.)
-
-        2. **Technology Stack Assessment**: Based on the actual files you can see, what technology choices were made and how well do they work together?
-
-        3. **Code Organization**: How are the modules, components, and services organized? Comment on the actual directory structure and file organization you observe.
-
-        4. **Scalability & Maintainability**: Based on the actual code patterns you see, how well would this architecture scale and how maintainable is it?
-
-        5. **Design Patterns**: What specific design patterns or architectural decisions do you see implemented in the actual code?
-
-        Provide a comprehensive architectural analysis (5-7 sentences) based on what you can actually observe in the code samples and structure.
+        As a software architect, give a 4–6 sentence architectural assessment: patterns,
+        module boundaries, scalability/maintainability, and notable design decisions
+        observed in code and directory structure.
         """
         
         try:
@@ -451,19 +447,8 @@ Code Content:
         prompt = f"""
         {context}
         
-        You are a senior developer conducting a maintainability review. Based on the actual code samples and metrics shown above, provide specific maintainability insights:
-
-        1. **Code Readability**: How readable and understandable is the actual code you can see? Comment on variable names, function structure, and documentation.
-
-        2. **Technical Debt**: What specific technical debt or code smells do you identify in the actual code samples?
-
-        3. **Testing & Documentation**: Based on what you can observe, how well is the code tested and documented?
-
-        4. **Refactoring Opportunities**: What specific refactoring opportunities do you see in the actual code?
-
-        5. **Long-term Maintenance**: What challenges would a new developer face when working with this code?
-
-        Provide specific, actionable maintainability recommendations (4-6 sentences) based on the actual code you can observe, not just the metrics.
+        Provide a maintainability assessment (4–6 sentences): readability, debt/smells,
+        test/docs sufficiency, and 2–3 concrete refactoring opportunities.
         """
         
         try:
@@ -484,9 +469,8 @@ Code Content:
         prompt = f"""
         {context}
         
-        Based on the repository metrics, identify 2-3 key strengths.
-        Return only a simple list, one item per line, without bullets or numbers.
-        Focus on technical strengths like code quality, security, architecture, or technology choices.
+        Identify 3 key technical strengths (testing/CI/security/docs/performance/architecture).
+        Return a plain list, one item per line, no bullets or numbers, max 8 words each.
         """
         
         try:
@@ -502,161 +486,334 @@ Code Content:
     
     async def _get_ai_weaknesses(self, context: str) -> List[str]:
         """Get AI-identified weaknesses."""
-        return ["Could improve test coverage", "Documentation needs work"]  # Placeholder
+        if not self.gemini_available:
+            return ["Insufficient test coverage", "Documentation gaps", "Missing CI checks"]
+
+        prompt = f"""
+        {context}
+
+        Identify the top 3 technical weaknesses blocking production readiness.
+        Return a plain list, one per line, max 8 words.
+        """
+
+        try:
+            response = self.model.generate_content(prompt)
+            if response and response.text:
+                items = [s.strip() for s in response.text.strip().split('\n') if s.strip()]
+                return items[:3]
+            return ["Testing is weak"]
+        except Exception as e:
+            logger.error(f"AI weaknesses assessment failed: {e}")
+            return ["Insufficient test coverage", "Documentation gaps", "Missing CI checks"]
     
     async def _get_ai_improvements(self, context: str) -> List[str]:
         """Get AI improvement suggestions."""
-        return ["Add more unit tests", "Improve code documentation"]  # Placeholder
+        if not self.gemini_available:
+            return [
+                "Add unit + integration tests (high impact)",
+                "Set up CI with lint/test (high impact)",
+                "Harden security checks/dep updates (medium)",
+            ]
+
+        prompt = f"""
+        {context}
+
+        Suggest 3–5 actionable improvements prioritized by impact. Each item should be
+        a short imperative with an impact tag in parentheses like "(high)" or "(medium)".
+        Return a plain list, one per line, no bullets.
+        """
+
+        try:
+            response = self.model.generate_content(prompt)
+            if response and response.text:
+                items = [s.strip() for s in response.text.strip().split('\n') if s.strip()]
+                return items[:5]
+            return ["Add tests (high)"]
+        except Exception as e:
+            logger.error(f"AI improvements failed: {e}")
+            return [
+                "Add unit + integration tests (high)",
+                "Set up CI with lint/test (high)",
+                "Harden security checks/dep updates (medium)",
+            ]
     
     async def _get_ai_skill_indicators(self, context: str) -> Dict[str, float]:
         """Get AI assessment of developer skill indicators."""
-        return {"architecture_design": 75.0, "code_quality": 80.0}  # Placeholder
+        if not self.gemini_available:
+            # Rule-based default; refined later by rule-based method
+            return {"architecture_design": 70.0, "code_quality": 70.0}
+
+        prompt = f"""
+        {context}
+
+        Return a compact JSON object mapping skill areas to percentages (0-100):
+        keys: ["architecture_design","code_quality","testing","security","devops","documentation"].
+        Only output JSON.
+        """
+
+        try:
+            response = self.model.generate_content(prompt)
+            if response and response.text:
+                text = response.text.strip().strip('`')
+                # Attempt to extract JSON
+                start = text.find('{')
+                end = text.rfind('}') + 1
+                if start != -1 and end != -1:
+                    parsed = json.loads(text[start:end])
+                    # Coerce to floats within range
+                    out: Dict[str, float] = {}
+                    for k, v in parsed.items():
+                        try:
+                            out[k] = float(max(0.0, min(100.0, float(v))))
+                        except Exception:
+                            continue
+                    if out:
+                        return out
+            return {"architecture_design": 70.0, "code_quality": 70.0}
+        except Exception as e:
+            logger.error(f"AI skill indicators failed: {e}")
+            return {"architecture_design": 70.0, "code_quality": 70.0}
     
     async def _get_ai_coding_patterns(self, context: str) -> List[str]:
         """Get AI-identified coding patterns."""
-        return ["Object-oriented design", "Clean code practices"]  # Placeholder
+        if not self.gemini_available:
+            return ["Modular design", "Typed APIs where applicable"]
+
+        prompt = f"""
+        {context}
+
+        List 3–5 concrete coding/architecture patterns observed (e.g., layered architecture,
+        repository pattern, RESTful controllers, hooks-based React). Return plain list, one per line.
+        """
+
+        try:
+            response = self.model.generate_content(prompt)
+            if response and response.text:
+                items = [s.strip() for s in response.text.strip().split('\n') if s.strip()]
+                return items[:5]
+            return ["Layered architecture"]
+        except Exception as e:
+            logger.error(f"AI coding patterns failed: {e}")
+            return ["Modular design", "Typed APIs where applicable"]
     
     async def _get_ai_project_maturity(self, context: str) -> str:
         """Get AI assessment of project maturity."""
-        return "developing"  # Placeholder
+        if not self.gemini_available:
+            return "developing"
+        prompt = f"""
+        {context}
+
+        Choose one maturity level only: experimental, developing, mature, legacy.
+        Return just the word.
+        """
+        try:
+            response = self.model.generate_content(prompt)
+            if response and response.text:
+                text = response.text.strip().lower()
+                for opt in ["experimental", "developing", "mature", "legacy"]:
+                    if opt in text:
+                        return opt
+            return "developing"
+        except Exception as e:
+            logger.error(f"AI project maturity failed: {e}")
+            return "developing"
     
     async def _get_ai_development_stage(self, context: str) -> str:
         """Get AI assessment of development stage."""
-        return "production"  # Placeholder
+        if not self.gemini_available:
+            return "development"
+        prompt = f"""
+        {context}
+
+        Choose one development stage only: prototype, mvp, production, enterprise.
+        Return just the word.
+        """
+        try:
+            response = self.model.generate_content(prompt)
+            if response and response.text:
+                text = response.text.strip().lower()
+                for opt in ["prototype", "mvp", "production", "enterprise"]:
+                    if opt in text:
+                        return opt
+            return "development"
+        except Exception as e:
+            logger.error(f"AI development stage failed: {e}")
+            return "development"
     
     # Rule-based methods
     
     def _rule_based_quality_assessment(self, code_metrics: CodeMetrics, quality_metrics: QualityMetrics) -> str:
         """Rule-based quality assessment."""
-        if code_metrics.maintainability_index > 80:
-            return "High quality codebase with excellent maintainability and clear structure"
-        elif code_metrics.maintainability_index > 60:
-            return "Good quality codebase with room for improvement in complexity management"
-        else:
-            return "Codebase needs attention - high complexity and maintainability issues detected"
+        mi = code_metrics.maintainability_index
+        cc = code_metrics.cyclomatic_complexity
+        if mi > 80 and cc < 5:
+            return "High-quality code: clear modular structure, low complexity, and solid maintainability"
+        if mi > 60:
+            return "Good quality: reasonable structure with some complexity hotspots to refactor"
+        return "Needs improvement: elevated complexity and maintainability risks present"
     
     def _rule_based_architecture_assessment(self, quality_metrics: QualityMetrics, tech_stack: TechStack) -> str:
         """Rule-based architecture assessment."""
-        if quality_metrics.architecture_score > 80:
-            return "Well-architected project with modern technology choices and good structure"
-        elif quality_metrics.architecture_score > 60:
-            return "Decent architecture with some areas for improvement"
-        else:
-            return "Architecture needs refactoring to improve maintainability and scalability"
+        score = quality_metrics.architecture_score
+        if score > 80:
+            return "Well-architected with modern stack and clear boundaries; production-ready patterns evident"
+        if score > 60:
+            return "Sound architecture with opportunities to improve layering, interfaces, or modularity"
+        return "Architecture requires restructuring for scalability, testing, and long-term maintenance"
     
     def _rule_based_maintainability_assessment(self, code_metrics: CodeMetrics) -> str:
         """Rule-based maintainability assessment."""
-        if code_metrics.technical_debt_ratio < 0.1:
-            return "Low technical debt - codebase is highly maintainable"
-        elif code_metrics.technical_debt_ratio < 0.3:
-            return "Moderate technical debt - maintainable with some effort"
-        else:
-            return "High technical debt - significant refactoring needed for maintainability"
+        tdr = code_metrics.technical_debt_ratio
+        if tdr < 0.1:
+            return "Low technical debt; straightforward to onboard and extend"
+        if tdr < 0.3:
+            return "Moderate technical debt; refactoring targeted hotspots will help"
+        return "High technical debt; plan phased refactors and testing first"
+
+    def _rule_based_project_summary(self, tech_stack: TechStack) -> str:
+        """Generate a brief project summary from tech hints when AI is unavailable."""
+        langs = ", ".join([t.name for t in tech_stack.languages][:3]) or "multi-language"
+        fw = ", ".join([t.name for t in tech_stack.frameworks][:2])
+        db = ", ".join([t.name for t in tech_stack.databases][:2])
+        if fw and db:
+            return f"Full-stack application ({fw}) with {langs} and {db}, demonstrating end-to-end features"
+        if fw:
+            return f"{fw} application showcasing core web functionality using {langs}"
+        return f"Codebase using {langs} with modern tooling"
     
     def _identify_strengths(
-        self, 
-        code_metrics: CodeMetrics, 
-        quality_metrics: QualityMetrics, 
+        self,
+        code_metrics: CodeMetrics,
+        quality_metrics: QualityMetrics,
         security_metrics: SecurityMetrics,
-        tech_stack: TechStack
+        tech_stack: TechStack,
     ) -> List[str]:
-        """Identify project strengths."""
-        strengths = []
-        
-        if quality_metrics.docstring_coverage > 70:
-            strengths.append("Excellent documentation coverage")
-        
-        if security_metrics.security_score > 80:
-            strengths.append("Strong security practices")
-        
-        if code_metrics.maintainability_index > 80:
-            strengths.append("Highly maintainable codebase")
-        
-        if tech_stack.modernness_score > 70:
-            strengths.append("Modern technology stack")
-        
-        if quality_metrics.test_to_code_ratio > 0.5:
-            strengths.append("Good test coverage")
-        
-        return strengths or ["Functional codebase with basic structure"]
+        """Identify project strengths aligned to common hiring signals."""
+        strengths: List[str] = []
+
+        # Testing
+        if quality_metrics.test_to_code_ratio >= 0.3:
+            strengths.append("Meaningful automated tests")
+        # Docs
+        if quality_metrics.docstring_coverage >= 60:
+            strengths.append("Good documentation standards")
+        # Security
+        if security_metrics.security_score >= 80 and security_metrics.critical_issues == 0:
+            strengths.append("Solid security hygiene")
+        # Maintainability
+        if code_metrics.maintainability_index >= 75:
+            strengths.append("Maintainable, modular code")
+        # Modern stack
+        if tech_stack.modernness_score >= 70:
+            strengths.append("Modern, industry-relevant stack")
+        # Tooling/CI
+        tool_names = {t.name.lower() for t in tech_stack.tools}
+        if any(t in tool_names for t in ["github actions", "circleci", "gitlab ci", "husky", "lint-staged"]):
+            strengths.append("CI and code quality automation")
+
+        return strengths[:5] or ["Functional codebase with modern foundations"]
     
     def _identify_weaknesses(
-        self, 
-        code_metrics: CodeMetrics, 
-        quality_metrics: QualityMetrics, 
-        security_metrics: SecurityMetrics
+        self,
+        code_metrics: CodeMetrics,
+        quality_metrics: QualityMetrics,
+        security_metrics: SecurityMetrics,
+        tech_stack: TechStack,
     ) -> List[str]:
-        """Identify project weaknesses."""
-        weaknesses = []
-        
+        """Identify project weaknesses that hinder production readiness."""
+        weaknesses: List[str] = []
+
         if quality_metrics.docstring_coverage < 30:
-            weaknesses.append("Poor documentation coverage")
-        
-        if security_metrics.critical_issues > 0:
-            weaknesses.append("Critical security issues present")
-        
+            weaknesses.append("Low documentation coverage")
+        if quality_metrics.test_to_code_ratio < 0.2:
+            weaknesses.append("Insufficient automated tests")
         if code_metrics.cyclomatic_complexity > 10:
             weaknesses.append("High code complexity")
-        
-        if quality_metrics.test_to_code_ratio < 0.2:
-            weaknesses.append("Insufficient test coverage")
-        
         if code_metrics.technical_debt_ratio > 0.3:
-            weaknesses.append("High technical debt")
-        
-        return weaknesses
+            weaknesses.append("Elevated technical debt")
+        if security_metrics.critical_issues > 0 or security_metrics.security_score < 60:
+            weaknesses.append("Security risks present")
+        # CI/Tooling gaps
+        tool_names = {t.name.lower() for t in tech_stack.tools}
+        if not any(t in tool_names for t in ["github actions", "circleci", "gitlab ci"]):
+            weaknesses.append("Missing CI pipeline")
+
+        return weaknesses[:5]
     
-    def _suggest_improvements(self, weaknesses: List[str], quality_metrics: QualityMetrics) -> List[str]:
-        """Suggest improvements based on weaknesses."""
-        improvements = []
-        
-        for weakness in weaknesses:
-            if "documentation" in weakness.lower():
-                improvements.append("Add comprehensive documentation and docstrings")
-            elif "security" in weakness.lower():
-                improvements.append("Address security vulnerabilities and implement security best practices")
-            elif "complexity" in weakness.lower():
-                improvements.append("Refactor complex functions and reduce cyclomatic complexity")
-            elif "test" in weakness.lower():
-                improvements.append("Increase test coverage with unit and integration tests")
-            elif "debt" in weakness.lower():
-                improvements.append("Reduce technical debt through systematic refactoring")
-        
-        return improvements or ["Continue maintaining current quality standards"]
+    def _suggest_improvements(self, weaknesses: List[str], quality_metrics: QualityMetrics, tech_stack: TechStack) -> List[str]:
+        """Suggest prioritized, actionable improvements based on weaknesses and stack."""
+        improvements: List[str] = []
+
+        wk = {w.lower() for w in weaknesses}
+        if any("test" in w for w in wk):
+            improvements.append("Add unit + integration tests (high)")
+        if any("documentation" in w or "doc" in w for w in wk):
+            improvements.append("Write API docs and README sections (medium)")
+        if any("complexity" in w for w in wk):
+            improvements.append("Refactor hotspots; extract smaller functions (high)")
+        if any("debt" in w for w in wk):
+            improvements.append("Create tech debt backlog with owners (medium)")
+        if any("security" in w for w in wk):
+            improvements.append("Enable dep scanning + secret detection (high)")
+
+        # CI suggestion when missing
+        tool_names = {t.name.lower() for t in tech_stack.tools}
+        if not any(t in tool_names for t in ["github actions", "circleci", "gitlab ci"]):
+            improvements.append("Set up CI for lint/test/build (high)")
+
+        # Keep list concise
+        return improvements[:5] or ["Continue maintaining current quality standards"]
     
     def _assess_skill_indicators(
-        self, 
-        code_metrics: CodeMetrics, 
-        quality_metrics: QualityMetrics, 
-        tech_stack: TechStack
+        self,
+        code_metrics: CodeMetrics,
+        quality_metrics: QualityMetrics,
+        tech_stack: TechStack,
     ) -> Dict[str, float]:
-        """Assess developer skill indicators."""
+        """Assess developer skill indicators with broader coverage."""
+        tools = {t.name.lower() for t in tech_stack.tools}
+        testing = len(tech_stack.testing_frameworks) > 0 or quality_metrics.test_to_code_ratio > 0.2
+        ci = any(t in tools for t in ["github actions", "gitlab ci", "circleci"]) or any(
+            t in tools for t in ["husky", "lint-staged"]
+        )
+        security_base = 70.0
+        if any(t in tools for t in ["dependabot", "snyk", "renovate"]):
+            security_base = 85.0
+
         return {
-            "code_quality": min(100.0, code_metrics.maintainability_index),
-            "architecture_design": quality_metrics.architecture_score,
-            "testing_practices": min(100.0, quality_metrics.test_to_code_ratio * 100),
-            "documentation": quality_metrics.docstring_coverage,
-            "technology_adoption": tech_stack.modernness_score,
-            "security_awareness": min(100.0, max(0.0, 100 - len(tech_stack.languages) * 5))
+            "code_quality": float(max(0.0, min(100.0, code_metrics.maintainability_index))),
+            "architecture_design": float(max(0.0, min(100.0, quality_metrics.architecture_score))),
+            "testing_practices": float(80.0 if testing else 40.0),
+            "security": float(security_base),
+            "devops": float(80.0 if ci else 50.0),
+            "documentation": float(max(0.0, min(100.0, quality_metrics.docstring_coverage))),
+            "technology_adoption": float(max(0.0, min(100.0, tech_stack.modernness_score))),
         }
     
     def _identify_coding_patterns(self, code_metrics: CodeMetrics, tech_stack: TechStack) -> List[str]:
         """Identify coding patterns."""
-        patterns = []
-        
+        patterns: List[str] = []
+
         if code_metrics.average_function_length < 20:
             patterns.append("Small, focused functions")
-        
         if code_metrics.cyclomatic_complexity < 5:
             patterns.append("Low complexity design")
-        
         if tech_stack.primary_language:
             patterns.append(f"{tech_stack.primary_language} expertise")
-        
         if len(tech_stack.frameworks) > 0:
             patterns.append("Framework-based development")
-        
-        return patterns or ["Basic coding practices"]
+
+        # Stack-derived patterns
+        fw = {t.name.lower() for t in tech_stack.frameworks}
+        libs = {t.name.lower() for t in tech_stack.libraries}
+        if any(x in fw for x in ["fastapi", "express", "nest", "django", "spring"]):
+            patterns.append("RESTful service architecture")
+        if any(x in libs for x in ["prisma", "sqlalchemy", "drizzle", "typeorm"]):
+            patterns.append("ORM-backed data access")
+        if any(x in libs for x in ["react-query", "tanstack query", "redux"]):
+            patterns.append("State management patterns")
+
+        return patterns[:6] or ["Basic coding practices"]
     
     def _assess_project_maturity(self, repository: Repository, quality_metrics: QualityMetrics) -> str:
         """Assess project maturity level."""
@@ -665,23 +822,23 @@ Code Content:
         
         if age_months < 3:
             return "experimental"
-        elif age_months < 12:
+        if age_months < 12:
             return "developing"
-        elif quality_metrics.architecture_score > 70:
+        if quality_metrics.architecture_score > 70:
             return "mature"
-        else:
-            return "legacy"
+        return "legacy"
     
-    def _assess_development_stage(self, repository: Repository, code_metrics: CodeMetrics) -> str:
+    def _assess_development_stage(self, repository: Repository, code_metrics: CodeMetrics, tech_stack: Optional[TechStack] = None) -> str:
         """Assess development stage."""
-        if code_metrics.total_lines < 1000:
+        lines = code_metrics.total_lines
+        stars = repository.stargazers_count
+        if lines < 1000:
             return "prototype"
-        elif code_metrics.total_lines < 10000:
+        if lines < 10000:
             return "mvp"
-        elif repository.stargazers_count > 100:
+        if stars > 100:
             return "production"
-        else:
-            return "development"
+        return "development"
     
     def _assess_maintenance_burden(self, code_metrics: CodeMetrics, security_metrics: SecurityMetrics) -> str:
         """Assess maintenance burden."""
@@ -693,46 +850,46 @@ Code Content:
         
         if score < 20:
             return "low"
-        elif score < 50:
+        if score < 50:
             return "medium"
-        else:
-            return "high"
+        return "high"
     
     def _get_industry_alignment(self, tech_stack: TechStack) -> List[str]:
-        """Get industry alignment based on tech stack."""
-        industries = []
-        
-        languages = [t.name.lower() for t in tech_stack.languages]
-        frameworks = [t.name.lower() for t in tech_stack.frameworks]
-        
-        if any(lang in languages for lang in ['javascript', 'typescript', 'react', 'vue']):
+        """Get industry alignment based on stack across languages, frameworks, libraries."""
+        industries: List[str] = []
+
+        langs = {t.name.lower() for t in tech_stack.languages}
+        fw = {t.name.lower() for t in tech_stack.frameworks}
+        libs = {t.name.lower() for t in tech_stack.libraries}
+
+        if any(x in langs | fw | libs for x in ["javascript", "typescript", "react", "next.js", "vue", "angular"]):
             industries.append("Web Development")
-        
-        if any(lang in languages for lang in ['python', 'r', 'jupyter']):
-            industries.append("Data Science")
-        
-        if any(lang in languages for lang in ['java', 'spring', 'kotlin']):
+        if any(x in langs | fw | libs for x in ["python", "pandas", "numpy", "jupyter", "pytorch", "tensorflow"]):
+            industries.append("Data/ML")
+        if any(x in langs | fw | libs for x in ["java", "spring", "kotlin"]):
             industries.append("Enterprise Software")
-        
-        if any(lang in languages for lang in ['swift', 'kotlin', 'react native']):
+        if any(x in langs | fw | libs for x in ["swift", "kotlin", "react native", "flutter"]):
             industries.append("Mobile Development")
-        
+        if any(x in fw | libs for x in ["fastapi", "express", "nest", "django", "rails", "spring"]):
+            industries.append("Backend/API Services")
+        if any(x in libs for x in ["docker", "kubernetes", "terraform"]):
+            industries.append("DevOps/Platform")
+
         return industries or ["General Software Development"]
     
     def _assess_career_impact(self, tech_stack: TechStack, quality_metrics: QualityMetrics) -> str:
         """Assess career impact potential."""
         score = (
-            tech_stack.modernness_score * 0.4 +
-            quality_metrics.architecture_score * 0.3 +
-            min(100, tech_stack.total_technologies * 10) * 0.3
+            tech_stack.modernness_score * 0.45 +
+            quality_metrics.architecture_score * 0.35 +
+            min(100, tech_stack.total_technologies * 6) * 0.20
         )
-        
+
         if score > 75:
             return "high"
-        elif score > 50:
+        if score > 50:
             return "medium"
-        else:
-            return "low"
+        return "low"
     
     def _calculate_overall_quality_score(
         self,
@@ -742,7 +899,7 @@ Code Content:
     ) -> float:
         """Calculate overall quality score."""
         return (
-            code_metrics.maintainability_index * 0.4 +
-            quality_metrics.architecture_score * 0.3 +
-            security_metrics.security_score * 0.3
+            float(code_metrics.maintainability_index) * 0.4 +
+            float(quality_metrics.architecture_score) * 0.3 +
+            float(security_metrics.security_score) * 0.3
         )
