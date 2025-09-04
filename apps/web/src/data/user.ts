@@ -330,22 +330,29 @@ export const getUserByUsername = async (
             }
         }
     }
+    interface UserProfileSkills extends DetailedUserSkill {}
+    interface UserProfileEducation extends Education {}
+    interface UserProfileExperience extends Experience {}
+    interface UserProfileProjectOwned extends Project {}
+    interface UserProfileProjectMemberOf extends DetailedProjectMember {}
+    interface UserProfileShowcasedItem extends DetailedShowcasedItem {}
 
-    // Combine profile data
     const userProfile: UserProfileDetails = {
-        ...profileUser,
-        skills: userSkillsData,
-        education: educationData,
-        experience: experienceData,
-        projectsOwned: projectsOwnedData,
-        projectsMemberOf: projectsMemberData,
-        showcasedItems: showcasedItemsData.map(item => ({
-          ...item,
-          skills: [] // No skills relation since you don't want the junction table
-        })),
-        connectionStatus,
-        connectionRequestId,
-        profileCompletionPercentage,
+      ...profileUser,
+      skills: userSkillsData as UserProfileSkills[],
+      education: educationData as UserProfileEducation[],
+      experience: experienceData as UserProfileExperience[],
+      projectsOwned: projectsOwnedData as UserProfileProjectOwned[],
+      projectsMemberOf: projectsMemberData as UserProfileProjectMemberOf[],
+      showcasedItems: showcasedItemsData.map(
+      (item: ShowcasedItem): UserProfileShowcasedItem => ({
+        ...item,
+        skills: [] as Skill[], // No skills relation since you don't want the junction table
+      })
+      ),
+      connectionStatus,
+      connectionRequestId,
+      profileCompletionPercentage,
     };
 
     return userProfile;
@@ -501,7 +508,7 @@ export const getEstablishedConnections = async (
     });
 
     // Map the results to the DetailedConnection format
-    const detailedConnections: DetailedConnection[] = connectionsData.map(conn => ({
+    const detailedConnections: DetailedConnection[] = connectionsData.map((conn: any) => ({
       ...conn,
       connectedUser: conn.userOneId === userId ? conn.userTwo : conn.userOne,
     }));

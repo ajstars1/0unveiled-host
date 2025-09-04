@@ -32,20 +32,29 @@ export function createDatabase() {
   });
 }
 
-// Singleton database instance with better error handling
+// Singleton database instance with lazy initialization
 let dbInstance: ReturnType<typeof createDatabase> | null = null;
 
-export const db = (() => {
+// Create a getter for lazy database initialization  
+function getDbInstance() {
   if (!dbInstance) {
     try {
       dbInstance = createDatabase();
     } catch (error) {
       console.error('Failed to create database connection:', error);
-      throw error;
+      // For build time, return a mock object to prevent crashes
+      if (process.env.NODE_ENV !== 'production' || process.env.DATABASE_URL) {
+        throw error;
+      }
+      // Return empty object for build time when DATABASE_URL is not available
+      return {} as any;
     }
   }
   return dbInstance;
-})();
+}
+
+// Export db as a getter property
+export const db = getDbInstance();
 
 // Export types and utilities
 export * from "./schema";

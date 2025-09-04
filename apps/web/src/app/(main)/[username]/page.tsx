@@ -28,6 +28,7 @@ import { formatShortDate } from "@/lib/utils"
 import { Metadata } from "next"
 import { PortfolioCard } from "@/components/profile/portfolio-card"
 import { ProfileActions } from "@/components/profile/profile-actions"
+import { ProfileAnalyzer } from "@/components/profile/profile-analyzer"
 
 import { fetchRepoCode } from "@/actions/portfolioActions"
 
@@ -186,6 +187,7 @@ async function ProfileDetail({
             <div className="flex gap-2 mt-4 md:mt-0 md:ml-auto shrink-0 items-center">
               {isOwnProfile ? (
                 <>
+                <ProfileAnalyzer username={username} isOwnProfile={isOwnProfile} />
                {/* <Link href="/benchmark/analyzing" passHref>
                 <Button
                   size="sm"

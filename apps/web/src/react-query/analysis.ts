@@ -5,6 +5,8 @@ export const analysisKeys = {
   all: ["analysis"] as const,
   repo: (username: string, owner: string, repo: string) =>
     ["analysis", username, owner, repo] as const,
+  profile: (username: string) =>
+    ["analysis", "profile", username] as const,
 } as const;
 
 // API helpers
@@ -21,11 +23,33 @@ async function postAnalyze(username: string, owner: string, repo: string, jobId?
   return { data: json.data, jobId: json.jobId as string | undefined };
 }
 
+async function postProfileAnalyze(username: string) {
+  const res = await fetch(`/api/analyze/profile`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  
+  if (!res.ok) {
+    const json = await res.json();
+    throw new Error(json?.error || "Failed to start profile analysis");
+  }
+  
+  return res; // Return the response for streaming
+}
+
 // Mutations
 export function useAnalyzeMutation() {
   return useMutation({
     mutationFn: async (vars: { username: string; owner: string; repo: string; jobId?: string }) =>
       postAnalyze(vars.username, vars.owner, vars.repo, vars.jobId),
+  });
+}
+
+export function useProfileAnalyzeMutation() {
+  return useMutation({
+    mutationFn: async (vars: { username: string }) =>
+      postProfileAnalyze(vars.username),
   });
 }
 
@@ -63,6 +87,18 @@ export function useAnalysisQuery(username: string, owner: string, repo: string) 
 export function useAnalysisCacheOnly() {
   try {
     const cached = sessionStorage.getItem("analysisResult");
+    if (!cached) return { data: undefined } as const;
+    const parsed = JSON.parse(cached);
+    return { data: parsed?.data } as const;
+  } catch {
+    return { data: undefined } as const;
+  }
+}
+
+// Cache-only variant for profile analysis results
+export function useProfileAnalysisCacheOnly() {
+  try {
+    const cached = sessionStorage.getItem("profileAnalysisResult");
     if (!cached) return { data: undefined } as const;
     const parsed = JSON.parse(cached);
     return { data: parsed?.data } as const;

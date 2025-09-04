@@ -273,7 +273,11 @@ router.post(
         const errorData = await analysisResponse
           .json()
           .catch(() => ({ detail: "Analysis service unavailable" }));
-        throw new Error(errorData.detail || "Repository analysis failed");
+        throw new Error(
+          typeof errorData === "object" && errorData !== null && "detail" in errorData
+            ? (errorData as { detail?: string }).detail || "Repository analysis failed"
+            : "Repository analysis failed"
+        );
       }
 
       const analysisData = await analysisResponse.json();
