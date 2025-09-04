@@ -12,6 +12,7 @@ import {
   userSkills, 
   connections, 
   connectionRequests,
+  aiVerifiedSkills,
   type User,
   type Skill,
   type Project,
@@ -21,7 +22,8 @@ import {
   type ProjectMember,
   type UserSkill,
   type Connection,
-  type ConnectionRequest
+  type ConnectionRequest,
+  type AIVerifiedSkill
 } from "@0unveiled/database";
 import { eq, and, or, desc, asc, inArray } from "drizzle-orm";
 
@@ -517,6 +519,103 @@ export const getEstablishedConnections = async (
 
   } catch (error) {
     console.error("Error fetching established connections:", error);
+    return null;
+  }
+};
+
+/**
+ * Fetches AI-verified skills for a given user.
+ * @param userId - The ID of the user whose AI-verified skills are to be fetched.
+ * @returns Array of AI-verified skills, or null on error.
+ */
+export const getAIVerifiedSkillsByUserId = async (
+  userId: string
+): Promise<AIVerifiedSkill[] | null> => {
+  try {
+    if (!userId) return null;
+
+    const verifiedSkills = await db.query.aiVerifiedSkills.findMany({
+      where: and(
+        eq(aiVerifiedSkills.userId, userId),
+        eq(aiVerifiedSkills.isVisible, true)
+      ),
+      orderBy: [
+        desc(aiVerifiedSkills.confidenceScore),
+        desc(aiVerifiedSkills.repositoryCount),
+        asc(aiVerifiedSkills.skillName)
+      ],
+    });
+
+    return verifiedSkills;
+
+  } catch (error) {
+    console.error("Error fetching AI-verified skills:", error);
+    return null;
+  }
+};
+
+/**
+ * Fetches AI-verified skills for a user by username.
+ * @param username - The username of the user whose AI-verified skills are to be fetched.
+ * @returns Array of AI-verified skills grouped by skill type, or null on error.
+ */
+export const getAIVerifiedSkillsByUsername = async (
+  username: string
+): Promise<{
+  languages: AIVerifiedSkill[];
+  frameworks: AIVerifiedSkill[];
+  libraries: AIVerifiedSkill[];
+  tools: AIVerifiedSkill[];
+  databases: AIVerifiedSkill[];
+  cloud: AIVerifiedSkill[];
+  totalSkills: number;
+  lastVerified: string | null;
+} | null> => {
+  try {
+    if (!username) return null;
+
+    // First get the user ID from username
+    const user = await db.query.users.findFirst({
+      where: eq(users.username, username.toLowerCase()),
+      columns: { id: true },
+    });
+
+    if (!user) return null;
+
+    // Get AI-verified skills for this user
+    const verifiedSkills = await getAIVerifiedSkillsByUserId(user.id);
+
+    if (!verifiedSkills) {
+      return {
+        languages: [],
+        frameworks: [],
+        libraries: [],
+        tools: [],
+        databases: [],
+        cloud: [],
+        totalSkills: 0,
+        lastVerified: null
+      };
+    }
+
+    // Group skills by type
+    const groupedSkills = {
+      languages: verifiedSkills.filter(skill => skill.skillType === 'LANGUAGE'),
+      frameworks: verifiedSkills.filter(skill => skill.skillType === 'FRAMEWORK'),
+      libraries: verifiedSkills.filter(skill => skill.skillType === 'LIBRARY'),
+      tools: verifiedSkills.filter(skill => skill.skillType === 'TOOL'),
+      databases: verifiedSkills.filter(skill => skill.skillType === 'DATABASE'),
+      cloud: verifiedSkills.filter(skill => skill.skillType === 'CLOUD'),
+      totalSkills: verifiedSkills.length,
+      lastVerified: verifiedSkills.length > 0 
+        ? verifiedSkills.sort((a, b) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime())[0].verifiedAt.toISOString()
+        : null
+    };
+
+    return groupedSkills;
+
+  } catch (error) {
+    console.error("Error fetching AI-verified skills by username:", error);
     return null;
   }
 };

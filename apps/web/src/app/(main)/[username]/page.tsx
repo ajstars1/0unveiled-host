@@ -23,12 +23,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { getUserByUsername, getCurrentUser } from "@/data/user"
+import { getAIVerifiedSkillsByUsername } from "@/data/user"
 import { notFound } from "next/navigation"
 import { formatShortDate } from "@/lib/utils"
 import { Metadata } from "next"
 import { PortfolioCard } from "@/components/profile/portfolio-card"
 import { ProfileActions } from "@/components/profile/profile-actions"
 import { ProfileAnalyzer } from "@/components/profile/profile-analyzer"
+import { AIVerifiedSkills } from "@/components/profile/ai-verified-skills"
 
 import { fetchRepoCode } from "@/actions/portfolioActions"
 
@@ -110,6 +112,9 @@ async function ProfileDetail({
   if(user.username === 'seed_user_1746410303039') {
     notFound()
   }
+
+  // Fetch AI-verified skills
+  const aiVerifiedSkills = await getAIVerifiedSkillsByUsername(username);
 
   // isOwnProfile can also be determined by connectionStatus === 'SELF'
   // const isOwnProfile = !!currentUser && currentUser.id === user.id
@@ -253,6 +258,11 @@ async function ProfileDetail({
                 )}
               </CardContent>
             </Card>
+
+            {/* AI-Verified Skills Section */}
+            {aiVerifiedSkills && aiVerifiedSkills.totalSkills > 0 && (
+              <AIVerifiedSkills skills={aiVerifiedSkills} />
+            )}
 
             {currentProjects.length > 0 && (
               <Card className={''}>

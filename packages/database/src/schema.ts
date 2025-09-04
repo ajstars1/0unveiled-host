@@ -1017,6 +1017,34 @@ export const knowledgeArticles = pgTable("KnowledgeArticle", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 
+// AI-verified skills
+export const aiVerifiedSkills = pgTable(
+  "AIVerifiedSkill",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("userId").notNull(),
+    skillName: text("skillName").notNull(),
+    skillType: text("skillType").notNull(), // 'LANGUAGE', 'FRAMEWORK', 'LIBRARY', 'TOOL', 'DATABASE', 'CLOUD'
+    confidenceScore: integer("confidenceScore").notNull(), // 0-100
+    verifiedAt: timestamp("verifiedAt").notNull().defaultNow(),
+    lastUpdatedAt: timestamp("lastUpdatedAt").notNull().defaultNow(),
+    sourceAnalysis: json("sourceAnalysis"), // Store analysis data that led to verification
+    repositoryCount: integer("repositoryCount").notNull().default(0), // How many repos this skill was found in
+    linesOfCodeCount: integer("linesOfCodeCount").notNull().default(0), // Total LOC analyzed for this skill
+    isVisible: boolean("isVisible").notNull().default(true), // User can hide skills from public profile
+  },
+  (table) => ({
+    uniqueUserSkill: uniqueIndex(
+      "AIVerifiedSkill_userId_skillName_key",
+    ).on(table.userId, table.skillName),
+    userIdIdx: index("AIVerifiedSkill_userId_idx").on(table.userId),
+    skillTypeIdx: index("AIVerifiedSkill_skillType_idx").on(table.skillType),
+    confidenceScoreIdx: index("AIVerifiedSkill_confidenceScore_idx").on(table.confidenceScore),
+  }),
+);
+
 // Leaderboard
 export const leaderboardTypeEnum = pgEnum("leaderboard_type", [
   "GENERAL",
@@ -1080,6 +1108,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   assignedTasks: many(tasks, { relationName: "AssignedTasks" }),
   badges: many(userBadges),
   skills: many(userSkills),
+  aiVerifiedSkills: many(aiVerifiedSkills),
   leaderboardScores: many(leaderboardScores),
 }));
 
@@ -1383,6 +1412,14 @@ export const showcasedItemsRelations = relations(
   }),
 );
 
+// AI Verified Skills relation
+export const aiVerifiedSkillsRelations = relations(aiVerifiedSkills, ({ one }) => ({
+  user: one(users, {
+    fields: [aiVerifiedSkills.userId],
+    references: [users.id],
+  }),
+}));
+
 // New table relations for recruitment and verification
 export const companiesRelations = relations(companies, ({ many }) => ({
   members: many(companyMembers),
@@ -1512,6 +1549,7 @@ export const usersRelationsUpdated = relations(users, ({ many }) => ({
   assignedTasks: many(tasks, { relationName: "AssignedTasks" }),
   badges: many(userBadges),
   skills: many(userSkills),
+  aiVerifiedSkills: many(aiVerifiedSkills),
   leaderboardScores: many(leaderboardScores),
   
   // New recruitment and verification relations
@@ -1540,7 +1578,6 @@ export const userBadgesRelationsUpdated = relations(userBadges, ({ one }) => ({
     references: [verificationRequests.id],
   }),
 }));
-
 // Export types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -1598,6 +1635,8 @@ export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
 export type ShowcasedItem = typeof showcasedItems.$inferSelect;
 export type NewShowcasedItem = typeof showcasedItems.$inferInsert;
+export type AIVerifiedSkill = typeof aiVerifiedSkills.$inferSelect;
+export type NewAIVerifiedSkill = typeof aiVerifiedSkills.$inferInsert;
 export type KnowledgeArticle = typeof knowledgeArticles.$inferSelect;
 export type NewKnowledgeArticle = typeof knowledgeArticles.$inferInsert;
 

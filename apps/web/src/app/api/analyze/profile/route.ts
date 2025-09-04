@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserByUsername } from "@/data/user";
 import { analyzeRepositoryAction } from "@/actions/analyze";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { db } from "@0unveiled/database";
-import { showcasedItems } from "@0unveiled/database";
+import { db, showcasedItems, aiVerifiedSkills } from "@0unveiled/database";
 import { eq, and } from "drizzle-orm";
 
 interface ProfileAnalysisRequest {
@@ -74,6 +73,70 @@ function createEventStreamResponse(encoder: TextEncoder, controller: ReadableStr
       }
     }
   };
+}
+
+// Function to save AI-verified skills to database
+async function saveAIVerifiedSkills(
+  userId: string, 
+  comprehensiveTechStack: any, 
+  detailedAnalyses: Array<{repository: RepositoryData; analysis: any}>
+) {
+  try {
+    // Clear existing AI-verified skills for this user
+    await db.delete(aiVerifiedSkills).where(eq(aiVerifiedSkills.userId, userId));
+    
+    const skillsToInsert: Array<{
+      userId: string;
+      skillName: string;
+      skillType: string;
+      confidenceScore: number;
+      repositoryCount: number;
+      linesOfCodeCount: number;
+      sourceAnalysis: any;
+      isVisible: boolean;
+    }> = [];
+    
+    // Process all categories of tech stack
+    Object.entries(comprehensiveTechStack).forEach(([categoryKey, skills]) => {
+      const skillsArray = skills as any[];
+      skillsArray.forEach((skill: any) => {
+        skillsToInsert.push({
+          userId,
+          skillName: skill.name,
+          skillType: skill.type,
+          confidenceScore: skill.confidence,
+          repositoryCount: skill.count,
+          linesOfCodeCount: Math.round(skill.linesOfCode),
+          sourceAnalysis: {
+            category: categoryKey,
+            detectedIn: detailedAnalyses.length,
+            totalRepositories: detailedAnalyses.length,
+            analysisDate: new Date().toISOString(),
+            verificationMethod: 'code_analysis'
+          },
+          isVisible: true
+        });
+      });
+    });
+    
+    // Insert new AI-verified skills in batches
+    if (skillsToInsert.length > 0) {
+      // Batch insert to handle large numbers of skills
+      const batchSize = 50;
+      for (let i = 0; i < skillsToInsert.length; i += batchSize) {
+        const batch = skillsToInsert.slice(i, i + batchSize);
+        await db.insert(aiVerifiedSkills).values(batch);
+      }
+      
+      console.log(`Saved ${skillsToInsert.length} AI-verified skills for user ${userId}`);
+      return { success: true, count: skillsToInsert.length };
+    }
+    
+    return { success: true, count: 0 };
+  } catch (error) {
+    console.error('Error saving AI-verified skills:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }
 
 // Function to get GitHub repositories from user's portfolio
@@ -275,20 +338,74 @@ export async function POST(request: NextRequest) {
               sendEvent({ step: "Analyzing profile content and career data...", progress: 60 });
             }
             
-            // Simulate some processing time
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Step 5: Generate comprehensive insights
-            sendEvent({ step: "Generating comprehensive career insights...", progress: 80 });
+            // Step 5: Generate comprehensive insights and save AI-verified skills
+            sendEvent({ step: "Generating comprehensive career insights and AI-verified skills...", progress: 80 });
             
             // Create analysis result
             const analysisResult = await generateProfileAnalysis(profileData, githubConnected, detailedAnalyses);
+            
+            // Save AI-verified skills to database if we have comprehensive tech stack data
+            let aiVerificationStatus: {
+              skillsVerified: number;
+              verifiedAt: string;
+              status: 'completed' | 'failed' | 'error' | 'skipped';
+              reason?: string;
+              error?: string;
+            } = {
+              skillsVerified: 0,
+              verifiedAt: new Date().toISOString(),
+              status: 'skipped',
+              reason: githubConnected ? 'No repository analysis available' : 'GitHub not connected'
+            };
+            
+            if (githubConnected && detailedAnalyses.length > 0 && (analysisResult as any).techStackAnalysis.comprehensive) {
+              sendEvent({ step: "Saving AI-verified skills to profile...", progress: 90 });
+              
+              try {
+                const saveResult = await saveAIVerifiedSkills(
+                  user.id,
+                  (analysisResult as any).techStackAnalysis.comprehensive,
+                  detailedAnalyses
+                );
+                
+                if (saveResult.success) {
+                  console.log(`Successfully saved ${saveResult.count} AI-verified skills for user ${user.id}`);
+                  aiVerificationStatus = {
+                    skillsVerified: saveResult.count || 0,
+                    verifiedAt: new Date().toISOString(),
+                    status: 'completed'
+                  };
+                } else {
+                  console.error('Failed to save AI-verified skills:', saveResult.error);
+                  aiVerificationStatus = {
+                    skillsVerified: 0,
+                    verifiedAt: new Date().toISOString(),
+                    status: 'failed',
+                    error: saveResult.error
+                  };
+                }
+              } catch (skillSaveError) {
+                console.error('Error during AI-verified skills saving:', skillSaveError);
+                aiVerificationStatus = {
+                  skillsVerified: 0,
+                  verifiedAt: new Date().toISOString(),
+                  status: 'error',
+                  error: skillSaveError instanceof Error ? skillSaveError.message : 'Unknown error'
+                };
+              }
+            }
+
+            // Add verification status to result
+            const finalResult = {
+              ...analysisResult,
+              aiVerificationStatus
+            };
 
             // Step 6: Complete
             sendEvent({ 
               step: "Analysis complete!", 
               progress: 100,
-              result: analysisResult 
+              result: finalResult 
             });
 
           controller.close();
@@ -348,6 +465,18 @@ async function generateProfileAnalysis(data: ProfileAnalysisData, githubConnecte
       : 0,
   };
 
+  // Extract comprehensive tech stack from detailed analyses
+  const comprehensiveTechStack = githubConnected && detailedAnalyses.length > 0 
+    ? getComprehensiveTechStack(detailedAnalyses)
+    : {
+        languages: [],
+        frameworks: [],
+        libraries: [],
+        tools: [],
+        databases: [],
+        cloud: []
+      };
+
   // Calculate career statistics
   const careerStats = {
     totalYearsExperience: calculateTotalExperience(data.profileData.experience),
@@ -358,7 +487,7 @@ async function generateProfileAnalysis(data: ProfileAnalysisData, githubConnecte
   };
 
   // Generate insights
-  const insights = generateCareerInsights(data, repoStats, careerStats, githubConnected, detailedAnalyses);
+  const insights = generateCareerInsights(data, repoStats, careerStats, githubConnected, detailedAnalyses, comprehensiveTechStack);
 
   return {
     profileSummary: {
@@ -396,6 +525,20 @@ async function generateProfileAnalysis(data: ProfileAnalysisData, githubConnecte
         analysis: item.analysis?.data || item.analysis
       })),
     },
+    techStackAnalysis: {
+      comprehensive: comprehensiveTechStack,
+      totalSkillsFound: Object.values(comprehensiveTechStack).reduce((sum, category) => sum + category.length, 0),
+      highConfidenceSkills: Object.values(comprehensiveTechStack)
+        .flat()
+        .filter(skill => skill.confidence >= 80)
+        .length,
+      primaryTechStack: Object.entries(comprehensiveTechStack)
+        .map(([category, skills]) => ({
+          category: category.charAt(0).toUpperCase() + category.slice(1),
+          topSkills: skills.slice(0, 3)
+        }))
+        .filter(category => category.topSkills.length > 0)
+    },
     careerAnalysis: {
       stats: careerStats,
       experience: data.profileData.experience,
@@ -430,6 +573,201 @@ function getLanguageDistribution(repositories: RepositoryData[]) {
     .slice(0, 10);
 }
 
+function getComprehensiveTechStack(detailedAnalyses: Array<{repository: RepositoryData; analysis: any}>): {
+  languages: Array<{name: string, type: 'LANGUAGE', count: number, confidence: number, linesOfCode: number}>,
+  frameworks: Array<{name: string, type: 'FRAMEWORK', count: number, confidence: number, linesOfCode: number}>,
+  libraries: Array<{name: string, type: 'LIBRARY', count: number, confidence: number, linesOfCode: number}>,
+  tools: Array<{name: string, type: 'TOOL', count: number, confidence: number, linesOfCode: number}>,
+  databases: Array<{name: string, type: 'DATABASE', count: number, confidence: number, linesOfCode: number}>,
+  cloud: Array<{name: string, type: 'CLOUD', count: number, confidence: number, linesOfCode: number}>
+} {
+  const techStackMap: Map<string, {type: string, count: number, confidence: number, linesOfCode: number}> = new Map();
+  
+  detailedAnalyses.forEach(({repository, analysis}) => {
+    const analysisData = analysis?.data || analysis;
+    
+    // Extract languages from file analysis
+    if (analysisData?.files) {
+      analysisData.files.forEach((file: any) => {
+        if (file.language) {
+          const key = file.language.toLowerCase();
+          const existing = techStackMap.get(key) || {type: 'LANGUAGE', count: 0, confidence: 0, linesOfCode: 0};
+          techStackMap.set(key, {
+            ...existing,
+            count: existing.count + 1,
+            confidence: Math.max(existing.confidence, 90), // High confidence for detected languages
+            linesOfCode: existing.linesOfCode + (file.lines || 0)
+          });
+        }
+      });
+    }
+    
+    // Extract frameworks and libraries from dependencies
+    if (analysisData?.dependencies) {
+      Object.entries(analysisData.dependencies).forEach(([depType, deps]: [string, any]) => {
+        if (Array.isArray(deps)) {
+          deps.forEach((dep: any) => {
+            if (typeof dep === 'string' || dep.name) {
+              const depName = (typeof dep === 'string' ? dep : dep.name).toLowerCase();
+              const key = depName;
+              const skillType = getSkillType(depName);
+              const existing = techStackMap.get(key) || {type: skillType, count: 0, confidence: 0, linesOfCode: 0};
+              techStackMap.set(key, {
+                ...existing,
+                count: existing.count + 1,
+                confidence: Math.max(existing.confidence, 85), // High confidence for explicit dependencies
+                linesOfCode: existing.linesOfCode + (analysisData?.metrics?.total_lines || 0) / deps.length
+              });
+            }
+          });
+        }
+      });
+    }
+    
+    // Extract tools from patterns in file names and content
+    if (analysisData?.files) {
+      analysisData.files.forEach((file: any) => {
+        const fileName = file.name?.toLowerCase() || '';
+        
+        // Detect common tools and configurations
+        const toolPatterns = [
+          {pattern: /dockerfile|\.docker/, name: 'docker', type: 'TOOL'},
+          {pattern: /package\.json/, name: 'npm', type: 'TOOL'},
+          {pattern: /yarn\.lock/, name: 'yarn', type: 'TOOL'},
+          {pattern: /requirements\.txt/, name: 'pip', type: 'TOOL'},
+          {pattern: /cargo\.toml/, name: 'cargo', type: 'TOOL'},
+          {pattern: /go\.mod/, name: 'go modules', type: 'TOOL'},
+          {pattern: /\.github|\.gitlab/, name: 'ci/cd', type: 'TOOL'},
+          {pattern: /webpack\.config/, name: 'webpack', type: 'TOOL'},
+          {pattern: /vite\.config/, name: 'vite', type: 'TOOL'},
+          {pattern: /next\.config/, name: 'next.js', type: 'FRAMEWORK'},
+          {pattern: /nuxt\.config/, name: 'nuxt.js', type: 'FRAMEWORK'},
+          {pattern: /angular\.json/, name: 'angular', type: 'FRAMEWORK'},
+          {pattern: /vue\.config/, name: 'vue.js', type: 'FRAMEWORK'},
+        ];
+        
+        toolPatterns.forEach(({pattern, name, type}) => {
+          if (pattern.test(fileName)) {
+            const existing = techStackMap.get(name) || {type, count: 0, confidence: 0, linesOfCode: 0};
+            techStackMap.set(name, {
+              ...existing,
+              count: existing.count + 1,
+              confidence: Math.max(existing.confidence, 80), // Good confidence for file patterns
+              linesOfCode: existing.linesOfCode + (file.lines || 0)
+            });
+          }
+        });
+      });
+    }
+    
+    // Extract cloud services from imports and configurations
+    if (analysisData?.imports || analysisData?.files) {
+      const cloudPatterns = [
+        {pattern: /aws|amazon/i, name: 'aws', type: 'CLOUD'},
+        {pattern: /azure|microsoft/i, name: 'azure', type: 'CLOUD'},
+        {pattern: /gcp|google.*cloud/i, name: 'google cloud', type: 'CLOUD'},
+        {pattern: /firebase/i, name: 'firebase', type: 'CLOUD'},
+        {pattern: /vercel/i, name: 'vercel', type: 'CLOUD'},
+        {pattern: /netlify/i, name: 'netlify', type: 'CLOUD'},
+        {pattern: /heroku/i, name: 'heroku', type: 'CLOUD'},
+        {pattern: /supabase/i, name: 'supabase', type: 'DATABASE'},
+        {pattern: /mongodb|mongo/i, name: 'mongodb', type: 'DATABASE'},
+        {pattern: /postgresql|postgres/i, name: 'postgresql', type: 'DATABASE'},
+        {pattern: /mysql/i, name: 'mysql', type: 'DATABASE'},
+        {pattern: /redis/i, name: 'redis', type: 'DATABASE'},
+      ];
+      
+      const searchText = JSON.stringify(analysisData).toLowerCase();
+      cloudPatterns.forEach(({pattern, name, type}) => {
+        if (pattern.test(searchText)) {
+          const existing = techStackMap.get(name) || {type, count: 0, confidence: 0, linesOfCode: 0};
+          techStackMap.set(name, {
+            ...existing,
+            count: existing.count + 1,
+            confidence: Math.max(existing.confidence, 75), // Moderate confidence for text patterns
+            linesOfCode: existing.linesOfCode + (analysisData?.metrics?.total_lines || 0) / 10
+          });
+        }
+      });
+    }
+  });
+  
+  // Group by skill type
+  const result = {
+    languages: [] as Array<{name: string, type: 'LANGUAGE', count: number, confidence: number, linesOfCode: number}>,
+    frameworks: [] as Array<{name: string, type: 'FRAMEWORK', count: number, confidence: number, linesOfCode: number}>,
+    libraries: [] as Array<{name: string, type: 'LIBRARY', count: number, confidence: number, linesOfCode: number}>,
+    tools: [] as Array<{name: string, type: 'TOOL', count: number, confidence: number, linesOfCode: number}>,
+    databases: [] as Array<{name: string, type: 'DATABASE', count: number, confidence: number, linesOfCode: number}>,
+    cloud: [] as Array<{name: string, type: 'CLOUD', count: number, confidence: number, linesOfCode: number}>
+  };
+  
+  techStackMap.forEach((data, name) => {
+    const skill = {
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      type: data.type as any,
+      count: data.count,
+      confidence: Math.round(data.confidence),
+      linesOfCode: Math.round(data.linesOfCode)
+    };
+    
+    switch (data.type) {
+      case 'LANGUAGE':
+        result.languages.push(skill);
+        break;
+      case 'FRAMEWORK':
+        result.frameworks.push(skill);
+        break;
+      case 'LIBRARY':
+        result.libraries.push(skill);
+        break;
+      case 'TOOL':
+        result.tools.push(skill);
+        break;
+      case 'DATABASE':
+        result.databases.push(skill);
+        break;
+      case 'CLOUD':
+        result.cloud.push(skill);
+        break;
+    }
+  });
+  
+  // Sort each category by confidence and count
+  Object.values(result).forEach(category => {
+    category.sort((a, b) => b.confidence - a.confidence || b.count - a.count);
+  });
+  
+  return result;
+}
+
+function getSkillType(skillName: string): string {
+  const lowerName = skillName.toLowerCase();
+  
+  // Frameworks
+  const frameworks = ['react', 'vue', 'angular', 'svelte', 'next.js', 'nuxt.js', 'express', 'fastapi', 'django', 'flask', 'spring', 'laravel', 'rails', 'asp.net'];
+  if (frameworks.some(fw => lowerName.includes(fw))) return 'FRAMEWORK';
+  
+  // Libraries
+  const libraries = ['axios', 'lodash', 'moment', 'jquery', 'bootstrap', 'tailwind', 'mui', 'antd', 'chakra', 'pandas', 'numpy', 'tensorflow', 'pytorch'];
+  if (libraries.some(lib => lowerName.includes(lib))) return 'LIBRARY';
+  
+  // Tools
+  const tools = ['webpack', 'vite', 'babel', 'eslint', 'prettier', 'jest', 'cypress', 'docker', 'kubernetes', 'terraform'];
+  if (tools.some(tool => lowerName.includes(tool))) return 'TOOL';
+  
+  // Databases
+  const databases = ['mongodb', 'postgresql', 'mysql', 'redis', 'sqlite', 'dynamodb', 'cassandra', 'elasticsearch'];
+  if (databases.some(db => lowerName.includes(db))) return 'DATABASE';
+  
+  // Cloud
+  const cloud = ['aws', 'azure', 'gcp', 'google cloud', 'firebase', 'vercel', 'netlify', 'heroku', 'digitalocean'];
+  if (cloud.some(cl => lowerName.includes(cl))) return 'CLOUD';
+  
+  // Default to library for unknown packages
+  return 'LIBRARY';
+}
+
 function calculateTotalExperience(experience: any[]): number {
   return experience.reduce((total, exp) => {
     const startDate = new Date(exp.startDate);
@@ -448,7 +786,14 @@ function calculateTotalEducation(education: any[]): number {
   }, 0);
 }
 
-function generateCareerInsights(data: ProfileAnalysisData, repoStats: any, careerStats: any, githubConnected: boolean = true, detailedAnalyses: Array<{repository: RepositoryData; analysis: any}> = []) {
+function generateCareerInsights(
+  data: ProfileAnalysisData, 
+  repoStats: any, 
+  careerStats: any, 
+  githubConnected: boolean = true, 
+  detailedAnalyses: Array<{repository: RepositoryData; analysis: any}> = [],
+  comprehensiveTechStack?: any
+) {
   const insights = [];
 
   // Repository insights (only if portfolio has GitHub repos)
@@ -545,7 +890,7 @@ function generateCareerInsights(data: ProfileAnalysisData, repoStats: any, caree
     strengths: insights,
     careerProgression: analyzeCareerProgression(data.profileData.experience),
     skillGaps: identifySkillGaps(repoStats.languages, data.profileData.skills, githubConnected),
-    recommendations: generateRecommendations(data, repoStats, careerStats, githubConnected, detailedAnalyses),
+    recommendations: generateRecommendations(data, repoStats, careerStats, githubConnected, detailedAnalyses, comprehensiveTechStack),
   };
 }
 
@@ -594,7 +939,14 @@ function identifySkillGaps(languages: any[], skills: any[], githubConnected: boo
   return gaps.slice(0, 3); // Limit to top 3 suggestions
 }
 
-function generateRecommendations(data: ProfileAnalysisData, repoStats: any, careerStats: any, githubConnected: boolean = true, detailedAnalyses: Array<{repository: RepositoryData; analysis: any}> = []): string[] {
+function generateRecommendations(
+  data: ProfileAnalysisData, 
+  repoStats: any, 
+  careerStats: any, 
+  githubConnected: boolean = true, 
+  detailedAnalyses: Array<{repository: RepositoryData; analysis: any}> = [],
+  comprehensiveTechStack?: any
+): string[] {
   const recommendations = [];
   
   // GitHub-specific recommendations
