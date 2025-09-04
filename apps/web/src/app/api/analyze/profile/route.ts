@@ -408,6 +408,9 @@ export async function POST(request: NextRequest) {
               result: finalResult 
             });
 
+            // Give the client a moment to process the final result before closing
+            await new Promise(resolve => setTimeout(resolve, 100));
+
           controller.close();
         } catch (error) {
           console.error("Profile analysis error:", error);

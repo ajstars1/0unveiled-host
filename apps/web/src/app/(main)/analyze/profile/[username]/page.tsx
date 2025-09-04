@@ -14,6 +14,7 @@ export default function AnalyzeProfilePage() {
   const [complete, setComplete] = useState<boolean>(false);
   const redirectedRef = useRef(false);
   const sseRef = useRef<EventSource | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Helper to safely redirect to results exactly once
   const redirectToResults = () => {
@@ -34,8 +35,16 @@ export default function AnalyzeProfilePage() {
         setStatus("Validating request");
         setProgress(3);
 
+        // Set a timeout for the entire analysis process (10 minutes)
+        timeoutRef.current = setTimeout(() => {
+          throw new Error("Analysis timed out after 10 minutes");
+        }, 10 * 60 * 1000);
+
         // Start SSE stream for profile analysis
         try {
+          setStatus("Starting analysis stream...");
+          setProgress(10);
+          
           const response = await fetch(`/api/analyze/profile`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -47,8 +56,7 @@ export default function AnalyzeProfilePage() {
             throw new Error(errorData.error || "Failed to start profile analysis");
           }
 
-          setStatus("Starting analysis stream...");
-          setProgress(10);
+          console.log("Profile analysis stream started successfully");
 
           const reader = response.body?.getReader();
           if (!reader) {
@@ -56,12 +64,16 @@ export default function AnalyzeProfilePage() {
           }
 
           let analysisResult: any = null;
+          let streamComplete = false;
           const decoder = new TextDecoder();
 
           // Stream the analysis progress
-          while (true) {
+          while (!streamComplete) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log("Stream ended naturally");
+              break;
+            }
 
             const chunk = decoder.decode(value);
             const lines = chunk.split('\n').filter(line => line.trim());
@@ -70,34 +82,43 @@ export default function AnalyzeProfilePage() {
               if (line.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(line.slice(6));
+                  console.log("Stream event received:", data);
                   
                   if (data.step) {
                     setStatus(data.step);
+                    console.log("Status updated:", data.step);
                   }
                   
                   if (typeof data.progress === 'number') {
                     setProgress(data.progress);
+                    console.log("Progress updated:", data.progress);
                   }
                   
                   if (data.result) {
+                    console.log("Analysis result received:", data.result);
                     analysisResult = data.result;
+                    streamComplete = true;
                   }
                   
                   if (data.error) {
+                    console.error("Stream error:", data.error);
                     throw new Error(data.error);
                   }
 
-                  if (data.complete) {
-                    setComplete(true);
-                    break;
+                  // Check for completion indicators
+                  if (data.progress === 100 || (data.step && data.step.toLowerCase().includes('complete'))) {
+                    console.log("Completion detected based on progress/step");
+                    streamComplete = true;
                   }
                 } catch (parseError) {
-                  console.error("Error parsing stream data:", parseError);
+                  console.error("Error parsing stream data:", parseError, "Raw line:", line);
                   // Don't break the stream for parsing errors, continue
                 }
               }
             }
           }
+
+          console.log("Stream processing completed. Result available:", !!analysisResult);
 
           if (analysisResult) {
             // Store the result in sessionStorage for the results page
@@ -107,17 +128,36 @@ export default function AnalyzeProfilePage() {
               timestamp: Date.now()
             }));
 
+            console.log("Profile analysis result stored:", analysisResult);
+            
+            // Clear the timeout
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+            
             setComplete(true);
             // Navigate to results page
             redirectToResults();
           } else {
+            console.error("Stream ended but no analysis result was received");
             throw new Error("Analysis completed but no result received");
           }
         } catch (streamError) {
+          // Clear the timeout on error
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
           console.error("Streaming error:", streamError);
           throw streamError;
         }
       } catch (e: any) {
+        // Clear the timeout on error
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
         setError(e?.message || "Unexpected error");
         setStatus("Error");
         setComplete(true);
@@ -141,6 +181,10 @@ export default function AnalyzeProfilePage() {
   useEffect(() => {
     return () => {
       if (sseRef.current) sseRef.current.close();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
   }, []);
 

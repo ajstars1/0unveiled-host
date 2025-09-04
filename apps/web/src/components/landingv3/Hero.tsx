@@ -126,8 +126,8 @@ export default function Hero() {
               className="space-y-6"
             >
               <h1 className="text-4xl lg:text-6xl font-heading font-bold leading-tight">
-                Show Your Work.{' '}
-                <span className="text-primary">Get Scored.</span>{' '}
+                Verify Skills.{' '}
+                <span className="text-primary">Build Trust.</span>{' '}
                 <span className="bg-accent text-accent-foreground px-2 py-1 rounded-lg">
                   Get Hired.
                 </span>
