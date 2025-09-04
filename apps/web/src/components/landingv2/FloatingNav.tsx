@@ -52,7 +52,7 @@ export function FloatingNav() {
 
   const navItems = [
     { id: "home", icon: Home, label: "Home", href: "#" },
-    { id: "pricing", icon: DollarSign, label: "Pricing", href: "#pricing" },
+    { id: "pricing", icon: DollarSign, label: "Pricing", href: "/pricing" },
     { id: "docs", icon: FileText, label: "Docs", href: "#docs" },
     { id: "community", icon: Users, label: "Community", href: "#community" },
   ];

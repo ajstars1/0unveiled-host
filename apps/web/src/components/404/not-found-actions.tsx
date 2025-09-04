@@ -26,9 +26,9 @@ export function NotFoundActions() {
       </Button>
 
       <Button variant="outline" size="lg" asChild className="space-x-2">
-        <Link href="/projects">
+        <Link href="/profiles">
           <Search className="w-4 h-4" />
-          <span>Browse Projects</span>
+          <span>Browse Profiles</span>
         </Link>
       </Button>
     </motion.div>

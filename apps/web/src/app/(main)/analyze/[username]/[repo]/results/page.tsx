@@ -242,12 +242,14 @@ const ResultsPage = () => {
           <CardContent>
             <div className="text-center">
               <div className="text-6xl font-bold text-black mb-4">
-                {analysisData.ai_insights?.overall_score || 0}/100
+                {analysisData.ai_insights?.overall_score || 0}
               </div>
-              <Progress 
-                value={analysisData.ai_insights?.overall_score || 0} 
-                className="w-full h-4"
-              />
+              <div className="w-full h-4 bg-gray-200 rounded-lg mb-4">
+                <div 
+                  className="h-full bg-black rounded-lg transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.max(0, (analysisData.ai_insights?.overall_score || 0)))}%` }}
+                />
+              </div>
               <p className="mt-4 text-gray-600">
                 Project Maturity: <span className="font-semibold text-black">
                   {analysisData.ai_insights?.project_maturity || 'Unknown'}
@@ -274,7 +276,7 @@ const ResultsPage = () => {
                       cy="50%"
                       outerRadius={100}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}%`}
+                      label={({ name, value }) => `${name}: ${value}`}
                     >
                       {qualityData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

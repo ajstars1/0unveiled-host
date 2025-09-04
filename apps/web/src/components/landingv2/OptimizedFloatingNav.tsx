@@ -139,10 +139,10 @@ export function OptimizedFloatingNav({
 
   const navItems = [
     { id: "home", icon: Home, label: "Home", href: "/" },
-    { id: "pricing", icon: DollarSign, label: "Pricing", href: "#pricing" },
+    { id: "pricing", icon: DollarSign, label: "Pricing", href: "/pricing" },
     { id: "explore", icon: FileText, label: "Explore", href: "/profiles" },
-    { id: "recruitment", icon: Briefcase, label: "Recruitment", href: "/recruitment" },
-    { id: "community", icon: Users, label: "Community", href: "#community" },
+    // { id: "recruitment", icon: Briefcase, label: "Recruitment", href: "/recruitment" },
+    { id: "leaderboard", icon: Sparkles, label: "Leaderboard", href: "/leaderboard" },
   ];
 
   const handleLogout = async () => {

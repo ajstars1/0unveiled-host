@@ -57,10 +57,10 @@ export function UserNav({ user }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="" />
         <DropdownMenuGroup>
-          <Link href="/dashboard">
+          <Link href="/profile">
             <DropdownMenuItem className="" inset>
-              Dashboard
-              <DropdownMenuShortcut className="">⌘D</DropdownMenuShortcut>
+              My Profile
+              <DropdownMenuShortcut className="">⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
           <Link href="/profile/edit">
@@ -81,12 +81,12 @@ export function UserNav({ user }: UserNavProps) {
               <DropdownMenuShortcut className="">⌘N</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
-          <Link href="/settings">
+          {/* <Link href="/settings">
             <DropdownMenuItem className="" inset>
               Settings
               <DropdownMenuShortcut className="">⌘S</DropdownMenuShortcut>
             </DropdownMenuItem>
-          </Link>
+          </Link> */}
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="" />
         <DropdownMenuItem className="" inset onClick={handleSignOut}>

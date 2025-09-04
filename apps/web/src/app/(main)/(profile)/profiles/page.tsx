@@ -68,9 +68,20 @@ export default function Profiles() {
 
   const filterCategories = useMemo(() => {
     const categories = new Set<string>(["All"])
-    allUsers?.forEach((user) => {
-      user.skills?.forEach((s) => {
-        if (s.skill.category) categories.add(s.skill.category)
+    interface Skill {
+      skill: {
+      name: string
+      category?: string
+      }
+    }
+
+    interface User {
+      skills?: Skill[]
+    }
+
+    allUsers?.forEach((user: User) => {
+      user.skills?.forEach((s: Skill) => {
+      if (s.skill.category) categories.add(s.skill.category)
       })
     })
     return Array.from(categories).slice(0, 6) // Limit categories shown
@@ -79,8 +90,27 @@ export default function Profiles() {
   const filteredProfiles = useMemo(() => {
     if (!allUsers) return []
 
+    interface Skill {
+      skill: {
+        name: string
+        category?: string
+      }
+    }
+
+    interface Profile {
+      id: string
+      firstName?: string
+      lastName?: string
+      headline?: string
+      location?: string
+      college?: string
+      role: string
+      onboarded: boolean
+      skills: Skill[]
+    }
+
     return allUsers
-      ?.filter((profile) => {
+      ?.filter((profile: Profile) => {
         if (profile.role === "ADMIN" || !profile.onboarded) {
           return false;
         }
@@ -92,12 +122,12 @@ export default function Profiles() {
           (profile.headline && profile.headline.toLowerCase().includes(searchLower)) ||
           (profile.location && profile.location.toLowerCase().includes(searchLower)) ||
           (profile.college && profile.college.toLowerCase().includes(searchLower)) ||
-          profile.skills.some((skill) =>
+          profile.skills.some((skill: Skill) =>
             skill.skill.name.toLowerCase().includes(searchLower)
           )
 
         const matchesCategory = selectedCategory === "All" ||
-          profile.skills.some((s) => s.skill.category === selectedCategory)
+          profile.skills.some((s: Skill) => s.skill.category === selectedCategory)
 
         return matchesSearch && matchesCategory
       })
@@ -182,14 +212,14 @@ export default function Profiles() {
         <>
           {filteredProfiles.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProfiles.map((profile) => (
+              {filteredProfiles.map((profile: any) => (
                 <ProfileCard key={profile.id} profile={profile} />
               ))}
             </div>
           ) : (
             <NotFoundComp
               icon="avatar"
-              title="No Profiles Found"
+              title="Profiles"
               description="No users match your current search and filter criteria."
             />
           )}
