@@ -56,39 +56,46 @@ export default function LoadingPage({ currentRepo, status, progress, complete }:
   })()
 
   return (
-    <div className="h-screen bg-white">
-      <div className="h-full max-w-7xl mx-auto p-4 md:p-6">
-        <div className="h-full rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 h-full divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
+    <div className="min-h-screen bg-gradient-to-b from-bg-gradient-start to-bg-gradient-end">
+      <div className="h-screen max-w-7xl mx-auto p-6 md:p-8">
+        <div className="h-full rounded-3xl border border-border shadow-xl bg-card overflow-hidden backdrop-blur-sm">
+          <div className="grid grid-cols-1 lg:grid-cols-2 h-full divide-y lg:divide-y-0 lg:divide-x divide-border">
             {/* Left: Analysis Progress (50%) */}
-            <section className="h-full p-6 flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-6 h-6 border border-black/20 border-t-black rounded-full animate-spin" />
-                <h1 className="text-lg font-semibold text-black">Processing Analysis</h1>
+            <section className="h-full p-8 lg:p-12 flex flex-col">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="relative">
+                  <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
+                  <div className="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-accent rounded-full animate-spin" style={{ animationDuration: '0.8s' }} />
+                </div>
+                <h1 className="text-xl lg:text-2xl font-heading font-bold text-foreground tracking-tight">Processing Analysis</h1>
               </div>
               {currentRepo ? (
-                <div className="text-xs text-black/70 font-medium mb-2">Currently analyzing: {currentRepo}</div>
+                <div className="text-sm text-muted-foreground font-sans font-medium mb-6 px-4 py-3 bg-muted/50 rounded-lg border border-border/50">
+                  <span className="text-muted-foreground/80">Currently analyzing:</span> <span className="font-semibold text-foreground font-mono">{currentRepo}</span>
+                </div>
               ) : null}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-black">Analysis Progress</span>
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-base font-heading font-semibold text-foreground tracking-tight">Analysis Progress</span>
                   {typeof clampedProgress === "number" ? (
-                    <span className="text-sm font-mono text-black/80">{Math.round(clampedProgress)}%</span>
+                    <span className="text-base font-mono font-bold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border/30">{Math.round(clampedProgress)}%</span>
                   ) : null}
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-muted rounded-full overflow-hidden shadow-inner border border-border/30">
                   {typeof clampedProgress === "number" ? (
                     <div
-                      className="h-full bg-black transition-all duration-500 ease-out rounded-full"
+                      className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700 ease-out rounded-full relative"
                       style={{ width: `${clampedProgress}%` }}
-                    />
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                    </div>
                   ) : (
                     <div className="relative h-full w-full overflow-hidden">
-                      <div className="absolute inset-0 -translate-x-1/2 w-1/2 bg-black/60 animate-pulse rounded-full" />
+                      <div className="absolute inset-0 -translate-x-1/2 w-1/2 bg-gradient-to-r from-primary to-accent animate-pulse rounded-full opacity-60" />
                     </div>
                   )}
                 </div>
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-3 text-sm text-muted-foreground font-sans font-medium">
                   {status
                     ? status
                     : typeof clampedProgress === "number"
@@ -102,33 +109,43 @@ export default function LoadingPage({ currentRepo, status, progress, complete }:
                     : "Working..."}
                 </div>
               </div>
-              <div className="mt-5">
-                <div className="text-xs font-medium text-black mb-2">Analysis steps</div>
-                <ol className="space-y-1 max-h-[50vh] lg:max-h-none flex-1 overflow-auto pr-1">
+              <div className="flex-1">
+                <div className="text-sm font-heading font-semibold text-foreground mb-4 tracking-tight">Analysis Pipeline</div>
+                <ol className="space-y-3 max-h-[50vh] lg:max-h-none flex-1 overflow-auto pr-2">
                   {PHASES.slice(0, 8).map((p, idx) => {
                     const isDone = currentPhaseIndex > idx
                     const isCurrent = currentPhaseIndex === idx
                     return (
-                      <li key={p.key} className="flex items-center gap-2 text-xs">
+                      <li key={p.key} className="flex items-center gap-3 text-sm group">
                         <span
-                          className={`inline-flex items-center justify-center w-4 h-4 rounded-full border ${
-                            isDone ? "bg-black border-black" : isCurrent ? "bg-black/70 border-black/70" : "border-gray-300"
+                          className={`inline-flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all duration-300 ${
+                            isDone 
+                              ? "bg-primary border-primary shadow-md" 
+                              : isCurrent 
+                                ? "bg-accent border-accent shadow-lg shadow-accent/20 animate-pulse" 
+                                : "border-border bg-muted/30"
                           }`}
                         >
                           {isDone ? (
-                            <svg viewBox="0 0 20 20" className="w-3 h-3 text-white">
+                            <svg viewBox="0 0 20 20" className="w-4 h-4 text-primary-foreground">
                               <path
                                 fill="currentColor"
                                 d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a 1 1 0 001.414 0l8-8a 1 1 0 000-1.414z"
                               />
                             </svg>
                           ) : isCurrent ? (
-                            <svg viewBox="0 0 20 20" className="w-3 h-3 text-white">
-                              <circle cx="10" cy="10" r="3" fill="currentColor" />
-                            </svg>
-                          ) : null}
+                            <div className="w-2.5 h-2.5 bg-accent-foreground rounded-full animate-pulse" />
+                          ) : (
+                            <div className="w-2 h-2 bg-muted-foreground/30 rounded-full" />
+                          )}
                         </span>
-                        <span className={`${isDone ? "text-black/60" : isCurrent ? "text-black" : "text-gray-400"}`}>
+                        <span className={`font-sans font-medium transition-colors duration-300 ${
+                          isDone 
+                            ? "text-muted-foreground line-through" 
+                            : isCurrent 
+                              ? "text-foreground font-semibold" 
+                              : "text-muted-foreground/70"
+                        }`}>
                           {p.label}
                         </span>
                       </li>
@@ -137,25 +154,28 @@ export default function LoadingPage({ currentRepo, status, progress, complete }:
                 </ol>
               </div>
               {complete && (
-                <div className="pt-4">
-                  <div className="inline-flex items-center gap-2 text-green-600 mb-1">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="font-medium">Analysis Complete</span>
+                <div className="pt-6 px-4 py-4 bg-accent/10 rounded-xl border border-accent/20">
+                  <div className="inline-flex items-center gap-3 text-accent-foreground mb-2">
+                    <div className="w-6 h-6 bg-accent rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <span className="font-heading font-bold text-lg tracking-tight">Analysis Complete!</span>
                   </div>
-                  <p className="text-sm text-gray-500">Preparing your results...</p>
+                  <p className="text-muted-foreground font-sans font-medium ml-9">Preparing your comprehensive results...</p>
                 </div>
               )}
             </section>
 
             {/* Right: Game (50%) */}
-            <section className="h-full p-4 lg:p-6 flex items-center justify-center bg-black/95">
-              <div className="max-w-full rounded-xl w-full h-full flex items-center justify-center">
+            <section className="h-full p-6 lg:p-8 flex items-center justify-center bg-gradient-to-br from-primary via-primary/95 to-primary/90 relative">
+              <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_49%,rgba(255,255,255,0.05)_50%,transparent_51%)] bg-[size:20px_20px]" />
+              <div className="relative z-10 max-w-full rounded-2xl w-full h-full flex items-center justify-center p-4">
                 <TetrisGame variant="dark" />
               </div>
             </section>

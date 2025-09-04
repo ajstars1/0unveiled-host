@@ -12,13 +12,13 @@ const BOARD_H = ROWS * TILE
 
 const COLORS: Record<Cell, string> = {
   0: "#ffffff",
-  1: "#00BCD4", // I - cyan
-  2: "#3F51B5", // J - blue
-  3: "#FF9800", // L - orange
-  4: "#FFEB3B", // O - yellow
-  5: "#4CAF50", // S - green
-  6: "#9C27B0", // T - purple
-  7: "#F44336", // Z - red
+  1: "#06b6d4", // I - cyan
+  2: "#3b82f6", // J - blue  
+  3: "#f59e0b", // L - orange
+  4: "#e7ff3a", // O - accent yellow
+  5: "#10b981", // S - green
+  6: "#8b5cf6", // T - purple
+  7: "#ef4444", // Z - red
 }
 
 type ShapeMatrix = number[][]
@@ -418,11 +418,11 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
     ctx.clearRect(0, 0, BOARD_W, BOARD_H)
 
     // background
-    ctx.fillStyle = "#fafafa"
+    ctx.fillStyle = isDark ? "#1a1a1a" : "#fafafa"
     ctx.fillRect(0, 0, BOARD_W, BOARD_H)
 
     // grid
-    ctx.strokeStyle = "#eee"
+    ctx.strokeStyle = isDark ? "#333" : "#eee"
     ctx.lineWidth = 1
     for (let x = 0; x <= COLS; x++) {
       ctx.beginPath()
@@ -489,7 +489,7 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
     const ctx = canvas.getContext("2d")
     if (!ctx) return
     ctx.clearRect(0, 0, 4 * TILE, 4 * TILE)
-    ctx.fillStyle = "#fff"
+    ctx.fillStyle = isDark ? "#1a1a1a" : "#fff"
     ctx.fillRect(0, 0, 4 * TILE, 4 * TILE)
     if (!next.length) return
     const t = next[0]
@@ -543,24 +543,31 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
   const overlay = useMemo(() => {
   if (!running && !gameOver) {
       return (
-        <div className={`absolute inset-0 z-10 flex items-center justify-center ${isDark ? "bg-black/60" : "bg-white/90"} px-3 pointer-events-none`}>
-          <div className="text-center space-y-3 max-w-full">
-            <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-black"}`}>Tetris</h3>
-            <p className={`text-xs ${isDark ? "text-white/70" : "text-gray-500"}`}>Mode: <span className={`font-medium ${isDark ? "text-white" : "text-black"}`}>{mode[0].toUpperCase() + mode.slice(1)}</span> (change in sidebar)</p>
-            <p className={`text-sm ${isDark ? "text-white/80" : "text-gray-600"}`}>Press Space or Tap to Start</p>
-            <p className={`text-xs ${isDark ? "text-white/70" : "text-gray-500"}`}>Arrows: Move • Up: Rotate • Space: Hard Drop</p>
+        <div className={`absolute inset-0 z-10 flex items-center justify-center ${isDark ? "bg-primary/90" : "bg-white/95"} px-4 pointer-events-none backdrop-blur-sm`}>
+          <div className="text-center space-y-4 max-w-full">
+            <h3 className={`text-xl font-heading font-bold ${isDark ? "text-white" : "text-black"} tracking-tight`}>Tetris</h3>
+            <p className={`text-sm font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>
+              Mode: <span className={`font-bold ${isDark ? "text-white" : "text-black"}`}>{mode[0].toUpperCase() + mode.slice(1)}</span>
+            </p>
+            <p className={`text-base font-semibold ${isDark ? "text-white/90" : "text-gray-700"}`}>Press Space or Tap to Start</p>
+            <div className={`text-xs font-mono ${isDark ? "text-white/60" : "text-gray-500"} space-y-1`}>
+              <p>↔️ Move • ↕️ Rotate • Space: Drop</p>
+            </div>
           </div>
         </div>
       )
     }
     if (!running && gameOver) {
       return (
-        <div className={`absolute inset-0 z-10 flex items-center justify-center ${isDark ? "bg-black/60" : "bg-white/90"} px-3`}>
-          <div className="text-center space-y-3 max-w-full">
-            <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-black"}`}>Game Over</h3>
-            <div className={`text-sm ${isDark ? "text-white/80" : "text-gray-600"}`}>Score: {score} • Lines: {linesCleared} • Level: {level}</div>
+        <div className={`absolute inset-0 z-10 flex items-center justify-center ${isDark ? "bg-primary/90" : "bg-white/95"} px-4 backdrop-blur-sm`}>
+          <div className="text-center space-y-4 max-w-full">
+            <h3 className={`text-xl font-heading font-bold ${isDark ? "text-white" : "text-black"} tracking-tight`}>Game Over</h3>
+            <div className={`text-base font-semibold ${isDark ? "text-white/90" : "text-gray-700"} space-y-1`}>
+              <div>Score: <span className="font-mono">{score.toLocaleString()}</span></div>
+              <div>Lines: <span className="font-mono">{linesCleared}</span> • Level: <span className="font-mono">{level}</span></div>
+            </div>
             <button
-              className={`px-4 py-1.5 text-sm rounded ${isDark ? "bg-white text-black hover:bg-white/90" : "bg-black text-white hover:bg-black/90"}`}
+              className={`px-6 py-2.5 text-sm rounded-md font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-md ${isDark ? "bg-white text-black hover:bg-white/90" : "bg-black text-white hover:bg-black/90"}`}
               onClick={() => {
                 setBoard(createEmptyBoard())
                 setScore(0)
@@ -576,9 +583,11 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
                 setRunning(true)
               }}
             >
-              Restart
+              Play Again
             </button>
-            <p className={`text-xs ${isDark ? "text-white/70" : "text-gray-500"}`}>Mode: <span className={`font-medium ${isDark ? "text-white" : "text-black"}`}>{mode[0].toUpperCase() + mode.slice(1)}</span> (change in sidebar)</p>
+            <p className={`text-xs font-medium ${isDark ? "text-white/60" : "text-gray-500"}`}>
+              Mode: <span className={`font-semibold ${isDark ? "text-white" : "text-black"}`}>{mode[0].toUpperCase() + mode.slice(1)}</span>
+            </p>
           </div>
         </div>
       )
@@ -594,43 +603,43 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
           ref={canvasRef}
           width={BOARD_W}
           height={BOARD_H}
-          className={`block border rounded ${isDark ? "border-white/20" : "border-gray-200"}`}
+          className={`block border rounded-lg shadow-md ${isDark ? "border-white/20 shadow-black/20" : "border-gray-200 shadow-gray-200/50"}`}
           onClick={onCanvasClick}
         />
       </div>
       <div className="w-56 md:w-64">
-        <div className={`rounded p-3 overflow-hidden border ${isDark ? "bg-black/60 border-white/20 text-white backdrop-blur-sm" : "bg-white border-gray-200"}`}>
-          <div className={`text-xs mb-2 ${isDark ? "text-white/70" : "text-gray-500"}`}>Mode</div>
-          <div className="flex flex-wrap gap-2 mb-3">
+        <div className={`rounded-lg p-4 overflow-hidden border shadow-md ${isDark ? "bg-primary/80 border-white/20 text-white backdrop-blur-sm shadow-black/20" : "bg-white border-gray-200 shadow-gray-200/50"}`}>
+          <div className={`text-xs mb-3 font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Difficulty Mode</div>
+          <div className="flex flex-wrap gap-2 mb-4">
             {(["easy", "medium", "hard", "insane"] as const).map((m) => (
               <button
                 key={m}
                 disabled={running}
-                className={`text-xs rounded px-3 py-1 border ${
+                className={`text-xs rounded-md px-3 py-1.5 border font-medium transition-all duration-200 ${
                   mode === m
                     ? isDark
-                      ? "bg-white text-black border-white"
-                      : "bg-black text-white border-black"
+                      ? "bg-white text-black border-white shadow-md"
+                      : "bg-black text-white border-black shadow-md"
                     : isDark
-                      ? "border-white/30 text-white hover:bg-white/10"
-                      : "border-gray-300 hover:bg-gray-50"
-                } ${running ? "opacity-50 cursor-not-allowed" : ""}`}
+                      ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50"
+                      : "border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                } ${running ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
                 onClick={() => setMode(m)}
               >
                 {m[0].toUpperCase() + m.slice(1)}
               </button>
             ))}
           </div>
-          <div className={`text-xs ${isDark ? "text-white/70" : "text-gray-500"}`}>Next</div>
-          <canvas ref={nextRef} width={4 * TILE} height={4 * TILE} className={`mt-2 border rounded ${isDark ? "border-white/20" : "border-gray-100"}`} />
-          <div className="mt-4 text-sm">
-            <div className="flex justify-between"><span className={`${isDark ? "text-white/70" : "text-gray-500"}`}>Score</span><span className={`font-semibold ${isDark ? "text-white" : ""}`}>{score}</span></div>
-            <div className="flex justify-between"><span className={`${isDark ? "text-white/70" : "text-gray-500"}`}>Level</span><span className={`font-semibold ${isDark ? "text-white" : ""}`}>{level}</span></div>
-            <div className="flex justify-between"><span className={`${isDark ? "text-white/70" : "text-gray-500"}`}>Lines</span><span className={`font-semibold ${isDark ? "text-white" : ""}`}>{linesCleared}</span></div>
+          <div className={`text-xs font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Next Piece</div>
+          <canvas ref={nextRef} width={4 * TILE} height={4 * TILE} className={`mt-3 border rounded-md shadow-sm ${isDark ? "border-white/20 shadow-black/20" : "border-gray-100 shadow-gray-200/30"}`} />
+          <div className="mt-6 text-sm space-y-2">
+            <div className="flex justify-between"><span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Score</span><span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{score.toLocaleString()}</span></div>
+            <div className="flex justify-between"><span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Level</span><span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{level}</span></div>
+            <div className="flex justify-between"><span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Lines</span><span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{linesCleared}</span></div>
           </div>
-          <div className="mt-4">
+          <div className="mt-6 space-y-2">
             <button
-              className={`w-full text-sm rounded px-3 py-1.5 disabled:opacity-50 ${isDark ? "bg-white text-black hover:bg-white/90" : "bg-black text-white hover:bg-black/90"}`}
+              className={`w-full text-sm rounded-md px-4 py-2 font-semibold transition-all duration-200 disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] ${isDark ? "bg-white text-black hover:bg-white/90 shadow-md" : "bg-black text-white hover:bg-black/90 shadow-md"}`}
               onClick={() => {
                 if (!running) {
                   if (gameOver) {
@@ -654,10 +663,10 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
               }}
               disabled={running}
             >
-              Start
+              {gameOver ? "Play Again" : "Start Game"}
             </button>
             <button
-              className={`w-full mt-2 text-sm border rounded px-3 py-1.5 ${isDark ? "border-white/30 text-white hover:bg-white/10" : "border-gray-300 hover:bg-gray-50"}`}
+              className={`w-full text-sm border rounded-md px-4 py-2 font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${isDark ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" : "border-gray-300 hover:bg-gray-50 hover:border-gray-400"}`}
               onClick={() => {
                 setBoard(createEmptyBoard())
                 setScore(0)
