@@ -43,10 +43,14 @@ interface ProfileAnalysisResult {
       totalStars: number;
       totalForks: number;
       averageRepoSize: number;
+      totalLinesOfCode?: number;
+      averageComplexity?: number;
+      averageQuality?: number;
       languages: Array<{
         language: string;
         repositoryCount: number;
         totalStars: number;
+        totalLines?: number;
         percentage: number;
       }>;
     };
@@ -62,7 +66,20 @@ interface ProfileAnalysisResult {
       language: string;
       repositoryCount: number;
       totalStars: number;
+      totalLines?: number;
       percentage: number;
+    }>;
+    detailedAnalyses?: Array<{
+      repository: {
+        name: string;
+        full_name: string;
+        description: string | null;
+        language: string | null;
+        stars: number;
+        forks: number;
+        url: string;
+      };
+      analysis: any;
     }>;
   };
   careerAnalysis: {
@@ -277,6 +294,38 @@ const ProfileAnalysisResults = () => {
                   <div className="text-sm text-muted-foreground">Avg Size</div>
                 </div>
               </div>
+              
+              {/* Additional code quality metrics if available */}
+              {(analysisData.repositoryAnalysis.stats.totalLinesOfCode || 
+                analysisData.repositoryAnalysis.stats.averageComplexity || 
+                analysisData.repositoryAnalysis.stats.averageQuality) && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                  {analysisData.repositoryAnalysis.stats.totalLinesOfCode && (
+                    <div className="bg-muted/30 p-4 rounded-lg text-center">
+                      <div className="text-lg font-bold text-purple-500">
+                        {Math.round(analysisData.repositoryAnalysis.stats.totalLinesOfCode / 1000)}K
+                      </div>
+                      <div className="text-xs text-muted-foreground">Lines of Code</div>
+                    </div>
+                  )}
+                  {analysisData.repositoryAnalysis.stats.averageComplexity && (
+                    <div className="bg-muted/30 p-4 rounded-lg text-center">
+                      <div className="text-lg font-bold text-orange-500">
+                        {analysisData.repositoryAnalysis.stats.averageComplexity}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Avg Complexity</div>
+                    </div>
+                  )}
+                  {analysisData.repositoryAnalysis.stats.averageQuality && (
+                    <div className="bg-muted/30 p-4 rounded-lg text-center">
+                      <div className="text-lg font-bold text-emerald-500">
+                        {analysisData.repositoryAnalysis.stats.averageQuality}%
+                      </div>
+                      <div className="text-xs text-muted-foreground">Avg Quality</div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -359,6 +408,125 @@ const ProfileAnalysisResults = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Detailed Repository Analyses */}
+        {analysisData.repositoryAnalysis.detailedAnalyses && 
+         analysisData.repositoryAnalysis.detailedAnalyses.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Code2 className="h-5 w-5" />
+                Detailed Repository Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {analysisData.repositoryAnalysis.detailedAnalyses.map((repoAnalysis, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium text-lg">{repoAnalysis.repository.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {repoAnalysis.repository.description || "No description available"}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                          {repoAnalysis.repository.language && (
+                            <Badge variant="secondary">{repoAnalysis.repository.language}</Badge>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4" />
+                            {repoAnalysis.repository.stars}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <GitFork className="h-4 w-4" />
+                            {repoAnalysis.repository.forks}
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(repoAnalysis.repository.url, '_blank')}
+                      >
+                        View on GitHub
+                      </Button>
+                    </div>
+                    
+                    {repoAnalysis.analysis && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Code Metrics */}
+                        {repoAnalysis.analysis.metrics && (
+                          <div className="bg-muted/30 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm mb-2">Code Metrics</h5>
+                            <div className="space-y-1 text-xs">
+                              {repoAnalysis.analysis.metrics.total_lines && (
+                                <div>Lines: {repoAnalysis.analysis.metrics.total_lines.toLocaleString()}</div>
+                              )}
+                              {repoAnalysis.analysis.metrics.complexity && (
+                                <div>Complexity: {repoAnalysis.analysis.metrics.complexity}</div>
+                              )}
+                              {repoAnalysis.analysis.metrics.maintainability && (
+                                <div>Maintainability: {repoAnalysis.analysis.metrics.maintainability}%</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Quality Metrics */}
+                        {repoAnalysis.analysis.quality && (
+                          <div className="bg-muted/30 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm mb-2">Quality</h5>
+                            <div className="space-y-1 text-xs">
+                              {repoAnalysis.analysis.quality.architecture_score && (
+                                <div>Architecture: {repoAnalysis.analysis.quality.architecture_score}%</div>
+                              )}
+                              {repoAnalysis.analysis.quality.documentation_coverage && (
+                                <div>Documentation: {repoAnalysis.analysis.quality.documentation_coverage}%</div>
+                              )}
+                              {repoAnalysis.analysis.quality.test_files && (
+                                <div>Test Files: {repoAnalysis.analysis.quality.test_files}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Security */}
+                        {repoAnalysis.analysis.security && (
+                          <div className="bg-muted/30 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm mb-2">Security</h5>
+                            <div className="space-y-1 text-xs">
+                              {repoAnalysis.analysis.security.security_score && (
+                                <div>Security Score: {repoAnalysis.analysis.security.security_score}%</div>
+                              )}
+                              {repoAnalysis.analysis.security.critical_issues && (
+                                <div>Critical Issues: {repoAnalysis.analysis.security.critical_issues.length}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* AI Insights for this repository */}
+                    {repoAnalysis.analysis?.ai_insights && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                        <h5 className="font-medium text-sm mb-2 text-blue-700 dark:text-blue-300">
+                          AI Assessment
+                        </h5>
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          {repoAnalysis.analysis.ai_insights.code_assessment || 
+                           repoAnalysis.analysis.ai_insights.overall_score ? 
+                           `Overall Score: ${repoAnalysis.analysis.ai_insights.overall_score}/100` : 
+                           "Analysis completed"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Career Analysis */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

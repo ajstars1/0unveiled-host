@@ -155,7 +155,8 @@ export async function analyzeRepositoryAction(
   userId: string, 
   owner: string, 
   repoName: string,
-  maxFiles: number = 50
+  maxFiles: number = 50,
+  progressCallback?: (status: string, progress: number) => void
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     // Validate current user authentication
@@ -239,6 +240,9 @@ export async function analyzeRepositoryAction(
     };
 
     console.log(`Calling analyzer service at ${analyzerServiceUrl}/api/auth/analyze-repository`);
+    
+    // Report progress through callback
+    progressCallback?.("Connecting to analyzer service", 30);
 
     const response = await fetch(`${analyzerServiceUrl}/api/auth/analyze-repository`, {
       method: 'POST',
@@ -248,6 +252,8 @@ export async function analyzeRepositoryAction(
       },
       body: JSON.stringify(analysisPayload),
     });
+
+    progressCallback?.("Analyzing repository content", 50);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -270,6 +276,8 @@ export async function analyzeRepositoryAction(
         };
       }
     }
+
+    progressCallback?.("Processing analysis results", 75);
 
     const analysisResult = await response.json();
 

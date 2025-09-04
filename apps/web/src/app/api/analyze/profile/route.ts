@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserByUsername } from "@/data/user";
-import { fetchUserGithubRepos } from "@/actions/portfolioActions";
+import { analyzeRepositoryAction } from "@/actions/analyze";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { db } from "@0unveiled/database";
+import { showcasedItems } from "@0unveiled/database";
+import { eq, and } from "drizzle-orm";
 
 interface ProfileAnalysisRequest {
   username: string;
@@ -58,10 +61,62 @@ interface ProfileAnalysisData {
 function createEventStreamResponse(encoder: TextEncoder, controller: ReadableStreamDefaultController) {
   return {
     sendEvent: (data: any) => {
-      const chunk = encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
-      controller.enqueue(chunk);
+      try {
+        const chunk = encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
+        controller.enqueue(chunk);
+      } catch (error: any) {
+        if (error?.code === 'ERR_INVALID_STATE') {
+          console.log('Controller already closed, skipping event:', data);
+          return;
+        }
+        // Re-throw other errors
+        throw error;
+      }
     }
   };
+}
+
+// Function to get GitHub repositories from user's portfolio
+async function getPortfolioGithubRepos(userId: string): Promise<{
+  success: boolean;
+  repositories?: RepositoryData[];
+  error?: string;
+}> {
+  try {
+    // Get GitHub repositories from the user's portfolio
+    const portfolioItems = await db.query.showcasedItems.findMany({
+      where: and(
+        eq(showcasedItems.userId, userId),
+        eq(showcasedItems.provider, 'GITHUB')
+      ),
+    });
+
+    if (portfolioItems.length === 0) {
+      return { success: false, error: "No GitHub repositories found in portfolio" };
+    }
+
+    const repositories: RepositoryData[] = portfolioItems.map((item: any) => {
+      const urlParts = item.url.split('/');
+      const owner = urlParts[urlParts.length - 2];
+      const repoName = urlParts[urlParts.length - 1];
+
+      return {
+        name: repoName,
+        full_name: `${owner}/${repoName}`,
+        description: item.description,
+        language: null, // We'll get this from the analysis
+        stargazers_count: 0, // We'll get this from the analysis
+        forks_count: 0, // We'll get this from the analysis
+        size: 0, // We'll get this from the analysis
+        html_url: item.url,
+      };
+    });
+
+    return { success: true, repositories };
+  } catch (error) {
+    console.error("Error fetching portfolio GitHub repos:", error);
+    return { success: false, error: "Failed to fetch portfolio repositories" };
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -92,41 +147,38 @@ export async function POST(request: NextRequest) {
             return;
           }
 
-          // Step 2: Get user's GitHub repositories
-          sendEvent({ step: "Fetching GitHub repositories...", progress: 25 });
+          // Step 2: Get GitHub repositories from user's portfolio
+          sendEvent({ step: "Fetching portfolio GitHub repositories...", progress: 25 });
+          
+          let repositories: RepositoryData[] = [];
+          let githubConnected = false;
           
           try {
-            // Check if user has GitHub connected
-            const supabase = await createSupabaseServerClient();
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const reposResult = await getPortfolioGithubRepos(user.id);
+            console.log("Portfolio repos result:", reposResult);
             
-            if (!currentUser) {
-              sendEvent({ error: "Authentication required" });
-              controller.close();
-              return;
+            if (reposResult.success && reposResult.repositories) {
+              repositories = reposResult.repositories;
+              githubConnected = true;
+              console.log("Found portfolio repositories:", repositories.length);
+            } else {
+              // No GitHub repositories in portfolio - continue with profile-only analysis
+              console.log("No GitHub repositories in portfolio, continuing with profile-only analysis");
+              githubConnected = false;
             }
 
-            const reposResult = await fetchUserGithubRepos();
-            console.log("GitHub repos result:", reposResult);
-            
-            if (!reposResult.connected) {
-              sendEvent({ error: "GitHub account not connected. Please connect your GitHub account first." });
-              controller.close();
-              return;
-            }
-            
-            if (reposResult.error) {
-              sendEvent({ error: reposResult.error });
-              controller.close();
-              return;
-            }
+          } catch (repoError) {
+            console.error("Portfolio repos fetch error:", repoError);
+            // Don't fail the entire analysis, just continue without GitHub repos
+            githubConnected = false;
+          }
 
-            const repositories = (reposResult.repos as RepositoryData[]) || [];
-            console.log("Found repositories:", repositories.length);
-
-            // Step 3: Prepare profile data
-            sendEvent({ step: "Organizing profile information...", progress: 40 });
-            
+          // Step 3: Prepare profile data
+          if (githubConnected) {
+            sendEvent({ step: "Organizing profile and portfolio repository information...", progress: 40 });
+          } else {
+            sendEvent({ step: "Analyzing profile information (no GitHub repositories in portfolio)...", progress: 40 });
+          }
             const profileData: ProfileAnalysisData = {
               userId: user.id,
               username: user.username || username,
@@ -163,8 +215,65 @@ export async function POST(request: NextRequest) {
               },
             };
 
-            // Step 4: Analyze repositories (simulate analysis for now)
-            sendEvent({ step: "Analyzing repository content and patterns...", progress: 60 });
+            // Step 4: Analyze portfolio repositories (real analysis)
+            let detailedAnalyses: Array<{
+              repository: RepositoryData;
+              analysis: any;
+            }> = [];
+
+            if (githubConnected && repositories.length > 0) {
+              sendEvent({ step: "Analyzing portfolio repository content and patterns...", progress: 50 });
+              
+              // Analyze all portfolio repositories
+              const totalRepos = repositories.length;
+              
+              for (let i = 0; i < totalRepos; i++) {
+                const repo = repositories[i];
+                const progressPercent = 50 + (i / totalRepos) * 25; // 50% to 75%
+                
+                sendEvent({ 
+                  step: `Analyzing portfolio repository ${i + 1}/${totalRepos}: ${repo.name}...`, 
+                  progress: Math.round(progressPercent) 
+                });
+                
+                try {
+                  // Extract owner and repo name from full_name
+                  const [owner, repoName] = repo.full_name.split('/');
+                  
+                  // Analyze this repository using the same service as individual analysis
+                  const analysisResult = await analyzeRepositoryAction(
+                    user.id,
+                    owner,
+                    repoName,
+                    50, // More files per repo since we're analyzing fewer, selected repos
+                    (status: string, progress: number) => {
+                      // Send sub-progress updates
+                      sendEvent({ 
+                        step: `${repo.name}: ${status}`, 
+                        progress: Math.round(progressPercent + (progress / 100) * (25 / totalRepos))
+                      });
+                    }
+                  );
+                  
+                  if (analysisResult.success && analysisResult.data) {
+                    detailedAnalyses.push({
+                      repository: repo,
+                      analysis: analysisResult.data
+                    });
+                  } else {
+                    console.log(`Failed to analyze portfolio repository ${repo.name}:`, analysisResult.error);
+                    // Continue with other repositories even if one fails
+                  }
+                } catch (repoAnalysisError) {
+                  console.error(`Error analyzing portfolio repository ${repo.name}:`, repoAnalysisError);
+                  // Continue with other repositories even if one fails
+                }
+              }
+              
+              sendEvent({ step: "Aggregating portfolio analysis results...", progress: 75 });
+            } else {
+              sendEvent({ step: "Analyzing profile content and career data...", progress: 60 });
+            }
             
             // Simulate some processing time
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -172,8 +281,8 @@ export async function POST(request: NextRequest) {
             // Step 5: Generate comprehensive insights
             sendEvent({ step: "Generating comprehensive career insights...", progress: 80 });
             
-            // Create analysis result (for now, we'll create a mock analysis)
-            const analysisResult = await generateProfileAnalysis(profileData);
+            // Create analysis result
+            const analysisResult = await generateProfileAnalysis(profileData, githubConnected, detailedAnalyses);
 
             // Step 6: Complete
             sendEvent({ 
@@ -182,19 +291,16 @@ export async function POST(request: NextRequest) {
               result: analysisResult 
             });
 
-          } catch (repoError) {
-            console.error("GitHub repos fetch error:", repoError);
-            sendEvent({ error: "Failed to fetch GitHub repositories. Please try again." });
-            controller.close();
-            return;
-          }
-
           controller.close();
         } catch (error) {
           console.error("Profile analysis error:", error);
-          sendEvent({ 
-            error: error instanceof Error ? error.message : "Analysis failed" 
-          });
+          try {
+            sendEvent({ 
+              error: error instanceof Error ? error.message : "Analysis failed" 
+            });
+          } catch (sendError) {
+            console.log("Failed to send error event, controller likely closed:", sendError);
+          }
           controller.close();
         }
       },
@@ -216,8 +322,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function generateProfileAnalysis(data: ProfileAnalysisData) {
-  // Calculate repository statistics
+async function generateProfileAnalysis(data: ProfileAnalysisData, githubConnected: boolean = true, detailedAnalyses: Array<{repository: RepositoryData; analysis: any}> = []) {
+  // Calculate repository statistics with enhanced metrics from actual analysis
   const repoStats = {
     totalRepos: data.repositories.length,
     totalStars: data.repositories.reduce((sum, repo) => sum + repo.stargazers_count, 0),
@@ -225,6 +331,20 @@ async function generateProfileAnalysis(data: ProfileAnalysisData) {
     languages: getLanguageDistribution(data.repositories),
     averageRepoSize: data.repositories.length > 0 
       ? Math.round(data.repositories.reduce((sum, repo) => sum + repo.size, 0) / data.repositories.length)
+      : 0,
+    // Enhanced metrics from actual code analysis
+    totalLinesOfCode: detailedAnalyses.reduce((sum, analysis) => {
+      return sum + (analysis.analysis?.data?.metrics?.total_lines || 0);
+    }, 0),
+    averageComplexity: detailedAnalyses.length > 0 
+      ? Math.round(detailedAnalyses.reduce((sum, analysis) => {
+          return sum + (analysis.analysis?.data?.metrics?.complexity || 0);
+        }, 0) / detailedAnalyses.length)
+      : 0,
+    averageQuality: detailedAnalyses.length > 0 
+      ? Math.round(detailedAnalyses.reduce((sum, analysis) => {
+          return sum + (analysis.analysis?.data?.quality?.overall_score || 0);
+        }, 0) / detailedAnalyses.length)
       : 0,
   };
 
@@ -238,7 +358,7 @@ async function generateProfileAnalysis(data: ProfileAnalysisData) {
   };
 
   // Generate insights
-  const insights = generateCareerInsights(data, repoStats, careerStats);
+  const insights = generateCareerInsights(data, repoStats, careerStats, githubConnected, detailedAnalyses);
 
   return {
     profileSummary: {
@@ -263,6 +383,18 @@ async function generateProfileAnalysis(data: ProfileAnalysisData) {
           url: repo.html_url,
         })),
       languageExpertise: repoStats.languages,
+      detailedAnalyses: detailedAnalyses.map(item => ({
+        repository: {
+          name: item.repository.name,
+          full_name: item.repository.full_name,
+          description: item.repository.description,
+          language: item.repository.language,
+          stars: item.repository.stargazers_count,
+          forks: item.repository.forks_count,
+          url: item.repository.html_url,
+        },
+        analysis: item.analysis?.data || item.analysis
+      })),
     },
     careerAnalysis: {
       stats: careerStats,
@@ -271,7 +403,7 @@ async function generateProfileAnalysis(data: ProfileAnalysisData) {
       skills: data.profileData.skills,
     },
     aiInsights: insights,
-    overallScore: calculateOverallScore(repoStats, careerStats, data.profileData),
+    overallScore: calculateOverallScore(repoStats, careerStats, data.profileData, githubConnected),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -316,43 +448,104 @@ function calculateTotalEducation(education: any[]): number {
   }, 0);
 }
 
-function generateCareerInsights(data: ProfileAnalysisData, repoStats: any, careerStats: any) {
+function generateCareerInsights(data: ProfileAnalysisData, repoStats: any, careerStats: any, githubConnected: boolean = true, detailedAnalyses: Array<{repository: RepositoryData; analysis: any}> = []) {
   const insights = [];
 
-  // Repository insights
-  if (repoStats.totalRepos > 10) {
-    insights.push(`Highly productive developer with ${repoStats.totalRepos} repositories showcasing diverse coding experience.`);
-  }
+  // Repository insights (only if portfolio has GitHub repos)
+  if (githubConnected && repoStats.totalRepos > 0) {
+    if (repoStats.totalRepos > 5) {
+      insights.push(`Strong portfolio with ${repoStats.totalRepos} showcased GitHub repositories demonstrating diverse coding experience.`);
+    } else if (repoStats.totalRepos > 0) {
+      insights.push(`Curated portfolio with ${repoStats.totalRepos} showcased GitHub repositories demonstrating coding skills.`);
+    }
 
-  if (repoStats.totalStars > 50) {
-    insights.push(`Strong community impact with ${repoStats.totalStars} total stars across repositories.`);
-  }
+    if (repoStats.totalStars > 50) {
+      insights.push(`Impactful portfolio with ${repoStats.totalStars} total stars across showcased repositories.`);
+    } else if (repoStats.totalStars > 0) {
+      insights.push(`Growing community engagement with ${repoStats.totalStars} stars across portfolio repositories.`);
+    }
 
-  // Language expertise insights
-  const topLanguage = repoStats.languages[0];
-  if (topLanguage) {
-    insights.push(`Primary expertise in ${topLanguage.language} with ${topLanguage.repositoryCount} repositories (${topLanguage.percentage}% of portfolio).`);
+    // Enhanced insights from actual code analysis
+    if (repoStats.totalLinesOfCode > 0) {
+      insights.push(`Substantial portfolio codebase with ${(repoStats.totalLinesOfCode / 1000).toFixed(1)}K lines of code analyzed.`);
+    }
+
+    if (repoStats.averageQuality > 0) {
+      if (repoStats.averageQuality >= 80) {
+        insights.push(`Excellent code quality in portfolio with an average score of ${repoStats.averageQuality}% across repositories.`);
+      } else if (repoStats.averageQuality >= 60) {
+        insights.push(`Good code quality in portfolio with an average score of ${repoStats.averageQuality}% across repositories.`);
+      } else {
+        insights.push(`Portfolio code quality shows ${repoStats.averageQuality}% average score with room for improvement.`);
+      }
+    }
+
+    if (repoStats.averageComplexity > 0) {
+      if (repoStats.averageComplexity <= 3) {
+        insights.push(`Clean, maintainable code architecture in portfolio with low complexity (avg: ${repoStats.averageComplexity}).`);
+      } else if (repoStats.averageComplexity <= 5) {
+        insights.push(`Moderate code complexity in portfolio (avg: ${repoStats.averageComplexity}) indicating balanced feature richness.`);
+      } else {
+        insights.push(`High code complexity in portfolio (avg: ${repoStats.averageComplexity}) suggests feature-rich implementations.`);
+      }
+    }
+
+    // Language expertise insights
+    const topLanguage = repoStats.languages[0];
+    if (topLanguage) {
+      insights.push(`Primary portfolio expertise in ${topLanguage.language} with ${topLanguage.repositoryCount} repositories (${topLanguage.percentage}% of portfolio).`);
+    }
+
+    // Security and best practices insights from detailed analysis
+    const securityScores = detailedAnalyses
+      .map(item => item.analysis?.data?.security?.security_score)
+      .filter(score => typeof score === 'number');
+    
+    if (securityScores.length > 0) {
+      const avgSecurity = Math.round(securityScores.reduce((sum, score) => sum + score, 0) / securityScores.length);
+      if (avgSecurity >= 80) {
+        insights.push(`Strong security practices in portfolio with ${avgSecurity}% average security score.`);
+      } else if (avgSecurity >= 60) {
+        insights.push(`Good security awareness in portfolio with ${avgSecurity}% average security score.`);
+      }
+    }
+
+  } else if (!githubConnected) {
+    insights.push("No GitHub repositories found in portfolio. Add GitHub projects to your portfolio to unlock coding insights and analysis.");
   }
 
   // Career progression insights
   if (careerStats.totalYearsExperience > 3) {
     insights.push(`Experienced professional with ${Math.round(careerStats.totalYearsExperience)} years of work experience.`);
+  } else if (careerStats.totalYearsExperience > 0) {
+    insights.push(`Growing professional with ${Math.round(careerStats.totalYearsExperience)} years of work experience.`);
   }
 
   if (data.profileData.skills.length > 5) {
     insights.push(`Well-rounded skill set with ${data.profileData.skills.length} documented technical and professional skills.`);
+  } else if (data.profileData.skills.length > 0) {
+    insights.push(`Foundation skill set with ${data.profileData.skills.length} documented skills. Consider adding more to enhance profile visibility.`);
   }
 
   // Education-career alignment
   if (data.profileData.education.length > 0 && data.profileData.experience.length > 0) {
     insights.push("Strong educational foundation complemented by practical work experience.");
+  } else if (data.profileData.education.length > 0) {
+    insights.push("Strong educational background provides solid foundation for career growth.");
+  } else if (data.profileData.experience.length > 0) {
+    insights.push("Practical work experience demonstrates real-world professional capabilities.");
+  }
+
+  // If no insights generated, add default
+  if (insights.length === 0) {
+    insights.push("Profile analysis ready. Add more information like skills, experience, or education to unlock deeper insights.");
   }
 
   return {
     strengths: insights,
     careerProgression: analyzeCareerProgression(data.profileData.experience),
-    skillGaps: identifySkillGaps(repoStats.languages, data.profileData.skills),
-    recommendations: generateRecommendations(data, repoStats, careerStats),
+    skillGaps: identifySkillGaps(repoStats.languages, data.profileData.skills, githubConnected),
+    recommendations: generateRecommendations(data, repoStats, careerStats, githubConnected, detailedAnalyses),
   };
 }
 
@@ -368,8 +561,25 @@ function analyzeCareerProgression(experience: any[]): string {
   return `Career progression from ${sortedExp[0].jobTitle} to ${sortedExp[sortedExp.length - 1].jobTitle}, showing growth across ${sortedExp.length} roles.`;
 }
 
-function identifySkillGaps(languages: any[], skills: any[]): string[] {
+function identifySkillGaps(languages: any[], skills: any[], githubConnected: boolean = true): string[] {
   const gaps: string[] = [];
+  
+  if (!githubConnected) {
+    gaps.push("Connect GitHub to get coding language insights and identify skill gaps");
+    
+    // General skill recommendations for profiles without GitHub
+    const skillNames = skills.map(s => s.name.toLowerCase());
+    const basicTechSkills = ['javascript', 'python', 'sql', 'git', 'html', 'css'];
+    
+    basicTechSkills.forEach(tech => {
+      if (!skillNames.some(skill => skill.includes(tech))) {
+        gaps.push(`Consider adding ${tech} to your skill set`);
+      }
+    });
+    
+    return gaps.slice(0, 3);
+  }
+  
   const skillNames = skills.map(s => s.name.toLowerCase());
   
   // Check if popular languages are missing from skills
@@ -384,13 +594,17 @@ function identifySkillGaps(languages: any[], skills: any[]): string[] {
   return gaps.slice(0, 3); // Limit to top 3 suggestions
 }
 
-function generateRecommendations(data: ProfileAnalysisData, repoStats: any, careerStats: any): string[] {
+function generateRecommendations(data: ProfileAnalysisData, repoStats: any, careerStats: any, githubConnected: boolean = true, detailedAnalyses: Array<{repository: RepositoryData; analysis: any}> = []): string[] {
   const recommendations = [];
   
-  if (repoStats.totalRepos < 5) {
+  // GitHub-specific recommendations
+  if (!githubConnected) {
+    recommendations.push("Connect your GitHub account to showcase your coding projects and get repository-based insights.");
+  } else if (repoStats.totalRepos < 5) {
     recommendations.push("Build more projects to showcase your skills and attract potential employers.");
   }
   
+  // Profile completeness recommendations
   if (data.profileData.bio === null || data.profileData.bio?.length < 50) {
     recommendations.push("Add a comprehensive bio to better describe your professional background and interests.");
   }
@@ -399,19 +613,64 @@ function generateRecommendations(data: ProfileAnalysisData, repoStats: any, care
     recommendations.push("Add more skills to your profile to improve discoverability and showcase your expertise.");
   }
   
-  if (repoStats.languages.length > 3) {
+  // Experience and education recommendations
+  if (data.profileData.experience.length === 0) {
+    recommendations.push("Add work experience to demonstrate your professional background and career progression.");
+  }
+  
+  if (data.profileData.education.length === 0) {
+    recommendations.push("Add educational background to provide context for your qualifications and learning journey.");
+  }
+  
+  // Advanced recommendations for connected profiles
+  if (githubConnected && repoStats.languages.length > 3) {
     recommendations.push("Consider specializing in 2-3 core technologies while maintaining your diverse skill set.");
+  }
+  
+  // Code quality recommendations from detailed analysis
+  if (detailedAnalyses.length > 0) {
+    const avgQuality = repoStats.averageQuality;
+    if (avgQuality > 0 && avgQuality < 70) {
+      recommendations.push("Focus on improving code quality through better documentation, testing, and architectural patterns.");
+    }
+    
+    const avgComplexity = repoStats.averageComplexity;
+    if (avgComplexity > 5) {
+      recommendations.push("Consider refactoring complex code sections to improve maintainability and readability.");
+    }
+    
+    // Security recommendations
+    const securityScores = detailedAnalyses
+      .map(item => item.analysis?.data?.security?.security_score)
+      .filter(score => typeof score === 'number');
+    
+    if (securityScores.length > 0) {
+      const avgSecurity = securityScores.reduce((sum, score) => sum + score, 0) / securityScores.length;
+      if (avgSecurity < 70) {
+        recommendations.push("Enhance security practices by addressing identified vulnerabilities and following security best practices.");
+      }
+    }
   }
   
   return recommendations.slice(0, 4);
 }
 
-function calculateOverallScore(repoStats: any, careerStats: any, profileData: any): number {
+function calculateOverallScore(repoStats: any, careerStats: any, profileData: any, githubConnected: boolean = true): number {
   let score = 0;
   
-  // Repository contribution (30%)
-  score += Math.min(30, (repoStats.totalRepos * 2));
-  score += Math.min(20, (repoStats.totalStars * 0.5));
+  if (githubConnected) {
+    // Repository contribution (30% when GitHub connected)
+    score += Math.min(30, (repoStats.totalRepos * 2));
+    score += Math.min(20, (repoStats.totalStars * 0.5));
+  } else {
+    // When GitHub not connected, redistribute scoring
+    // Give some base points for having a complete profile instead
+    if (profileData.bio && profileData.bio.length > 50) score += 15;
+    if (profileData.headline) score += 10;
+    if (profileData.skills.length > 3) score += 15;
+    if (profileData.location) score += 5;
+    if (profileData.college) score += 5;
+  }
   
   // Career experience (25%)
   score += Math.min(25, (careerStats.totalYearsExperience * 5));

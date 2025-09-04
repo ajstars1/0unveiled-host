@@ -116,7 +116,13 @@ export async function GET(req: NextRequest) {
               return;
             }
             push({ status: "Starting analyzer", progress: 20 });
-            const result = await analyzeRepositoryAction(resolved.userId!, owner, repoName, 200);
+            
+            // Create a progress callback to track analysis progress
+            const progressCallback = (status: string, progress: number) => {
+              push({ status, progress });
+            };
+            
+            const result = await analyzeRepositoryAction(resolved.userId!, owner, repoName, 200, progressCallback);
             push({ status: "Processing response", progress: 90 });
             if (!result.success) {
               push({ status: "Analysis failed", progress: 100, complete: true, error: result.error || "Analysis failed" });
@@ -187,7 +193,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: resolved.error || "User not found", jobId }, { status: 404 });
     }
     publish(jobId, { status: "Starting analyzer", progress: 20 });
-    const result = await analyzeRepositoryAction(resolved.userId!, owner, repoName, 200);
+    
+    // Create a progress callback to track analysis progress
+    const progressCallback = (status: string, progress: number) => {
+      publish(jobId, { status, progress });
+    };
+    
+    const result = await analyzeRepositoryAction(resolved.userId!, owner, repoName, 200, progressCallback);
     publish(jobId, { status: "Processing response", progress: 90 });
     if (!result.success) {
       publish(jobId, { status: "Analysis failed", progress: 100, complete: true, error: result.error || "Analysis failed" });
