@@ -1,0 +1,15 @@
+{
+  "name": "@0unveiled/ai-recruitment-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered recruitment and candidate matching service",
+  "scripts": {
+    "dev": "python3 -m uvicorn src.main:app --host 0.0.0.0 --port 8002 --reload",
+    "start": "python3 -m uvicorn src.main:app --host 0.0.0.0 --port 8002",
+    "install-deps": "python3 -m pip install --upgrade pip && python3 -m pip install -r requirements.txt",
+    "setup": "python3 -m pip install --upgrade pip setuptools wheel && python3 -m pip install -r requirements.txt",
+    "clean": "find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

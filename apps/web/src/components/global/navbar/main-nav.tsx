@@ -1,7 +1,7 @@
 import Link from "next/link"
 
 import { cn } from "@/lib/utils"
-import { CircleHelp, Home, Package, Sparkles, User } from "lucide-react"
+import { CircleHelp, Home, Package, Sparkles, User, Briefcase } from "lucide-react"
 
 export function MainNav({
   className,
@@ -42,6 +42,13 @@ export function MainNav({
       >
         <User className="w-4 h-4 md:hidden" />
         Explore Profiles
+      </Link>
+      <Link
+        href="/recruitment"
+        className="font-medium text-primary transition-colors hover:text-muted-foreground flex items-center gap-2"
+      >
+        <Briefcase className="w-4 h-4 md:hidden" />
+        Recruitment
       </Link>
       {/* <Link
         href="/contact"
