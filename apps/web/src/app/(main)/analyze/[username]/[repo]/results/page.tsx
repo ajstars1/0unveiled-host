@@ -235,7 +235,7 @@ const ResultsPage = () => {
         </div>
 
         {/* Overall Score */}
-        <Card className="border-2 border-black">
+        {/* <Card className="border-2 border-black">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Overall Quality Score</CardTitle>
           </CardHeader>
@@ -257,7 +257,7 @@ const ResultsPage = () => {
               </p>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

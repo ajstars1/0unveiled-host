@@ -39,7 +39,6 @@ class AIInsightsAnalyzer:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=settings.gemini_api_key)
-                # Use a fast yet capable model by default
                 self.model = genai.GenerativeModel('gemini-1.5-flash')
                 logger.info("Gemini AI model initialized")
             except ImportError:
@@ -69,10 +68,10 @@ class AIInsightsAnalyzer:
             return await self._generate_ai_insights(
                 repository, code_metrics, quality_metrics, security_metrics, tech_stack, files
             )
-        # Fallback: robust rule-based insights
-        return await self._generate_rule_based_insights(
-            repository, code_metrics, quality_metrics, security_metrics, tech_stack
-        )
+        else:
+            return await self._generate_rule_based_insights(
+                repository, code_metrics, quality_metrics, security_metrics, tech_stack
+            )
     
     async def _generate_ai_insights(
         self,
@@ -85,27 +84,27 @@ class AIInsightsAnalyzer:
     ) -> AIInsights:
         """Generate insights using Gemini AI."""
         try:
-            # Prepare context for AI with actual code samples and tech highlights
+            # Prepare context for AI with actual code samples
             context = self._prepare_context_with_code(
                 repository, code_metrics, quality_metrics, security_metrics, tech_stack, files or []
             )
-
-            # Orchestrate targeted prompts for reliability and succinct outputs
+            
+            # Generate different types of insights
             project_summary = await self._get_ai_project_summary(context)
             quality_assessment = await self._get_ai_quality_assessment(context)
             architecture_assessment = await self._get_ai_architecture_assessment(context)
             maintainability_assessment = await self._get_ai_maintainability_assessment(context)
-
+            
             strengths = await self._get_ai_strengths(context)
             weaknesses = await self._get_ai_weaknesses(context)
             improvements = await self._get_ai_improvements(context)
-
+            
             skill_indicators = await self._get_ai_skill_indicators(context)
             coding_patterns = await self._get_ai_coding_patterns(context)
-
+            
             project_maturity = await self._get_ai_project_maturity(context)
             development_stage = await self._get_ai_development_stage(context)
-
+            
             return AIInsights(
                 overall_quality_score=self._calculate_overall_quality_score(
                     code_metrics, quality_metrics, security_metrics
@@ -127,7 +126,7 @@ class AIInsightsAnalyzer:
                 industry_alignment=self._get_industry_alignment(tech_stack),
                 career_impact=self._assess_career_impact(tech_stack, quality_metrics)
             )
-
+            
         except Exception as e:
             logger.error(f"AI insights generation failed: {e}")
             # Fallback to rule-based insights
@@ -144,13 +143,13 @@ class AIInsightsAnalyzer:
         tech_stack: TechStack
     ) -> AIInsights:
         """Generate insights using rule-based logic."""
-
+        
         # Quality assessments
         quality_assessment = self._rule_based_quality_assessment(code_metrics, quality_metrics)
         architecture_assessment = self._rule_based_architecture_assessment(quality_metrics, tech_stack)
         maintainability_assessment = self._rule_based_maintainability_assessment(code_metrics)
-
-        # Strengths and weaknesses aligned with hiring signals
+        
+        # Strengths and weaknesses
         strengths = self._identify_strengths(code_metrics, quality_metrics, security_metrics, tech_stack)
         weaknesses = self._identify_weaknesses(code_metrics, quality_metrics, security_metrics, tech_stack)
         improvements = self._suggest_improvements(weaknesses, quality_metrics, tech_stack)
@@ -158,7 +157,7 @@ class AIInsightsAnalyzer:
         # Developer profiling
         skill_indicators = self._assess_skill_indicators(code_metrics, quality_metrics, tech_stack)
         coding_patterns = self._identify_coding_patterns(code_metrics, tech_stack)
-
+        
         # Project assessment
         project_maturity = self._assess_project_maturity(repository, quality_metrics)
         development_stage = self._assess_development_stage(repository, code_metrics, tech_stack)
@@ -275,7 +274,7 @@ File {i+1}: {file_info.path}
 Language: {file_info.extension}
 Size: {len(file_info.content)} characters
 
-Code Content (truncated if long):
+Code Content:
 ```{file_info.extension}
 {content_preview}
 ```
@@ -373,9 +372,33 @@ Code Content (truncated if long):
         prompt = f"""
         {context}
         
-        You are a senior engineer. In 2–3 sentences, summarize what the application does
-        based on actual code (functions, data flow, APIs) and the tech snapshot. Focus on
-        the problem domain and primary user value. Avoid generic stack descriptions.
+        You are a senior software engineer analyzing this codebase to understand what this project ACTUALLY DOES functionally. Look at the code content, not just file names.
+
+        **CRITICAL**: Read the actual code content shown above and determine what the application's PURPOSE is:
+
+        **Deep Code Analysis Required:**
+        - What business logic do you see in the functions/methods?
+        - What data is being processed, stored, or manipulated?
+        - What APIs or services are being called?
+        - What user interactions or workflows are implemented?
+        - What specific problems is this code solving?
+
+        **Examples of good summaries:**
+        - "An e-commerce platform that processes online payments, manages product inventory, and handles user authentication with shopping cart functionality"
+        - "A machine learning model training pipeline that processes image data, applies computer vision algorithms, and generates classification results"
+        - "A real-time chat application that handles WebSocket connections, stores messages in a database, and provides user authentication"
+        - "A financial analysis tool that fetches stock market data, calculates risk metrics, and generates investment recommendations"
+
+        **Bad examples (too generic):**
+        - "A web application with React components"
+        - "A TypeScript project with modern development tools"
+        - "A full-stack application using popular frameworks"
+
+        **Your task**: Based on the ACTUAL CODE CONTENT you can see (functions, logic, data flow, API calls), write 2-3 pointers explaining what this project functionally accomplishes and what specific problem domain it addresses.
+
+        Focus on WHAT IT DOES, not HOW it's built.
+
+        PROVIDE A CRISP SHORT, TO THE POINT, 10 TO 15 WORDED, 4 TO 6 LINED CLEAR CUT BULLET POINTS THAT DILIVER IMPACTFUL INSIGHTS WITH NATURAL LANGUAGE LIKE SALTING TO PROVIDE THE USERS INFORMATION USEFULL TO THEIR SPECIFIC CONTEXT AND DOMAIN
         """
         
         try:
@@ -397,9 +420,18 @@ Code Content (truncated if long):
         prompt = f"""
         {context}
         
-        Provide a concise code quality assessment (4–6 sentences) referencing specific
-        implementation details from the code samples: patterns, language features,
-        structure, and 1–2 actionable improvements. Keep it technical and specific.
+        You are a senior software engineer reviewing this codebase. Analyze the actual code samples provided above and give a detailed assessment covering:
+
+        1. **Code Quality & Patterns**: What specific coding patterns, frameworks, and architectures do you see? Comment on the actual implementation approaches used.
+
+        2. **Language-Specific Observations**: Based on the actual code files shown, what modern language features, libraries, or frameworks are being used effectively or ineffectively?
+
+        3. **Code Structure**: How is the code organized? Comment on the actual file structure, naming conventions, and separation of concerns you observe.
+
+        4. **Specific Improvements**: Based on the actual code you can see, what specific, actionable improvements would you recommend?
+
+        
+        PROVIDE A CRISP SHORT, TO THE POINT, 10 TO 15 WORDED, 4 TO 6 LINED CLEAR CUT BULLET POINTS THAT DILIVER IMPACTFUL INSIGHTS WITH NATURAL LANGUAGE LIKE SALTING TO PROVIDE THE USERS INFORMATION USEFULL TO THEIR SPECIFIC CONTEXT AND DOMAIN
         """
         
         try:
@@ -424,9 +456,19 @@ Code Content (truncated if long):
         prompt = f"""
         {context}
         
-        As a software architect, give a 4–6 sentence architectural assessment: patterns,
-        module boundaries, scalability/maintainability, and notable design decisions
-        observed in code and directory structure.
+        You are a software architect reviewing this codebase. Based on the actual code files and directory structure shown above, provide a detailed architectural analysis:
+
+        1. **Architecture Pattern**: What architectural patterns do you identify from the actual code structure? (MVC, microservices, layered, etc.)
+
+        2. **Technology Stack Assessment**: Based on the actual files you can see, what technology choices were made and how well do they work together?
+
+        3. **Code Organization**: How are the modules, components, and services organized? Comment on the actual directory structure and file organization you observe.
+
+        4. **Scalability & Maintainability**: Based on the actual code patterns you see, how well would this architecture scale and how maintainable is it?
+
+        5. **Design Patterns**: What specific design patterns or architectural decisions do you see implemented in the actual code?
+
+        PROVIDE A CRISP SHORT, TO THE POINT, 10 TO 15 WORDED, 4 TO 6 LINED CLEAR CUT BULLET POINTS THAT DILIVER IMPACTFUL INSIGHTS WITH NATURAL LANGUAGE LIKE SALTING TO PROVIDE THE USERS INFORMATION USEFULL TO THEIR SPECIFIC CONTEXT AND DOMAIN
         """
         
         try:
@@ -447,8 +489,19 @@ Code Content (truncated if long):
         prompt = f"""
         {context}
         
-        Provide a maintainability assessment (4–6 sentences): readability, debt/smells,
-        test/docs sufficiency, and 2–3 concrete refactoring opportunities.
+        You are a senior developer conducting a maintainability review. Based on the actual code samples and metrics shown above, provide specific maintainability insights:
+
+        1. **Code Readability**: How readable and understandable is the actual code you can see? Comment on variable names, function structure, and documentation.
+
+        2. **Technical Debt**: What specific technical debt or code smells do you identify in the actual code samples?
+
+        3. **Testing & Documentation**: Based on what you can observe, how well is the code tested and documented?
+
+        4. **Refactoring Opportunities**: What specific refactoring opportunities do you see in the actual code?
+
+        5. **Long-term Maintenance**: What challenges would a new developer face when working with this code?
+
+        PROVIDE A CRISP SHORT, TO THE POINT, 10 TO 15 WORDED, 4 TO 6 LINED CLEAR CUT BULLET POINTS THAT DILIVER IMPACTFUL INSIGHTS WITH NATURAL LANGUAGE LIKE SALTING TO PROVIDE THE USERS INFORMATION USEFULL TO THEIR SPECIFIC CONTEXT AND DOMAIN
         """
         
         try:
@@ -468,9 +521,9 @@ Code Content (truncated if long):
         
         prompt = f"""
         {context}
-        
-        Identify 3 key technical strengths (testing/CI/security/docs/performance/architecture).
-        Return a plain list, one item per line, no bullets or numbers, max 8 words each.
+        Based on the repository metrics, identify 2-3 key strengths.
+        Return only a simple list, one item per line, without bullets or numbers.
+        Focus on technical strengths like code quality, security, architecture, testing/CI/security/docs/performance, or technology choices.
         """
         
         try:
@@ -518,9 +571,32 @@ Code Content (truncated if long):
         prompt = f"""
         {context}
 
-        Suggest 3–5 actionable improvements prioritized by impact. Each item should be
-        a short imperative with an impact tag in parentheses like "(high)" or "(medium)".
-        Return a plain list, one per line, no bullets.
+        You are a senior software engineer providing actionable improvement recommendations for this codebase.
+
+        **Analyze the actual code and metrics above** and suggest 3-5 specific, actionable improvements that will have the most impact on:
+
+        1. **Production Readiness**: What blockers prevent this from going to production?
+        2. **Code Quality**: What specific code improvements will reduce bugs and improve maintainability?
+        3. **Developer Experience**: What will make it easier for other developers to work with this code?
+        4. **Performance & Security**: What critical issues need immediate attention?
+
+        **Prioritization Guidelines:**
+        - **(high impact)**: Fixes that prevent production deployment, critical security issues, or major functionality blockers
+        - **(medium impact)**: Important quality improvements, testing gaps, or significant DX enhancements
+        - **(low impact)**: Nice-to-have improvements, minor optimizations, or documentation enhancements
+
+        **Requirements for each suggestion:**
+        - Start with a clear, actionable verb (Add, Implement, Fix, Configure, etc.)
+        - Include specific details about WHAT to implement and WHERE
+        - Explain WHY it matters for this specific codebase
+        - Use the impact tag format: (high impact), (medium impact), or (low impact)
+
+        **Examples of good suggestions:**
+        - "Add comprehensive unit tests for API endpoints (high impact)"
+        - "Implement proper error handling in database operations (medium impact)"
+        - "Set up automated CI/CD pipeline with security scanning (high impact)"
+
+        PROVIDE A CRISP SHORT, TO THE POINT, 10 TO 15 WORDED, 4 TO 6 LINED CLEAR CUT BULLET POINTS THAT DILIVER IMPACTFUL INSIGHTS WITH NATURAL LANGUAGE LIKE SALTING TO PROVIDE THE USERS INFORMATION USEFULL TO THEIR SPECIFIC CONTEXT AND DOMAIN
         """
 
         try:
@@ -644,22 +720,21 @@ Code Content (truncated if long):
     
     def _rule_based_quality_assessment(self, code_metrics: CodeMetrics, quality_metrics: QualityMetrics) -> str:
         """Rule-based quality assessment."""
-        mi = code_metrics.maintainability_index
-        cc = code_metrics.cyclomatic_complexity
-        if mi > 80 and cc < 5:
-            return "High-quality code: clear modular structure, low complexity, and solid maintainability"
-        if mi > 60:
-            return "Good quality: reasonable structure with some complexity hotspots to refactor"
-        return "Needs improvement: elevated complexity and maintainability risks present"
+        if code_metrics.maintainability_index > 80:
+            return "High quality codebase with excellent maintainability and clear structure"
+        elif code_metrics.maintainability_index > 60:
+            return "Good quality codebase with room for improvement in complexity management"
+        else:
+            return "Codebase needs attention - high complexity and maintainability issues detected"
     
     def _rule_based_architecture_assessment(self, quality_metrics: QualityMetrics, tech_stack: TechStack) -> str:
         """Rule-based architecture assessment."""
-        score = quality_metrics.architecture_score
-        if score > 80:
-            return "Well-architected with modern stack and clear boundaries; production-ready patterns evident"
-        if score > 60:
-            return "Sound architecture with opportunities to improve layering, interfaces, or modularity"
-        return "Architecture requires restructuring for scalability, testing, and long-term maintenance"
+        if quality_metrics.architecture_score > 80:
+            return "Well-architected project with modern technology choices and good structure"
+        elif quality_metrics.architecture_score > 60:
+            return "Decent architecture with some areas for improvement"
+        else:
+            return "Architecture needs refactoring to improve maintainability and scalability"
     
     def _rule_based_maintainability_assessment(self, code_metrics: CodeMetrics) -> str:
         """Rule-based maintainability assessment."""
@@ -682,11 +757,11 @@ Code Content (truncated if long):
         return f"Codebase using {langs} with modern tooling"
     
     def _identify_strengths(
-        self,
-        code_metrics: CodeMetrics,
-        quality_metrics: QualityMetrics,
+        self, 
+        code_metrics: CodeMetrics, 
+        quality_metrics: QualityMetrics, 
         security_metrics: SecurityMetrics,
-        tech_stack: TechStack,
+        tech_stack: TechStack
     ) -> List[str]:
         """Identify project strengths aligned to common hiring signals."""
         strengths: List[str] = []
@@ -740,35 +815,29 @@ Code Content (truncated if long):
 
         return weaknesses[:5]
     
-    def _suggest_improvements(self, weaknesses: List[str], quality_metrics: QualityMetrics, tech_stack: TechStack) -> List[str]:
-        """Suggest prioritized, actionable improvements based on weaknesses and stack."""
-        improvements: List[str] = []
-
-        wk = {w.lower() for w in weaknesses}
-        if any("test" in w for w in wk):
-            improvements.append("Add unit + integration tests (high)")
-        if any("documentation" in w or "doc" in w for w in wk):
-            improvements.append("Write API docs and README sections (medium)")
-        if any("complexity" in w for w in wk):
-            improvements.append("Refactor hotspots; extract smaller functions (high)")
-        if any("debt" in w for w in wk):
-            improvements.append("Create tech debt backlog with owners (medium)")
-        if any("security" in w for w in wk):
-            improvements.append("Enable dep scanning + secret detection (high)")
-
-        # CI suggestion when missing
-        tool_names = {t.name.lower() for t in tech_stack.tools}
-        if not any(t in tool_names for t in ["github actions", "circleci", "gitlab ci"]):
-            improvements.append("Set up CI for lint/test/build (high)")
-
-        # Keep list concise
-        return improvements[:5] or ["Continue maintaining current quality standards"]
+    def _suggest_improvements(self, weaknesses: List[str], quality_metrics: QualityMetrics) -> List[str]:
+        """Suggest improvements based on weaknesses."""
+        improvements = []
+        
+        for weakness in weaknesses:
+            if "documentation" in weakness.lower():
+                improvements.append("Add comprehensive documentation and docstrings")
+            elif "security" in weakness.lower():
+                improvements.append("Address security vulnerabilities and implement security best practices")
+            elif "complexity" in weakness.lower():
+                improvements.append("Refactor complex functions and reduce cyclomatic complexity")
+            elif "test" in weakness.lower():
+                improvements.append("Increase test coverage with unit and integration tests")
+            elif "debt" in weakness.lower():
+                improvements.append("Reduce technical debt through systematic refactoring")
+        
+        return improvements or ["Continue maintaining current quality standards"]
     
     def _assess_skill_indicators(
-        self,
-        code_metrics: CodeMetrics,
-        quality_metrics: QualityMetrics,
-        tech_stack: TechStack,
+        self, 
+        code_metrics: CodeMetrics, 
+        quality_metrics: QualityMetrics, 
+        tech_stack: TechStack
     ) -> Dict[str, float]:
         """Assess developer skill indicators with broader coverage."""
         tools = {t.name.lower() for t in tech_stack.tools}
@@ -792,14 +861,17 @@ Code Content (truncated if long):
     
     def _identify_coding_patterns(self, code_metrics: CodeMetrics, tech_stack: TechStack) -> List[str]:
         """Identify coding patterns."""
-        patterns: List[str] = []
-
+        patterns = []
+        
         if code_metrics.average_function_length < 20:
             patterns.append("Small, focused functions")
+        
         if code_metrics.cyclomatic_complexity < 5:
             patterns.append("Low complexity design")
+        
         if tech_stack.primary_language:
             patterns.append(f"{tech_stack.primary_language} expertise")
+        
         if len(tech_stack.frameworks) > 0:
             patterns.append("Framework-based development")
 
@@ -822,23 +894,23 @@ Code Content (truncated if long):
         
         if age_months < 3:
             return "experimental"
-        if age_months < 12:
+        elif age_months < 12:
             return "developing"
-        if quality_metrics.architecture_score > 70:
+        elif quality_metrics.architecture_score > 70:
             return "mature"
-        return "legacy"
+        else:
+            return "legacy"
     
     def _assess_development_stage(self, repository: Repository, code_metrics: CodeMetrics, tech_stack: Optional[TechStack] = None) -> str:
         """Assess development stage."""
-        lines = code_metrics.total_lines
-        stars = repository.stargazers_count
-        if lines < 1000:
+        if code_metrics.total_lines < 1000:
             return "prototype"
-        if lines < 10000:
+        elif code_metrics.total_lines < 10000:
             return "mvp"
-        if stars > 100:
+        elif repository.stargazers_count > 100:
             return "production"
-        return "development"
+        else:
+            return "development"
     
     def _assess_maintenance_burden(self, code_metrics: CodeMetrics, security_metrics: SecurityMetrics) -> str:
         """Assess maintenance burden."""
@@ -850,9 +922,10 @@ Code Content (truncated if long):
         
         if score < 20:
             return "low"
-        if score < 50:
+        elif score < 50:
             return "medium"
-        return "high"
+        else:
+            return "high"
     
     def _get_industry_alignment(self, tech_stack: TechStack) -> List[str]:
         """Get industry alignment based on stack across languages, frameworks, libraries."""
@@ -884,12 +957,13 @@ Code Content (truncated if long):
             quality_metrics.architecture_score * 0.35 +
             min(100, tech_stack.total_technologies * 6) * 0.20
         )
-
+        
         if score > 75:
             return "high"
-        if score > 50:
+        elif score > 50:
             return "medium"
-        return "low"
+        else:
+            return "low"
     
     def _calculate_overall_quality_score(
         self,

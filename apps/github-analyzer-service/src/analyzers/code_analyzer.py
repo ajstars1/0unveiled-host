@@ -25,7 +25,6 @@ class CodeAnalyzer:
     """Analyzer for code metrics and quality assessment."""
     
     def __init__(self):
-        # Language handlers. Keep minimal but useful breadth.
         self.supported_extensions = {
             '.py': self._analyze_python_file,
             '.js': self._analyze_javascript_file,
@@ -143,18 +142,18 @@ class CodeAnalyzer:
     ) -> QualityMetrics:
         """Analyze code quality metrics."""
         logger.info("Analyzing quality metrics")
-
+        
         # Documentation metrics
         docstring_coverage = await self._calculate_docstring_coverage(files)
         comment_density = await self._calculate_comment_density(files)
         readme_quality = self._assess_readme_quality(structure)
-
+        
         # Testing metrics
         test_metrics = self._analyze_test_metrics(files, structure)
-
+        
         # Code style metrics
         style_metrics = await self._analyze_style_metrics(files)
-
+        
         # Architecture metrics
         architecture_score = self._assess_architecture(structure, files)
 
@@ -179,7 +178,7 @@ class CodeAnalyzer:
     def _is_code_file(self, file_info: FileInfo) -> bool:
         """Check if file is a code file that should be analyzed."""
         code_extensions = {
-            'py', 'js', 'ts', 'jsx', 'tsx', 'java', 'cpp', 'c', 'cs',
+            'py', 'js', 'ts', 'jsx', 'tsx', 'java', 'cpp', 'c', 'cs', 
             'go', 'rs', 'php', 'rb', 'swift', 'kt', 'scala', 'r'
         }
         ext = file_info.extension.lower()
@@ -211,6 +210,7 @@ class CodeAnalyzer:
     async def _analyze_file_metrics(self, file_info: FileInfo) -> Dict[str, Any]:
         """Analyze metrics for a single file."""
         extension = f".{file_info.extension.lower()}"
+        
         if extension in self.supported_extensions:
             handler = self.supported_extensions[extension]
             return await handler(file_info)
@@ -250,10 +250,10 @@ class CodeAnalyzer:
             
             for func in functions:
                 func_complexity = self._calculate_python_complexity(func)
-                func_length = self._estimate_block_length(lines, func.lineno, getattr(func, 'end_lineno', None))
+                func_lines = len(file_info.content[func.lineno:func.end_lineno].split('\n')) if hasattr(func, 'end_lineno') else 10
                 
                 function_complexities.append(func_complexity)
-                function_lengths.append(func_length)
+                function_lengths.append(func_lines)
             
             return {
                 'total_lines': total_lines,
@@ -296,20 +296,35 @@ class CodeAnalyzer:
         return await self._analyze_js_like_file(file_info, language='ts')
     
     async def _analyze_java_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze Java file metrics."""
         return await self._analyze_generic_file(file_info)
+    
     async def _analyze_cpp_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze C++ file metrics.""" 
         return await self._analyze_generic_file(file_info)
+    
     async def _analyze_c_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze C file metrics."""
         return await self._analyze_generic_file(file_info)
+    
     async def _analyze_csharp_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze C# file metrics."""
         return await self._analyze_generic_file(file_info)
+    
     async def _analyze_go_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze Go file metrics."""
         return await self._analyze_generic_file(file_info)
+    
     async def _analyze_rust_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze Rust file metrics."""
         return await self._analyze_generic_file(file_info)
+    
     async def _analyze_php_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze PHP file metrics."""
         return await self._analyze_generic_file(file_info)
+    
     async def _analyze_ruby_file(self, file_info: FileInfo) -> Dict[str, Any]:
+        """Analyze Ruby file metrics."""
         return await self._analyze_generic_file(file_info)
 
     async def _analyze_js_like_file(self, file_info: FileInfo, language: str) -> Dict[str, Any]:
@@ -430,10 +445,7 @@ class CodeAnalyzer:
         }
     
     async def _calculate_docstring_coverage(self, files: List[FileInfo]) -> float:
-        """Calculate documentation coverage for Python functions/classes/modules.
-
-        For non-Python repos, returns 0.0 (we could extend later).
-        """
+        """Calculate documentation coverage."""
         python_files = [f for f in files if f.extension.lower() == 'py']
         
         if not python_files:
@@ -530,11 +542,11 @@ class CodeAnalyzer:
         test_count = len(test_like)
         code_count = len(code_like)
         ratio = (test_count / code_count) if code_count > 0 else 0.0
-
+        
         return {
             'test_files': test_count,
             'ratio': ratio,
-            'coverage': None  # Real coverage requires test execution
+            'coverage': None  # Would need test execution to get real coverage
         }
     
     async def _analyze_style_metrics(self, files: List[FileInfo]) -> Dict[str, Any]:
