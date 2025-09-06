@@ -20,6 +20,10 @@
         "turbo": "^2.5.5",
       },
     },
+    "apps/ai-recruitment-service": {
+      "name": "@0unveiled/ai-recruitment-service",
+      "version": "0.1.0",
+    },
     "apps/api": {
       "name": "@0unveiled/api",
       "version": "0.1.0",
@@ -262,6 +266,8 @@
     },
   },
   "packages": {
+    "@0unveiled/ai-recruitment-service": ["@0unveiled/ai-recruitment-service@workspace:apps/ai-recruitment-service"],
+
     "@0unveiled/api": ["@0unveiled/api@workspace:apps/api"],
 
     "@0unveiled/config": ["@0unveiled/config@workspace:packages/config"],

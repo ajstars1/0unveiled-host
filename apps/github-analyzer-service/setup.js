@@ -29,18 +29,22 @@ try {
   console.log('📥 Installing dependencies...');
   const activateCmd = isWindows 
     ? 'venv\\Scripts\\activate.bat &&' 
-    : 'source venv/bin/activate &&';
+    : '. venv/bin/activate &&';
   
   const installCmd = `${activateCmd} pip install --no-build-isolation fastapi uvicorn pydantic pydantic-settings httpx requests loguru python-dotenv google-generativeai python-multipart`;
   
-  execSync(installCmd, { stdio: 'inherit', shell: true });
+  const shellOptions = isWindows 
+    ? { stdio: 'inherit', shell: true }
+    : { stdio: 'inherit', shell: '/bin/bash' };
+  
+  execSync(installCmd, shellOptions);
 
   // Install analysis tools
   console.log('🔧 Installing analysis tools...');
   const toolsCmd = `${activateCmd} pip install --no-build-isolation astunparse radon lizard gitpython pygments chardet`;
   
   try {
-    execSync(toolsCmd, { stdio: 'inherit', shell: true });
+    execSync(toolsCmd, shellOptions);
   } catch (error) {
     console.log('⚠️ Some analysis tools skipped due to compatibility issues');
   }
