@@ -3,7 +3,7 @@
 import { db } from "@0unveiled/database";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getUserBySupabaseId } from "@/data/user";
-import { accounts, showcasedItems } from "@0unveiled/database";
+import { accounts, showcasedItems, type ShowcasedItem } from "@0unveiled/database";
 import { eq, and } from "drizzle-orm";
 import { Octokit, App } from "octokit";
 import { RequestParameters } from "@octokit/types";
@@ -91,7 +91,7 @@ export const fetchUserGithubRepos = async (): Promise<{ error?: string; data?: G
         eq(showcasedItems.userId, dbUser.id),
         eq(showcasedItems.provider, "GITHUB")
       ));
-    const importedRepoIds = new Set(importedItems.map(item => item.externalId));
+    const importedRepoIds = new Set(importedItems.map((item: ShowcasedItem) => item.externalId));
 
     const formattedRepos: GithubRepoFrontend[] = userRepos.map((repo) => ({
       id: repo.id.toString(),

@@ -4,10 +4,10 @@ const AI_RECRUITMENT_SERVICE_URL = process.env.AI_RECRUITMENT_SERVICE_URL || 'ht
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { candidateId: string } }
+  { params }: { params: Promise<{ candidateId: string }> }
 ) {
   try {
-    const { candidateId } = params;
+    const { candidateId } = await params;
     
     const response = await fetch(`${AI_RECRUITMENT_SERVICE_URL}/api/recruitment/candidates/${candidateId}/profile`, {
       method: 'GET',

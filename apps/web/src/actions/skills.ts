@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/drizzle"
-import { skills } from "@0unveiled/database"
+import { skills, type Skill } from "@0unveiled/database"
 import { ilike, or } from "drizzle-orm"
 
 export async function searchSkills(value: string): Promise<{ name: string; value: string; group?: string }[]> {
@@ -18,7 +18,7 @@ export async function searchSkills(value: string): Promise<{ name: string; value
     limit: 10
   })
 
-  return skillsData.map((skill) => ({
+  return skillsData.map((skill: Pick<Skill, 'name' | 'category'>) => ({
     name: skill.name,
     value: skill.name,
     group: skill.category || undefined
