@@ -19,7 +19,8 @@ import {
 import { getProjectById, MemberSummary } from "@/data/projects"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import type { MemberRole } from "@0unveiled/database/schema";
+// Use frontend-safe MemberRole from data layer to avoid importing server-only types
+import type { MemberRole } from "@/data/projects";
 
 interface ProjectTeamProps {
   projectId: string

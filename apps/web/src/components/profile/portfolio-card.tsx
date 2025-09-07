@@ -4,7 +4,6 @@ import * as React from "react"
 import Link from "next/link"
 import NextImage from "next/image"
 import { Github, Link as LinkIcon, ExternalLink, GitCommitVertical, Code2, Dribbble, Pin, PinOff, Loader2 } from "lucide-react"
-import { integrationProviderEnum } from "@0unveiled/database/schema"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "sonner"
 
@@ -19,6 +18,8 @@ import { getAiBenchmarkInsights, ProjectInputDataForAI } from "@/actions/AI"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import BenchmarkResultsDialog from "@/components/benchmark/benchmark-results-dialog"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 // Define the expected prop type`       
 interface PortfolioCardProps {
@@ -46,7 +47,6 @@ type GitHubRepoForAnalysis = {
   name: string;
   description?: string;
   language?: string;
-  // Add more fields if needed
 };
 
 // Helper function to map IntegrationProvider enum (from schema) to Lucide icons or default
@@ -76,38 +76,45 @@ function extractAiFromMetadata(metadata: any): { aiSummary?: string; aiTechStack
   if (!metadata) return result;
 
   const candidates: any[] = [];
-  // Common places we might have stored the analysis
   if (metadata.analysisData) candidates.push(metadata.analysisData);
   if (metadata.analysis) candidates.push(metadata.analysis);
   if (metadata.aiAnalysis) candidates.push(metadata.aiAnalysis);
   if (metadata.jsonDescription) candidates.push(metadata.jsonDescription);
 
-  // Normalize candidates (parse JSON strings)
-  const normalized = candidates.map((c) => {
-    if (!c) return null;
-    if (typeof c === 'string') {
-      try { return JSON.parse(c); } catch { return null; }
-    }
-    if (typeof c === 'object') return c;
-    return null;
-  }).filter(Boolean) as any[];
+  const normalized = candidates
+    .map((c) => {
+      if (!c) return null;
+      if (typeof c === 'string') {
+        try {
+          return JSON.parse(c);
+        } catch {
+          return null;
+        }
+      }
+      if (typeof c === 'object') return c;
+      return null;
+    })
+    .filter(Boolean) as any[];
 
-  // Find summary
   for (const obj of normalized) {
-    const summary = obj?.ai_summary ?? obj?.project_summary ?? obj?.summary ?? obj?.short_summary ?? obj?.aiShortSummary ?? obj?.projectSummary;
+    const summary =
+      obj?.ai_summary ??
+      obj?.project_summary ??
+      obj?.summary ??
+      obj?.short_summary ??
+      obj?.aiShortSummary ??
+      obj?.projectSummary;
     if (typeof summary === 'string' && summary.trim()) {
       result.aiSummary = summary.trim();
       break;
     }
   }
 
-  // Find tech stack
   const techNames: string[] = [];
   for (const obj of normalized) {
     const tech = obj?.technology_stack ?? obj?.tech_stack ?? obj?.stack;
     if (!tech) continue;
 
-    // If it's already a string[]
     if (Array.isArray(tech)) {
       for (const t of tech) {
         if (typeof t === 'string') techNames.push(t);
@@ -116,7 +123,6 @@ function extractAiFromMetadata(metadata: any): { aiSummary?: string; aiTechStack
       continue;
     }
 
-    // If it's an object with categories
     const categories = ['languages', 'frameworks', 'libraries', 'databases', 'tools'];
     for (const key of categories) {
       const arr = tech?.[key];
@@ -156,7 +162,9 @@ export function PortfolioCard({ item, isOwnProfile, isPinned, username }: Portfo
 
   // Pull AI summary and tech stack from metadata if present
   const { aiSummary, aiTechStack } = React.useMemo(() => extractAiFromMetadata(metadataObject), [metadataObject]);
-  const descriptionText = aiSummary ?? item.description ?? "No description provided.";
+  const descriptionMd = aiSummary ?? item.description ?? "No description provided.";
+  const [expanded, setExpanded] = React.useState(false)
+  const shouldTruncate = React.useMemo(() => (descriptionMd?.length || 0) > 220, [descriptionMd])
 
   // Implement pin/unpin logic
   const handlePinToggle = () => {
@@ -241,7 +249,7 @@ export function PortfolioCard({ item, isOwnProfile, isPinned, username }: Portfo
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="left" className="">
-                <p>{isPinned ? "Unpin" : "Pin to top"}</p>
+                <p className="text-white">{isPinned ? "Unpin" : "Pin to top"}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -271,9 +279,71 @@ export function PortfolioCard({ item, isOwnProfile, isPinned, username }: Portfo
             {item.roleInItem && <p className="text-sm font-medium text-muted-foreground mb-2">Role: {item.roleInItem}</p>}
 
             {/* Description - prefer AI summary when present */}
-            <p className="text-xs text-muted-foreground mb-3 line-clamp-3">
-              {descriptionText}
-            </p>
+            <div className="mb-3">
+              <h5 className="text-xs font-medium text-muted-foreground mb-1">About this project</h5>
+              <div
+                className={cn(
+                  "prose prose-sm max-w-none",
+                  // Light gray text across markdown elements
+                  "prose-headings:text-gray-400 dark:prose-headings:text-gray-400",
+                  "prose-p:text-gray-400 dark:prose-p:text-gray-400",
+                  "prose-li:text-gray-400 dark:prose-li:text-gray-400",
+                  "prose-strong:text-gray-400 dark:prose-strong:text-gray-400",
+                  "prose-a:text-gray-400 dark:prose-a:text-gray-400",
+                  // Tighten spacing inside the card
+                  "prose-p:my-0 prose-ul:my-0 prose-ol:my-0 prose-li:my-0",
+                  !expanded && shouldTruncate && "line-clamp-3"
+                )}
+              >
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ node, ...props }) => (
+                      <p className="m-0 text-sm text-gray-400" {...props} />
+                    ),
+                    li: ({ node, ...props }) => (
+                      <li className="m-0 text-sm text-gray-400" {...props} />
+                    ),
+                    ul: ({ node, ...props }) => (
+                      <ul className="list-disc pl-5 text-gray-400" {...props} />
+                    ),
+                    ol: ({ node, ...props }) => (
+                      <ol className="list-decimal pl-5 text-gray-400" {...props} />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong className="font-semibold text-gray-400" {...props} />
+                    ),
+                    a: ({ node, ...props }) => (
+                      <a className="underline text-gray-400 hover:text-gray-300" {...props} />
+                    ),
+                    code: ({ node, inline, ...props }: { node?: any; inline?: boolean; [key: string]: any }) => (
+                      <code className={cn("rounded bg-muted px-1 py-0.5 text-gray-400", inline ? "text-xs" : "text-sm block p-2")} {...props} />
+                    ),
+                    h1: ({ node, ...props }) => (
+                      <h3 className="text-sm font-medium text-gray-400" {...props} />
+                    ),
+                    h2: ({ node, ...props }) => (
+                      <h4 className="text-sm font-medium text-gray-400" {...props} />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h5 className="text-xs font-medium text-gray-400" {...props} />
+                    ),
+                  }}
+                >
+                  {descriptionMd}
+                </ReactMarkdown>
+              </div>
+              {shouldTruncate && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="mt-1 text-xs text-primary hover:underline"
+                  aria-expanded={expanded}
+                >
+                  {expanded ? "Read less" : "Read more"}
+                </button>
+              )}
+            </div>
 
             {/* Spacer within the flex container if needed, or rely on grow */}
             <div className="grow min-h-2"></div> {/* Adjusted spacer */}

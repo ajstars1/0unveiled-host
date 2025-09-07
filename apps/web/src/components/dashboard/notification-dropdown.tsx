@@ -159,7 +159,7 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
              </Button>
          )}
       </DropdownMenuLabel>
-      <DropdownMenuSeparator className={''} />
+  <DropdownMenuSeparator />
       <ScrollArea className="h-[300px]">
         {notifications.length === 0 ? (
             <div className="text-center text-muted-foreground py-10 px-4">
@@ -169,7 +169,7 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
         ) : (
           notifications.map((notification) => (
             <DropdownMenuItem
-              inset={true}
+              inset
               key={notification.id}
               className={cn(
                 "flex items-start gap-3 data-highlighted:bg-muted/50 relative",
@@ -207,7 +207,7 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
           ))
         )}
       </ScrollArea>
-  <DropdownMenuSeparator className={''} />
+  <DropdownMenuSeparator />
   <DropdownMenuItem inset asChild className="justify-center cursor-pointer">
         <Link href="/notifications">
           View All Notifications
