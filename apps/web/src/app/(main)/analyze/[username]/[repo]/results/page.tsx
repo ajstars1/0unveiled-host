@@ -43,6 +43,27 @@ interface AnalysisResult {
     critical_issues?: string[];
     security_hotspots?: string[];
   };
+  security_metrics?: {
+    security_score?: number;
+    critical_issues?: number;
+    security_hotspots?: number;
+    potential_vulnerabilities?: number;
+    high_issues?: number;
+    medium_issues?: number;
+    low_issues?: number;
+    has_security_policy?: boolean;
+    uses_secrets_scanning?: boolean;
+    has_dependency_updates?: boolean;
+    hardcoded_secrets?: number;
+    sql_injection_risks?: number;
+    xss_risks?: number;
+    unsafe_operations?: number;
+    insecure_deserialization?: number;
+    insecure_file_operations?: number;
+    command_injection?: number;
+    sensitive_files?: number;
+    issue_locations?: Record<string, string[]>;
+  };
   // Legacy/alternate keys used by previous UI (kept optional for compatibility)
   repository_info?: any;
   code_metrics?: any;
@@ -102,9 +123,102 @@ const ResultsPage = () => {
     ?? analysisData.quality_metrics?.docstring_coverage
     ?? 0;
 
-  const securityScore = analysisData.security?.security_score
-    ?? analysisData.security_analysis?.security_score
-    ?? 0;
+  // Function to safely extract the security score
+  const getSecurityScore = () => {
+    // Try to access the security score from various possible locations
+    const directScore = 
+      analysisData.security_metrics?.security_score ?? 
+      analysisData.security?.security_score ??
+      analysisData.security_analysis?.security_score;
+    
+    // Check if we have a direct numeric score
+    if (typeof directScore === 'number' && !isNaN(directScore)) {
+      return directScore;
+    }
+    
+    // If we get here, try to calculate a score based on available metrics
+    try {
+      const metrics = analysisData.security_metrics;
+      if (metrics) {
+        // Get critical issues count safely
+        let criticalIssues = 0;
+        if (typeof metrics.critical_issues === 'number') {
+          criticalIssues = metrics.critical_issues;
+        } else if (Array.isArray(metrics.critical_issues)) {
+          criticalIssues = (metrics.critical_issues as string[]).length;
+        }
+        
+        // Get other issue counts safely
+        let highIssues = typeof metrics.high_issues === 'number' ? metrics.high_issues : 0;
+        let mediumIssues = typeof metrics.medium_issues === 'number' ? metrics.medium_issues : 0;
+        let lowIssues = typeof metrics.low_issues === 'number' ? metrics.low_issues : 0;
+        
+        // If we have any issues, calculate a score
+        const total = criticalIssues + highIssues + mediumIssues + lowIssues;
+        
+        if (total > 0) {
+          // Simple algorithm: start with 100 and subtract based on issues
+          const calculatedScore = Math.max(0, 100 - 
+            criticalIssues * 10 - 
+            highIssues * 5 - 
+            mediumIssues * 2 - 
+            lowIssues * 0.5
+          );
+          
+          return Math.round(calculatedScore);
+        }
+        
+        // If we have security hotspots but no issues, use that for a score
+        let securityHotspots = 0;
+        if (typeof metrics.security_hotspots === 'number') {
+          securityHotspots = metrics.security_hotspots;
+        } else if (Array.isArray(metrics.security_hotspots)) {
+          securityHotspots = (metrics.security_hotspots as string[]).length;
+        }
+        
+        if (securityHotspots > 0) {
+          // Score based on hotspots - less severe than issues
+          return Math.max(50, 100 - securityHotspots * 2);
+        }
+      }
+      
+      // Try to calculate from security object
+      if (analysisData.security) {
+        let criticalIssues = 0;
+        let securityHotspots = 0;
+        
+        // Get counts safely
+        if (typeof analysisData.security.critical_issues === 'number') {
+          criticalIssues = analysisData.security.critical_issues;
+        } else if (Array.isArray(analysisData.security.critical_issues)) {
+          criticalIssues = analysisData.security.critical_issues.length;
+        }
+        
+        if (typeof analysisData.security.security_hotspots === 'number') {
+          securityHotspots = analysisData.security.security_hotspots;
+        } else if (Array.isArray(analysisData.security.security_hotspots)) {
+          securityHotspots = analysisData.security.security_hotspots.length;
+        }
+        
+        if (criticalIssues > 0 || securityHotspots > 0) {
+          // Simple algorithm based on available data
+          return Math.max(0, 100 - criticalIssues * 10 - securityHotspots * 1);
+        }
+      }
+    } catch (e) {
+      console.error("Error calculating security score:", e);
+    }
+    
+    // If security data exists but no score could be calculated, default to 50
+    if (analysisData.security_metrics || analysisData.security) {
+      return 50;
+    }
+    
+    // Default score if no security data exists
+    return 0;
+  };
+  
+  const securityScore = getSecurityScore();
 
   // Files analyzed - try multiple sources
   const filesAnalyzed = analysisData.metrics?.files_analyzed
@@ -144,13 +258,48 @@ const ResultsPage = () => {
     ?? analysisData.repository?.open_issues_count
     ?? 0;
 
-  // Debug logging for data availability
+  // Deep debug of security metrics
+  React.useEffect(() => {
+    if (analysisData) {
+      console.log('Security Data Deep Debug:', {
+        security: analysisData.security,
+        security_metrics: analysisData.security_metrics,
+        security_analysis: analysisData.security_analysis,
+        // Log more detailed type information
+        securityMetricsType: analysisData.security_metrics ? typeof analysisData.security_metrics : 'undefined',
+        criticalIssuesType: analysisData.security_metrics?.critical_issues 
+          ? typeof analysisData.security_metrics.critical_issues + (Array.isArray(analysisData.security_metrics.critical_issues) ? ' (array)' : '')
+          : 'undefined',
+        securityHotspotsType: analysisData.security_metrics?.security_hotspots
+          ? typeof analysisData.security_metrics.security_hotspots + (Array.isArray(analysisData.security_metrics.security_hotspots) ? ' (array)' : '')
+          : 'undefined',
+        // If it's a number that looks suspiciously like a memory address, note it
+        criticalIssuesValue: analysisData.security_metrics?.critical_issues,
+        securityHotspotsValue: analysisData.security_metrics?.security_hotspots,
+        securityScore: getSecurityScore(),
+        // Check if calculated value is a valid number
+        calculatedSecurityScore: getSecurityScore(),
+        isScoreValidNumber: !isNaN(getSecurityScore()),
+        // Check if direct security score exists and is valid
+        directSecurityScore: analysisData.security_metrics?.security_score,
+        isDirectScoreValidNumber: !isNaN(analysisData.security_metrics?.security_score || 0),
+        // Log a sample of the raw structure for reference
+        rawSample: JSON.stringify(analysisData).slice(0, 500) + '...'
+      });
+    }
+  }, [analysisData]);
+
+  // Original debug logging
   console.log('Analysis Data Debug:', {
     hasMetrics: !!analysisData.metrics,
     hasCodeMetrics: !!analysisData.code_metrics,
     hasQualityMetrics: !!analysisData.quality_metrics,
     hasRepository: !!analysisData.repository,
     hasRepositoryInfo: !!analysisData.repository_info,
+    hasSecurityMetrics: !!analysisData.security_metrics,
+    hasSecurity: !!analysisData.security,
+    hasSecurityAnalysis: !!analysisData.security_analysis,
+    securityScore,
     filesAnalyzed,
     totalLines,
     repoSize,
@@ -456,6 +605,9 @@ const ResultsPage = () => {
                   <div className={`p-2 rounded ${analysisData.repository_info ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
                     Repository Info: {analysisData.repository_info ? '✓' : '✗'}
                   </div>
+                  <div className={`p-2 rounded ${analysisData.security_metrics ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                    Security Metrics: {analysisData.security_metrics ? '✓' : '✗'}
+                  </div>
                   <div className={`p-2 rounded ${analysisData.security ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
                     Security: {analysisData.security ? '✓' : '✗'}
                   </div>
@@ -752,14 +904,80 @@ const ResultsPage = () => {
                 <CardHeader><CardTitle>🔒 Security Analysis</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between text-sm"><span className="text-muted-foreground">Security Score</span><span className="font-medium">{Math.round(Number(securityScore) || 0)}/100</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Critical Issues</span><span className="font-medium text-destructive">{analysisData.security?.critical_issues ?? analysisData.security_analysis?.critical_issues ?? 0}</span></div>
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Security Hotspots</span><span className="font-medium text-orange-600">{analysisData.security?.security_hotspots ?? analysisData.security_analysis?.security_hotspots ?? 0}</span></div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Critical Issues</span>
+                    <span className="font-medium text-destructive">
+                      {(() => {
+                        // Try to access security metrics critical issues
+                        const criticalIssues = analysisData.security_metrics?.critical_issues as number | string[] | undefined;
+                        
+                        // If it's a direct number, use it
+                        if (typeof criticalIssues === 'number') {
+                          return criticalIssues;
+                        }
+                        
+                        // If it's an array, use the length
+                        if (Array.isArray(criticalIssues)) {
+                          return criticalIssues.length;
+                        }
+                        
+                        // Try security.critical_issues if it exists
+                        if (analysisData.security?.critical_issues) {
+                          // Handle both number and array cases
+                          if (typeof analysisData.security.critical_issues === 'number') {
+                            return analysisData.security.critical_issues;
+                          }
+                          if (Array.isArray(analysisData.security.critical_issues)) {
+                            return (analysisData.security.critical_issues as string[]).length;
+                          }
+                        }
+                        
+                        // Final fallback
+                        return 0;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Security Hotspots</span>
+                    <span className="font-medium text-orange-600">
+                      {(() => {
+                        // Try to access security metrics security hotspots
+                        const securityHotspots = analysisData.security_metrics?.security_hotspots;
+
+                        // If it's a direct number, use it
+                        if (typeof securityHotspots === 'number') {
+                          return securityHotspots;
+                        }
+
+                        // If it's an array, use the length (with type assertion for compatibility)
+                        if (Array.isArray(securityHotspots)) {
+                          return (securityHotspots as string[]).length;
+                        }
+
+                        // Try security.security_hotspots if it exists
+                        if (analysisData.security?.security_hotspots) {
+                          // Handle both number and array cases
+                          if (typeof analysisData.security.security_hotspots === 'number') {
+                            return analysisData.security.security_hotspots;
+                          }
+                          if (Array.isArray(analysisData.security.security_hotspots)) {
+                            return (analysisData.security.security_hotspots as string[]).length;
+                          }
+                        }
+
+                        // Final fallback
+                        return 0;
+                      })()}
+                    </span>
+                  </div>
                   <Progress value={Math.round(Number(securityScore) || 0)} className="w-full" />
                 </CardContent>
               </Card>
               {(() => {
                 const securityFindings: string[] = (analysisData.security_analysis?.recommendations as string[] | undefined)
+                  ?? (analysisData.security_metrics?.security_hotspots as string[] | undefined)
                   ?? (analysisData.security?.security_hotspots as string[] | undefined)
+                  ?? (analysisData.security_metrics?.critical_issues as string[] | undefined)
                   ?? (analysisData.security?.critical_issues as string[] | undefined)
                   ?? [];
                 return securityFindings.length > 0 ? (

@@ -79,12 +79,28 @@ class SecurityMetrics(BaseModel):
     has_security_policy: bool = False
     uses_secrets_scanning: bool = False
     has_dependency_updates: bool = False
+    has_security_workflow: bool = False
     
     # Code patterns
     hardcoded_secrets: int = 0
     sql_injection_risks: int = 0
     xss_risks: int = 0
     unsafe_operations: int = 0
+    insecure_deserialization: int = 0
+    insecure_file_operations: int = 0
+    command_injection: int = 0
+    sensitive_files: int = 0
+    
+    # Issue locations for better reporting
+    issue_locations: Dict[str, List[str]] = Field(default_factory=lambda: {
+        'hardcoded_secrets': [],
+        'sql_injection': [],
+        'xss_risks': [],
+        'command_injection': [],
+        'insecure_deserialization': [],
+        'insecure_file_operations': [],
+        'sensitive_files': []
+    })
     
     # Dependencies
     vulnerable_dependencies: int = 0
