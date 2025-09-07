@@ -9,7 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Search, User as UserIcon } from 'lucide-react';
 import { getAllUsers } from '@/data/user';
 import { Skeleton } from '@/components/ui/skeleton';
-import { type User } from '@0unveiled/database';
+import { type User, type UserSkill, type Skill } from '@0unveiled/database';
+
+// Type for user with skills relation from getAllUsers
+type UserWithSkills = User & {
+  skills: (UserSkill & {
+    skill: Pick<Skill, 'id' | 'name' | 'category'>
+  })[]
+};
 
 interface UserAuthProps {
   onUserIdSubmit: (userId: string) => void;
@@ -41,7 +48,7 @@ export function UserAuth({ onUserIdSubmit, loading }: UserAuthProps) {
   const filteredUsers = useMemo(() => {
     if (!allUsers) return [];
 
-    return allUsers.filter((user: User) => {
+    return allUsers.filter((user: UserWithSkills) => {
       if (user.role === "ADMIN" || !user.onboarded) {
         return false;
       }
@@ -68,7 +75,7 @@ export function UserAuth({ onUserIdSubmit, loading }: UserAuthProps) {
     }
   };
 
-  const selectedUser = allUsers?.find((user: User) => user.id === selectedUserId);
+  const selectedUser = allUsers?.find((user: UserWithSkills) => user.id === selectedUserId);
 
   return (
     <div className="mb-12 bg-white border border-gray-200 rounded-2xl p-8">
@@ -129,7 +136,7 @@ export function UserAuth({ onUserIdSubmit, loading }: UserAuthProps) {
             {[...Array(4)].map((_, i) => <UserCardSkeleton key={i} />)}
           </>
         ) : filteredUsers.length > 0 ? (
-          filteredUsers.map((user: User) => (
+          filteredUsers.map((user: UserWithSkills) => (
             <div
               key={user.id}
               onClick={() => handleUserSelect(user.id)}

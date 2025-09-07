@@ -470,7 +470,10 @@ export function BadgeShowcase({ userId }: BadgeSystemProps) {
               <p className="text-muted-foreground mb-4">
                 Start by improving your code quality and getting verified
               </p>
-              <Button onClick={() => document.querySelector('[data-state="active"][value="verification"]')?.click()}>
+              <Button onClick={() => {
+                const element = document.querySelector('[data-state="active"][value="verification"]') as HTMLElement;
+                element?.click();
+              }}>
                 Get Your First Badge
               </Button>
             </div>

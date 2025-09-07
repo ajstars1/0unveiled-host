@@ -5,7 +5,10 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { TaskStatus } from "@0unveiled/database/schema"
+import { taskStatusEnum } from "@0unveiled/database"
+
+// Derive the TaskStatus type from the enum
+type TaskStatus = (typeof taskStatusEnum.enumValues)[number];
 
 export interface CalendarEvent {
   id: string

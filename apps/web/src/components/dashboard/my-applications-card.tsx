@@ -8,12 +8,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Badge, BadgeProps } from "@/components/ui/badge"
+// Need to import badgeVariants to use with VariantProps
+import { Badge, badgeVariants } from "@/components/ui/badge"
+import type { VariantProps } from "class-variance-authority"
 import { Mail } from "lucide-react" // Icon for the card
 import { formatDistanceToNow } from 'date-fns';
 
 import type { DashboardData } from "@/data/dashboard"
-import { ApplicationStatus } from "@0unveiled/lib/supabase"
+import { applicationStatusEnum } from "@0unveiled/database"
+
+// Derive the ApplicationStatus type from the enum
+type ApplicationStatus = (typeof applicationStatusEnum.enumValues)[number];
 
 // Define the props interface
 interface MyApplicationsCardProps {
@@ -21,11 +26,12 @@ interface MyApplicationsCardProps {
 }
 
 // Helper to map standard variants
-const mapApplicationStatusVariant = (status: ApplicationStatus): BadgeProps["variant"] => {
+const mapApplicationStatusVariant = (status: string): VariantProps<typeof badgeVariants>["variant"] => {
     switch (status) {
-        case ApplicationStatus.ACCEPTED: return "default"; // Using default for success (green style later)
-        case ApplicationStatus.REJECTED: return "destructive";
-        case ApplicationStatus.PENDING: return "secondary"; // Using secondary for pending (yellow style later)
+        case "ACCEPTED": return "default"; // Using default for success (green style later)
+        case "REJECTED": return "destructive";
+        case "PENDING": return "secondary"; // Using secondary for pending (yellow style later)
+        case "WITHDRAWN": return "outline"; // Handle withdrawn status
         default: return "secondary";
     }
 }
