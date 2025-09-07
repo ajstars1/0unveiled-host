@@ -1,12 +1,13 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { saveProfileAnalysisAsProject } from "@/actions/profileAnalysisResult";
 import {
   User,
   Github,
@@ -128,6 +129,7 @@ const ProfileAnalysisResults = () => {
   const router = useRouter();
   const [analysisData, setAnalysisData] = useState<ProfileAnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     // Load analysis result from sessionStorage
@@ -153,6 +155,28 @@ const ProfileAnalysisResults = () => {
     
     setLoading(false);
   }, [params.username, router]);
+
+  // Effect to save the analysis data to the database when it's available
+  useEffect(() => {
+    const saveAnalysisToDb = async () => {
+      if (analysisData && !isSaved) {
+        // Save to database
+        const result = await saveProfileAnalysisAsProject(
+          params.username,
+          analysisData
+        );
+        
+        if (result.success) {
+          console.log('Profile analysis saved to database', result);
+          setIsSaved(true);
+        } else {
+          console.error('Failed to save profile analysis to database:', result.error);
+        }
+      }
+    };
+    
+    saveAnalysisToDb();
+  }, [analysisData, isSaved, params.username]);
 
   if (loading || !analysisData) {
     return (

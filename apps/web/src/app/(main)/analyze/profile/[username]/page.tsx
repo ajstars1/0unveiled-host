@@ -95,8 +95,10 @@ export default function AnalyzeProfilePage() {
                   }
                   
                   if (data.result) {
-                    console.log("Analysis result received:", data.result);
+                    console.log("Analysis result received");
                     analysisResult = data.result;
+                    setStatus("Analysis complete");
+                    setProgress(100);
                     streamComplete = true;
                   }
                   
@@ -108,6 +110,8 @@ export default function AnalyzeProfilePage() {
                   // Check for completion indicators
                   if (data.progress === 100 || (data.step && data.step.toLowerCase().includes('complete'))) {
                     console.log("Completion detected based on progress/step");
+                    setStatus("Analysis complete");
+                    setProgress(100);
                     streamComplete = true;
                   }
                 } catch (parseError) {
@@ -118,27 +122,37 @@ export default function AnalyzeProfilePage() {
             }
           }
 
-          console.log("Stream processing completed. Result available:", !!analysisResult);
+            console.log("Stream processing completed. Result available:", !!analysisResult);
 
           if (analysisResult) {
             // Store the result in sessionStorage for the results page
-            sessionStorage.setItem("profileAnalysisResult", JSON.stringify({
-              success: true,
-              data: analysisResult,
-              timestamp: Date.now()
-            }));
+            try {
+              sessionStorage.setItem("profileAnalysisResult", JSON.stringify({
+                success: true,
+                data: analysisResult,
+                timestamp: Date.now()
+              }));
 
-            console.log("Profile analysis result stored:", analysisResult);
-            
-            // Clear the timeout
-            if (timeoutRef.current) {
-              clearTimeout(timeoutRef.current);
-              timeoutRef.current = null;
+              console.log("Profile analysis result stored in sessionStorage");
+              
+              // Clear the timeout
+              if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+              }
+              
+              setProgress(100);
+              setStatus("Analysis complete");
+              setComplete(true);
+              
+              // Navigate to results page after a short delay to ensure UI updates
+              setTimeout(() => {
+                redirectToResults();
+              }, 500);
+            } catch (storageError) {
+              console.error("Error storing analysis result:", storageError);
+              throw new Error("Failed to store analysis result");
             }
-            
-            setComplete(true);
-            // Navigate to results page
-            redirectToResults();
           } else {
             console.error("Stream ended but no analysis result was received");
             throw new Error("Analysis completed but no result received");
@@ -172,16 +186,21 @@ export default function AnalyzeProfilePage() {
   // Failsafe: if complete flips true for any reason, navigate to results
   useEffect(() => {
     if (complete && !error) {
+      console.log("Analysis complete, redirecting to results page");
       redirectToResults();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [complete]);
+  }, [complete, error]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (sseRef.current) sseRef.current.close();
+      if (sseRef.current) {
+        console.log("Closing SSE connection on unmount");
+        sseRef.current.close();
+        sseRef.current = null;
+      }
       if (timeoutRef.current) {
+        console.log("Clearing timeout on unmount");
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
