@@ -254,11 +254,18 @@ export default function AnalyzeRepoPage() {
   }, []);
 
   return (
-    <div className="relative">
-      <AIAnalysisGame currentRepo={decodeURIComponent(params.repo)} status={status} progress={progress} complete={complete} />
+    <div className="relative min-h-dvh bg-background text-foreground">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6">
+        <AIAnalysisGame
+          currentRepo={decodeURIComponent(params.repo)}
+          status={status}
+          progress={progress}
+          complete={complete}
+        />
+      </div>
       {error ? (
-        <div className="absolute inset-x-0 top-4 mx-auto max-w-xl">
-          <div className="mx-auto rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 shadow-sm">
+        <div className="fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+1rem)] z-50 px-4">
+          <div className="mx-auto w-full sm:max-w-md md:max-w-xl rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-destructive/15">
             {error}
           </div>
         </div>
