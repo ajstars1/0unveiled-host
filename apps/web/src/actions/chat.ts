@@ -76,8 +76,8 @@ export const getOrCreateDmChannel = async (
     });
 
     // Filter for channels with exactly 2 members where both users are members
-    const existingChannel = potentialChannels.find((channel) => {
-      const memberIds = channel.members.map(m => m.userId);
+    const existingChannel = potentialChannels.find((channel: Channel & { members: ChannelMember[] }) => {
+      const memberIds = channel.members.map((m: ChannelMember) => m.userId);
       return memberIds.length === 2 && 
              memberIds.includes(currentUser.id) && 
              memberIds.includes(otherUserId);
@@ -171,7 +171,7 @@ export const sendMessage = async (
     }).returning();
 
     // --- Send Notification --- 
-    const recipient = channelWithMembers.members.find(m => m.userId !== currentUser.id);
+    const recipient = channelWithMembers.members.find((m: ChannelMember) => m.userId !== currentUser.id);
     if (recipient) {
         try {
             const senderName = `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() || currentUser.username || 'A user';
@@ -357,8 +357,8 @@ export const getDmChannelsForCurrentUser = async (): Promise<DmChannelListItem[]
       return []; // User is not a member of any channels
     }
 
-    const userChannelIds = userMemberships.map(m => m.channelId);
-    const lastReadMap = new Map(userMemberships.map(m => [m.channelId, m.lastReadAt]));
+    const userChannelIds = userMemberships.map((m: ChannelMember) => m.channelId);
+    const lastReadMap = new Map(userMemberships.map((m: ChannelMember) => [m.channelId, m.lastReadAt]));
 
     // 2. Fetch DIRECT_MESSAGE channels from those channel IDs
     const userChannels = await db.query.channels.findMany({
@@ -389,13 +389,18 @@ export const getDmChannelsForCurrentUser = async (): Promise<DmChannelListItem[]
     });
 
     // Filter channels to only include those where the user is a member
-    const filteredChannels = userChannels.filter(channel => 
+    const filteredChannels = userChannels.filter((channel: Channel) => 
       userChannelIds.includes(channel.id)
     );
 
     // 3. Process channels to combine data and calculate actual unread count
-    const dmListItemsPromises = filteredChannels.map(async (channel) => {
-      const otherMember = channel.members.find(m => m.userId !== currentUser!.id);
+    const dmListItemsPromises = filteredChannels.map(async (channel: Channel & { 
+      members: (ChannelMember & { 
+        user: Pick<User, 'id' | 'username' | 'firstName' | 'lastName' | 'profilePicture'> 
+      })[], 
+      messages: Message[] 
+    }) => {
+      const otherMember = channel.members.find((m: ChannelMember & { user: Pick<User, 'id' | 'username' | 'firstName' | 'lastName' | 'profilePicture'> }) => m.userId !== currentUser!.id);
       const lastMsg = channel.messages[0]; // Last message from the include
       const lastReadTime = lastReadMap.get(channel.id);
 
@@ -515,7 +520,7 @@ export const getDmChannelDetails = async (channelId: string): Promise<{ otherUse
             return { otherUser: null, error: 'Channel not found or you are not a member.' };
         }
 
-        const otherMember = channel.members.find(member => member.userId !== currentUser.id);
+        const otherMember = channel.members.find((member: ChannelMember & { user: Pick<User, 'id' | 'username' | 'firstName' | 'lastName' | 'profilePicture'> }) => member.userId !== currentUser.id);
 
         if (!otherMember || !otherMember.user) {
             // This might happen if the other user was deleted, return appropriate state

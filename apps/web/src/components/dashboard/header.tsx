@@ -18,8 +18,9 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import type { UserProfileDetails } from "@/data/user"
-import type { Notification } from ".prisma/client"
-import { NotificationType } from ".prisma/client"
+import type { Notification, notificationTypeEnum } from "@0unveiled/database"
+// Derive the NotificationType type from the enum
+type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
 import { logout } from "@/actions/auth"
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/hooks/use-toast"
@@ -182,7 +183,7 @@ export function Header({ user, initialNotificationCount, initialNotifications }:
   const displayNotifications = React.useMemo(() => {
       if (!recentNotificationsResult) return [];
       return recentNotificationsResult.filter(notification => {
-          if (notification.type === NotificationType.NEW_MESSAGE && activeChatChannelId) {
+          if (notification.type === "NEW_MESSAGE" && activeChatChannelId) {
               const notificationChannelId = getChannelIdFromUrl(notification.linkUrl);
               if (notificationChannelId === activeChatChannelId) {
                   return false; // Filter out this notification

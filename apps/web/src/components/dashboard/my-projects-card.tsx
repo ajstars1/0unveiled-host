@@ -10,7 +10,8 @@ import {
   CardFooter
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge, BadgeProps } from "@/components/ui/badge"
+import { Badge, badgeVariants } from "@/components/ui/badge"
+import type { VariantProps } from "class-variance-authority"
 import { Eye, Lock, Users, Clock, Inbox, Briefcase, ChevronRight } from "lucide-react"
 import {
   Tooltip,
@@ -21,26 +22,32 @@ import {
 import { cn } from "@/lib/utils"
 
 import type { DashboardData } from "@/data/dashboard"
-import { ProjectStatus, ProjectVisibility, MemberRole } from "@0unveiled/database/schema"
+import { projectStatusEnum, projectVisibilityEnum, memberRoleEnum } from "@0unveiled/database"
+
+// Derive types from the enums
+type ProjectStatus = (typeof projectStatusEnum.enumValues)[number];
+type ProjectVisibility = (typeof projectVisibilityEnum.enumValues)[number];
+type MemberRole = (typeof memberRoleEnum.enumValues)[number];
 
 // Define the props interface
 interface MyProjectsCardProps {
   projects: DashboardData['projects'];
 }
 
-const getStatusVariant = (status: ProjectStatus): BadgeProps["variant"] => {
+const getStatusVariant = (status: string): VariantProps<typeof badgeVariants>["variant"] => {
   switch (status) {
-    case ProjectStatus.ACTIVE: return "default";
-    case ProjectStatus.PLANNING: return "secondary";
-    case ProjectStatus.ON_HOLD: return "destructive";
-    case ProjectStatus.COMPLETED: return "secondary";
-    case ProjectStatus.ARCHIVED: return "outline-solid";
+    case "ACTIVE": return "default";
+    case "PLANNING": return "secondary";
+    case "ON_HOLD": return "destructive";
+    case "COMPLETED": return "secondary";
+    case "ARCHIVED": return "outline";
+    case "DRAFT": return "secondary";
     default: return "secondary";
   }
 }
 
-const getRoleDisplay = (role: MemberRole) => {
-    return role === MemberRole.LEADER ? "Owner" : "Member";
+const getRoleDisplay = (role: string) => {
+    return (role === "LEADER" || role === "OWNER") ? "Owner" : "Member";
 }
 
 export function MyProjectsCard({ projects }: MyProjectsCardProps) {

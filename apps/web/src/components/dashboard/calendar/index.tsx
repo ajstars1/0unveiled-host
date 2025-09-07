@@ -31,7 +31,7 @@ import { isSameDay, addDays, subDays, addWeeks, subWeeks } from 'date-fns'
 type FetchedTask = Awaited<ReturnType<typeof import("@/data/tasks").getAllProjectTasksForUser>> extends (infer U)[] | null ? U : never;
 
 interface CalendarProps {
-    fetchedTasks: FetchedTask[];
+    fetchedTasks: FetchedTask[] | null;
     currentProjectId?: string; // Optional: ID of the current project context
     currentProjectTitle?: string; // Optional: Title of the current project context
 }
@@ -47,10 +47,10 @@ export default function Calendar({ fetchedTasks, currentProjectId, currentProjec
 
   // Transform fetchedTasks into CalendarEvent[] and apply filters
   const events: CalendarEvent[] = useMemo(() => {
-     if (!fetchedTasks) return []; // Handle null case
-     return fetchedTasks
-       .filter(task => !!task.dueDate) // Ensure task has a due date
-       .map(task => {
+     if (!fetchedTasks || !Array.isArray(fetchedTasks)) return []; // Handle null case
+     return (fetchedTasks as any[])
+       .filter((task: any) => !!task.dueDate) // Ensure task has a due date
+       .map((task: any) => {
             const dueDate = task.dueDate as Date; // Cast is safe due to filter
             // Determine the event type based on task status or other logic
             // Example: If it's done, it's a 'task', otherwise it's a 'deadline'
@@ -79,7 +79,7 @@ export default function Calendar({ fetchedTasks, currentProjectId, currentProjec
   const projectTitles = useMemo(() => {
       // Only calculate if not in a specific project context
       if (currentProjectId || !fetchedTasks) return []; 
-      const titles = new Set(fetchedTasks.map(task => task.project.title));
+      const titles = new Set((fetchedTasks as any[]).map((task: any) => task.project.title));
       return Array.from(titles);
   }, [fetchedTasks, currentProjectId]);
 

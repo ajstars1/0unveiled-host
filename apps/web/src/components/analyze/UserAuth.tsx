@@ -6,9 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, User } from 'lucide-react';
+import { Search, User as UserIcon } from 'lucide-react';
 import { getAllUsers } from '@/data/user';
 import { Skeleton } from '@/components/ui/skeleton';
+import { type User, type UserSkill, type Skill } from '@0unveiled/database';
+
+// Type for user with skills relation from getAllUsers
+type UserWithSkills = User & {
+  skills: (UserSkill & {
+    skill: Pick<Skill, 'id' | 'name' | 'category'>
+  })[]
+};
 
 interface UserAuthProps {
   onUserIdSubmit: (userId: string) => void;
@@ -40,7 +48,7 @@ export function UserAuth({ onUserIdSubmit, loading }: UserAuthProps) {
   const filteredUsers = useMemo(() => {
     if (!allUsers) return [];
 
-    return allUsers.filter((user) => {
+    return allUsers.filter((user: UserWithSkills) => {
       if (user.role === "ADMIN" || !user.onboarded) {
         return false;
       }
@@ -67,7 +75,7 @@ export function UserAuth({ onUserIdSubmit, loading }: UserAuthProps) {
     }
   };
 
-  const selectedUser = allUsers?.find(user => user.id === selectedUserId);
+  const selectedUser = allUsers?.find((user: UserWithSkills) => user.id === selectedUserId);
 
   return (
     <div className="mb-12 bg-white border border-gray-200 rounded-2xl p-8">
@@ -128,7 +136,7 @@ export function UserAuth({ onUserIdSubmit, loading }: UserAuthProps) {
             {[...Array(4)].map((_, i) => <UserCardSkeleton key={i} />)}
           </>
         ) : filteredUsers.length > 0 ? (
-          filteredUsers.map((user) => (
+          filteredUsers.map((user: UserWithSkills) => (
             <div
               key={user.id}
               onClick={() => handleUserSelect(user.id)}
@@ -170,7 +178,7 @@ export function UserAuth({ onUserIdSubmit, loading }: UserAuthProps) {
           ))
         ) : (
           <div className="text-center py-8 text-gray-500">
-            <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <UserIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p>No users found matching your search.</p>
           </div>
         )}

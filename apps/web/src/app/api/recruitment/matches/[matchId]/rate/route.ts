@@ -4,10 +4,10 @@ const AI_RECRUITMENT_SERVICE_URL = process.env.AI_RECRUITMENT_SERVICE_URL || 'ht
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { matchId: string } }
+  { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
-    const { matchId } = params;
+    const { matchId } = await params;
     const { searchParams } = new URL(request.url);
     const rating = searchParams.get('rating');
     const notes = searchParams.get('notes');

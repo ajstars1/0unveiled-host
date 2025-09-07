@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Inter, Poppins } from "next/font/google"
+// import { Inter, Poppins } from "next/font/google"
 // import "@/styles/globals.css"
 import "./globals.css"
 // import { ReduxProvider } from "@/redux/provider"
@@ -10,16 +10,29 @@ import { GoogleAnalytics } from "@next/third-parties/google"
 import { AuthProvider } from "@/providers/auth-provider"
 // import { ThemeProvider } from "@/components/theme"
 
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-})
+// import { Inter, Poppins } from "next/font/google"
+// Due to network constraints in build environment, using system fonts
+// const inter = Inter({
+//   subsets: ["latin"],
+//   display: "swap",
+//   fallback: ["system-ui", "-apple-system", "sans-serif"],
+// })
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-})
+// const poppins = Poppins({
+//   subsets: ["latin"],
+//   display: "swap",
+//   weight: ["400", "500", "600", "700"],
+//   fallback: ["system-ui", "-apple-system", "sans-serif"],
+// })
+
+// System font fallbacks for build environment
+const inter = {
+  className: "font-system",
+}
+
+const poppins = {
+  className: "font-system",
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://0unveiled.com"),
