@@ -1,18 +1,28 @@
 "use client";
 
-import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useParams, useRouter } from 'next/navigation';
+import { useMemo, useEffect, useState } from 'react';
+import { useAnalysisCacheOnly } from '@/react-query/analysis';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CheckCircle2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line } from 'recharts';
-import ReactFlow, { Node, Edge, Background, Controls, BackgroundVariant } from 'reactflow';
+import ReactFlow, { 
+  Node, 
+  Edge, 
+  Background, 
+  BackgroundVariant, 
+  Controls,
+} from 'reactflow';
 import 'reactflow/dist/style.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useParams } from 'next/navigation';
-import { useAnalysisCacheOnly } from '@/react-query/analysis';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { saveGitHubAnalysisAsProject } from '@/actions/analysisResult';
+import React from 'react';
 
 interface AnalysisResult {
   // New backend shape
@@ -84,12 +94,196 @@ interface AnalysisResult {
   overall_score?: number;
 }
 
+// Helper function to extract all tech stack items from analysis data
+const extractTechStack = (analysisData: AnalysisResult | null): string[] => {
+  if (!analysisData) return [];
+
+  const techItems = new Set<string>();
+  
+  // Extract from technology_stack if available
+  const techStack = analysisData.technology_stack;
+  if (techStack) {
+    // Add languages
+    if (Array.isArray(techStack.languages)) {
+      techStack.languages.forEach((lang: any) => {
+        const name = typeof lang === 'string' ? lang : lang?.name;
+        if (name) techItems.add(name);
+      });
+    }
+    
+    // Add frameworks
+    if (Array.isArray(techStack.frameworks)) {
+      techStack.frameworks.forEach((fw: any) => {
+        const name = typeof fw === 'string' ? fw : fw?.name;
+        if (name) techItems.add(name);
+      });
+    }
+    
+    // Add libraries
+    if (Array.isArray(techStack.libraries)) {
+      techStack.libraries.forEach((lib: any) => {
+        const name = typeof lib === 'string' ? lib : lib?.name;
+        if (name) techItems.add(name);
+      });
+    }
+    
+    // Add databases
+    if (Array.isArray(techStack.databases)) {
+      techStack.databases.forEach((db: any) => {
+        const name = typeof db === 'string' ? db : db?.name;
+        if (name) techItems.add(name);
+      });
+    }
+    
+    // Add tools
+    if (Array.isArray(techStack.tools)) {
+      techStack.tools.forEach((tool: any) => {
+        const name = typeof tool === 'string' ? tool : tool?.name;
+        if (name) techItems.add(name);
+      });
+    }
+    
+    // Add testing frameworks
+    if (Array.isArray((techStack as any)?.testing_frameworks)) {
+      (techStack as any).testing_frameworks.forEach((test: any) => {
+        const name = typeof test === 'string' ? test : test?.name;
+        if (name) techItems.add(name);
+      });
+    }
+    
+    // Add build tools
+    if (Array.isArray((techStack as any)?.build_tools)) {
+      (techStack as any).build_tools.forEach((tool: any) => {
+        const name = typeof tool === 'string' ? tool : tool?.name;
+        if (name) techItems.add(name);
+      });
+    }
+    
+    // Add deployment tools
+    if (Array.isArray((techStack as any)?.deployment_tools)) {
+      (techStack as any).deployment_tools.forEach((tool: any) => {
+        const name = typeof tool === 'string' ? tool : tool?.name;
+        if (name) techItems.add(name);
+      });
+    }
+  }
+  
+  // Primary language as fallback
+  const primaryLanguage = analysisData.repository?.language || 
+    (analysisData.repository_info?.language as string) || 
+    (analysisData.technology_stack as any)?.primary_language;
+  
+  if (primaryLanguage && !techItems.has(primaryLanguage)) {
+    techItems.add(primaryLanguage);
+  }
+  
+  return Array.from(techItems);
+};
+
+// Helper function to extract or generate an AI summary
+const extractAISummary = (analysisData: AnalysisResult | null): string => {
+  if (!analysisData) return '';
+  
+  // Use AI insights if available
+  if (analysisData.ai_insights) {
+    // If we have a code assessment, use that
+    if (analysisData.ai_insights.code_assessment) {
+      return analysisData.ai_insights.code_assessment;
+    }
+    
+    // Combine strengths and project maturity if available
+    const strengths = analysisData.ai_insights.strengths || [];
+    const maturity = analysisData.ai_insights.project_maturity || '';
+    
+    if (strengths.length > 0 || maturity) {
+      let summary = '';
+      
+      if (maturity) {
+        summary += `This is a ${maturity} project. `;
+      }
+      
+      if (strengths.length > 0) {
+        summary += `Key strengths include: ${strengths.join(', ')}.`;
+      }
+      
+      return summary;
+    }
+  }
+  
+  // Generate a basic summary from repository info if no AI insights
+  const repoName = analysisData.repository?.full_name || 
+    (analysisData.repository_info?.owner && analysisData.repository_info?.name 
+      ? `${analysisData.repository_info.owner}/${analysisData.repository_info.name}` 
+      : '');
+  
+  const language = analysisData.repository?.language || 
+    analysisData.repository_info?.language || 
+    '';
+  
+  const description = analysisData.repository?.description || 
+    analysisData.repository_info?.description || 
+    '';
+  
+  if (repoName || language || description) {
+    let summary = '';
+    
+    if (repoName) {
+      summary += `${repoName} `;
+    }
+    
+    if (language) {
+      summary += `is a ${language} project `;
+    }
+    
+    if (description) {
+      summary += description;
+    }
+    
+    return summary.trim();
+  }
+  
+  return 'GitHub repository analysis';
+};
+
 const ResultsPage = () => {
   const params = useParams<{ username: string; repo: string }>();
+  const router = useRouter();
   const decoded = useMemo(() => decodeURIComponent(params.repo), [params.repo]);
   const [owner, repo] = useMemo(() => (decoded.includes('/') ? decoded.split('/') : [params.username, decoded]), [decoded, params.username]);
   const { data } = useAnalysisCacheOnly();
   const analysisData = (data as unknown as AnalysisResult) || null;
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Effect to save the analysis data to the database when it's available
+  useEffect(() => {
+    const saveAnalysisToDb = async () => {
+      if (analysisData && !isSaved) {
+        // Extract tech stack
+        const techStack = extractTechStack(analysisData);
+        
+        // Extract or generate AI summary
+        const aiSummary = extractAISummary(analysisData);
+        
+        // Save to database
+        const result = await saveGitHubAnalysisAsProject(
+          owner,
+          repo,
+          aiSummary,
+          techStack,
+          analysisData
+        );
+        
+        if (result.success) {
+          console.log('Analysis saved to project database', result.project);
+          setIsSaved(true);
+        } else {
+          console.error('Failed to save analysis to database:', result.error);
+        }
+      }
+    };
+    
+    saveAnalysisToDb();
+  }, [analysisData, isSaved, owner, repo]);
 
   if (!analysisData) {
     return (
@@ -550,6 +744,18 @@ const ResultsPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Success notification */}
+        {isSaved && (
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800">Analysis Saved</AlertTitle>
+            <AlertDescription className="text-green-700">
+              This project has been added to your profile with all tech stack information.
+              You can view it in your projects list.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Header */}
         <div className="text-center border-b border-border pb-6 mb-6">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Code Analysis Results</h1>

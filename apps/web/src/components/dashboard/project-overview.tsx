@@ -1,16 +1,25 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge, BadgeProps } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Users, CheckSquare, AlertCircle, Edit, ExternalLink } from "lucide-react"
 import Link from "next/link"
-import { getProjectById } from "@/data/projects"
-import { ProjectStatus } from "@0unveiled/database/schema"
 import { Skeleton } from "@/components/ui/skeleton"
 
-type ProjectData = NonNullable<Awaited<ReturnType<typeof getProjectById>>>;
+// Local shape for project data used by this component
+type ProjectData = {
+  id: string
+  title: string
+  publicSummary?: string | null
+  description?: string | null
+  status: ProjectStatus
+  requiredSkills?: { id: string; name: string }[]
+  startDate?: string | Date | null
+  endDate?: string | Date | null
+  members?: Array<unknown>
+}
 
 interface SkillSummary {
   id: string;
@@ -23,13 +32,17 @@ interface ProjectOverviewProps {
   isOwner?: boolean;
 }
 
-const getStatusVariant = (status: ProjectStatus): BadgeProps["variant"] => {
+// Local types to avoid importing server-only enums/types
+type ProjectStatus = "PLANNING" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED"
+type BadgeVariant = "default" | "secondary" | "destructive" | "outline"
+
+const getStatusVariant = (status: ProjectStatus): BadgeVariant => {
   switch (status) {
-    case ProjectStatus.ACTIVE: return "default";
-    case ProjectStatus.PLANNING: return "secondary";
-    case ProjectStatus.ON_HOLD: return "destructive";
-    case ProjectStatus.COMPLETED: return "secondary";
-    case ProjectStatus.ARCHIVED: return "outline-solid";
+  case "ACTIVE": return "default";
+  case "PLANNING": return "secondary";
+  case "ON_HOLD": return "destructive";
+  case "COMPLETED": return "secondary";
+  case "ARCHIVED": return "outline";
     default: return "secondary";
   }
 };

@@ -31,6 +31,7 @@ import { PortfolioCard } from "@/components/profile/portfolio-card"
 import { ProfileActions } from "@/components/profile/profile-actions"
 import { ProfileAnalyzer } from "@/components/profile/profile-analyzer"
 import { AIVerifiedSkills } from "@/components/profile/ai-verified-skills"
+// Removed GitHubAnalyzedProjects separate section; PortfolioCard now renders AI data inline
 
 import { fetchRepoCode } from "@/actions/portfolioActions"
 
@@ -128,12 +129,18 @@ async function ProfileDetail({
   const allPortfolioItems = user.showcasedItems || []
   const pinnedPortfolioItems = allPortfolioItems.filter(item => item.isPinned)
 
+  // Get all projects, including GitHub analyzed projects
+  const allProjects = user.projectsOwned || [];
+  
+  // Filter active/planning projects for the "Currently Working On" section
   const currentProjects = [
     ...(user.projectsOwned?.filter(p => p.status === 'ACTIVE' || p.status === 'PLANNING')
       .map(p => ({ ...p, role: 'Founder', type: 'ownedProject' })) || []),
     ...(user.projectsMemberOf?.filter(m => m.project && (m.project.status === 'ACTIVE' || m.project.status === 'PLANNING'))
       .map(m => ({ ...m.project, role: m.role || 'Member', type: 'memberProject' })) || [])
   ].filter((p, index, self) => index === self.findIndex((t) => t.id === p.id))
+  
+  // Removed separate GitHub analyzed projects parsing; data will surface directly in cards
 
   return (
     <div className="min-h-screen bg-linear-to-b from-background to-secondary/10 text-foreground">
@@ -263,7 +270,7 @@ async function ProfileDetail({
             {aiVerifiedSkills && aiVerifiedSkills.totalSkills > 0 && (
               <AIVerifiedSkills skills={aiVerifiedSkills} />
             )}
-
+            
             {currentProjects.length > 0 && (
               <Card className={''}>
                 <CardHeader className={''}>
@@ -346,6 +353,8 @@ async function ProfileDetail({
                   </Card>
                 )}
               </TabsContent>
+              
+              {/* Removed GitHub tab; AI data is displayed within each PortfolioCard */}
             </Tabs>
 
             <Card className={''}>

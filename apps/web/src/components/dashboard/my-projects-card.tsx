@@ -26,8 +26,6 @@ import { projectStatusEnum, projectVisibilityEnum, memberRoleEnum } from "@0unve
 
 // Derive types from the enums
 type ProjectStatus = (typeof projectStatusEnum.enumValues)[number];
-type ProjectVisibility = (typeof projectVisibilityEnum.enumValues)[number];
-type MemberRole = (typeof memberRoleEnum.enumValues)[number];
 
 // Define the props interface
 interface MyProjectsCardProps {
@@ -49,6 +47,11 @@ const getStatusVariant = (status: string): VariantProps<typeof badgeVariants>["v
 const getRoleDisplay = (role: string) => {
     return (role === "LEADER" || role === "OWNER") ? "Owner" : "Member";
 }
+
+// Replace type-only usage with string literals derived from enum
+const VIS_PUBLIC = projectVisibilityEnum.enumValues.find(v => v.toUpperCase?.() === 'PUBLIC') || 'PUBLIC'
+const VIS_PRIVATE = projectVisibilityEnum.enumValues.find(v => v.toUpperCase?.() === 'PRIVATE') || 'PRIVATE'
+const ROLE_LEADER = memberRoleEnum.enumValues.find(v => v.toUpperCase?.() === 'LEADER') || 'LEADER'
 
 export function MyProjectsCard({ projects }: MyProjectsCardProps) {
   return (
@@ -94,11 +97,11 @@ export function MyProjectsCard({ projects }: MyProjectsCardProps) {
                       <Tooltip>
                         <TooltipTrigger>
                            <Badge variant="outline" className="px-1.5 py-0">
-                              {project.visibility === ProjectVisibility.PUBLIC ? <Eye className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                              {project.visibility === VIS_PUBLIC ? <Eye className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
                            </Badge>
                         </TooltipTrigger>
                         <TooltipContent>
-                           <p className="text-xs">{project.visibility === ProjectVisibility.PUBLIC ? "Public Project" : "Private Project"}</p>
+                           <p className="text-xs">{project.visibility === VIS_PUBLIC ? "Public Project" : "Private Project"}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -106,7 +109,7 @@ export function MyProjectsCard({ projects }: MyProjectsCardProps) {
                 </div>
                 <div className="flex flex-col items-end shrink-0 gap-1">
                    {/* Show application count only if user is LEADER */} 
-                  {project.userRole === MemberRole.LEADER && project.pendingApplicationCount > 0 && (
+                  {project.userRole === ROLE_LEADER && project.pendingApplicationCount > 0 && (
                       <TooltipProvider delayDuration={100}>
                            <Tooltip>
                                 <TooltipTrigger asChild>
@@ -144,4 +147,4 @@ export function MyProjectsCard({ projects }: MyProjectsCardProps) {
       </CardFooter> */}
     </Card>
   )
-} 
+}

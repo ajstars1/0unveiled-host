@@ -19,7 +19,7 @@ import {
 import { getProjectById, MemberSummary } from "@/data/projects"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { MemberRole } from "@0unveiled/database/schema";
+import type { MemberRole } from "@0unveiled/database/schema";
 
 interface ProjectTeamProps {
   projectId: string

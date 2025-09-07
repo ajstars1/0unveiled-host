@@ -14,7 +14,8 @@ import { useEffect } from "react"
 import { toast } from "sonner" // Using sonner for feedback
 
 // Define the expected type for the settings prop based on the schema
-import type { EmailFrequency } from "@0unveiled/database/schema" // Import the enum type
+// Local type to avoid importing server-only code in a client component
+type EmailFrequency = "IMMEDIATE" | "DAILY" | "WEEKLY" | "NEVER"
 
 interface NotificationSettingsProps {
   settings: {
@@ -40,11 +41,20 @@ function SubmitButton() {
 // Main component
 export function NotificationSettings({ settings }: NotificationSettingsProps) {
 
-  // Initial state for useFormState
-  const initialState: { message?: string; errors?: Record<string, string[]>; success?: boolean } = {};
-  
-  // Use useActionState instead of useFormState
-  const [state, dispatch] = useActionState(updateNotificationSettings, initialState);
+  // Result state shape for this form
+  type State = { message?: string; errors?: Record<string, string[]>; success?: boolean }
+  const initialState: State = {}
+
+  // Wrap server action to match useActionState signature (prevState, formData)
+  const action = async (_prevState: State, formData: FormData): Promise<State> => {
+    const result = await updateNotificationSettings(formData)
+    if ((result as any)?.error) {
+      return { success: false, message: (result as any).error }
+    }
+    return { success: true, message: "Settings updated successfully!" }
+  }
+
+  const [state, dispatch] = useActionState(action, initialState)
 
   // Show toast on success/error messages from the server action
   useEffect(() => {

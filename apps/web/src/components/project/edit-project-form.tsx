@@ -5,7 +5,8 @@ import { useState, useMemo, useEffect, Dispatch, SetStateAction } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, Resolver, useFieldArray } from "react-hook-form"
 import { z } from "zod"
-import { User, ProjectStatus, ProjectVisibility } from "@0unveiled/database/schema"
+import type { User } from "@0unveiled/database/schema"
+import { projectStatusEnum, projectVisibilityEnum } from "@0unveiled/database"
 import { useRouter } from "next/navigation"
 import { Plus, Trash2 } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -66,6 +67,15 @@ interface EditProjectFormProps {
   initialData: ProjectProp; // Existing project data
   user: User; // Current user for permission checks (maybe in action)
 }
+
+// Runtime-safe enum values
+const VIS_PUBLIC = projectVisibilityEnum.enumValues.find(v => v.toUpperCase?.() === 'PUBLIC') || 'PUBLIC'
+const VIS_PRIVATE = projectVisibilityEnum.enumValues.find(v => v.toUpperCase?.() === 'PRIVATE') || 'PRIVATE'
+const STATUS_PLANNING = projectStatusEnum.enumValues.find(v => v.toUpperCase?.() === 'PLANNING') || 'PLANNING'
+const STATUS_ACTIVE = projectStatusEnum.enumValues.find(v => v.toUpperCase?.() === 'ACTIVE') || 'ACTIVE'
+const STATUS_ON_HOLD = projectStatusEnum.enumValues.find(v => v.toUpperCase?.() === 'ON_HOLD') || 'ON_HOLD'
+const STATUS_COMPLETED = projectStatusEnum.enumValues.find(v => v.toUpperCase?.() === 'COMPLETED') || 'COMPLETED'
+const STATUS_ARCHIVED = projectStatusEnum.enumValues.find(v => v.toUpperCase?.() === 'ARCHIVED') || 'ARCHIVED'
 
 const mapSkillsToOptions = (skills: Array<{ id: string, name: string, category?: string | null }> | undefined | null): Option[] => {
   if (!skills) return [];
@@ -130,8 +140,8 @@ export function EditProjectForm({ projectId, initialData, user }: EditProjectFor
       jsonDescription: initialJsonContent, // Use parsed content for editor initial state
       // htmlDescription: initialData.htmlDescription || "", // Remove this field
       htmlDescription: "", // Set by useEffect
-      visibility: initialData.visibility || ProjectVisibility.PUBLIC,
-      status: initialData.status || ProjectStatus.PLANNING,
+  visibility: initialData.visibility || VIS_PUBLIC,
+  status: initialData.status || STATUS_PLANNING,
       startDate: initialData.startDate ? new Date(initialData.startDate) : null,
       endDate: initialData.endDate ? new Date(initialData.endDate) : null,
       // Map required skills from initialData to Option[] format
@@ -302,8 +312,8 @@ export function EditProjectForm({ projectId, initialData, user }: EditProjectFor
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value={ProjectVisibility.PUBLIC}>Public</SelectItem>
-                              <SelectItem value={ProjectVisibility.PRIVATE}>Private</SelectItem>
+                              <SelectItem value={VIS_PUBLIC}>Public</SelectItem>
+                              <SelectItem value={VIS_PRIVATE}>Private</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -325,11 +335,11 @@ export function EditProjectForm({ projectId, initialData, user }: EditProjectFor
                             </FormControl>
                             <SelectContent>
                                 {/* Include all relevant statuses for editing */}
-                              <SelectItem value={ProjectStatus.PLANNING}>Planning</SelectItem>
-                              <SelectItem value={ProjectStatus.ACTIVE}>Active</SelectItem>
-                              <SelectItem value={ProjectStatus.ON_HOLD}>On Hold</SelectItem>
-                              <SelectItem value={ProjectStatus.COMPLETED}>Completed</SelectItem>
-                              <SelectItem value={ProjectStatus.ARCHIVED}>Archived</SelectItem>
+                              <SelectItem value={STATUS_PLANNING}>Planning</SelectItem>
+                              <SelectItem value={STATUS_ACTIVE}>Active</SelectItem>
+                              <SelectItem value={STATUS_ON_HOLD}>On Hold</SelectItem>
+                              <SelectItem value={STATUS_COMPLETED}>Completed</SelectItem>
+                              <SelectItem value={STATUS_ARCHIVED}>Archived</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

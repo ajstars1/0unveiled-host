@@ -207,8 +207,8 @@ export function NotificationDropdown({ notifications, userId }: NotificationDrop
           ))
         )}
       </ScrollArea>
-      <DropdownMenuSeparator className={''} />
-      <DropdownMenuItem inset={''} asChild className="justify-center cursor-pointer">
+  <DropdownMenuSeparator className={''} />
+  <DropdownMenuItem inset asChild className="justify-center cursor-pointer">
         <Link href="/notifications">
           View All Notifications
         </Link>
