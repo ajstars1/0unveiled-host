@@ -27,10 +27,17 @@ export const getSkills = async (userId: string | null) => {
       }
     })
     
-    return userSkillsData.map(us => ({
+    interface DbUserSkill {
+      userId: string;
+      skillId: string;
+      level: number | null;
+      skill: SkillProp;
+    }
+
+    return userSkillsData.map((us: DbUserSkill): UserSkillProp => ({
       ...us.skill,
       level: us.level
-    })) as UserSkillProp[]
+    }));
   } catch (error) {
     console.error("Get Skills Error: ", error)
     return null

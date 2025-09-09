@@ -165,9 +165,9 @@ export function EditProjectForm({ projectId, initialData, user }: EditProjectFor
 
   // --- Mutation Setup ---
   const { mutate: submitUpdateProject, isPending: isUpdating } = useMutation({
-    mutationFn: updateProject,
+    mutationFn: (params: { projectId: string, formData: any }) => updateProject(params.projectId, params.formData),
     onSuccess: (result) => {
-      if (result?.success && result.projectId) {
+      if (result?.success && result.project) {
         toast({ title: "Success!", description: "Project updated successfully." });
         queryClient.invalidateQueries({ queryKey: ['projectDetails', projectId] });
         queryClient.invalidateQueries({ queryKey: ['projectsByUserId', user.id] });
@@ -205,7 +205,7 @@ export function EditProjectForm({ projectId, initialData, user }: EditProjectFor
   });
 
   const handleDeleteConfirm = () => {
-    submitDeleteProject({ projectId });
+    submitDeleteProject(projectId);
   };
 
   // --- Submit Handler ---
@@ -366,7 +366,7 @@ export function EditProjectForm({ projectId, initialData, user }: EditProjectFor
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
-                                variant={"outline-solid"}
+                                variant={"outline"}
                                 className={cn(
                                   "pl-3 text-left font-normal",
                                   !field.value && "text-muted-foreground"
@@ -401,7 +401,7 @@ export function EditProjectForm({ projectId, initialData, user }: EditProjectFor
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
-                                variant={"outline-solid"}
+                                variant={"outline"}
                                 className={cn(
                                   "pl-3 text-left font-normal",
                                   !field.value && "text-muted-foreground"
