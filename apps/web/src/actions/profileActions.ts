@@ -1,13 +1,11 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@0unveiled/database'
 import { getCurrentUser } from '@/data/user' // Corrected import path
-import { ZodError } from "zod"
 import { eq, and, or } from "drizzle-orm"
 import { showcasedItems, connectionRequests, connections, users } from "@0unveiled/database"
 import { createNotification } from './notifications'; // Import the action
-import { connectionStatusEnum, notificationTypeEnum } from "@0unveiled/database"
 
 /**
  * Toggles the pinned status of a showcased item.
@@ -58,6 +56,12 @@ export const toggleShowcasedItemPin = async (
 
     // Revalidate the profile path to refresh data
     revalidatePath(`/${username}`) // Use the provided username for the dynamic path
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${currentUser.id}`)
+    revalidateTag(`leaderboard:rank:${currentUser.id}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
 
     return { success: true }
   } catch (error) {

@@ -141,6 +141,12 @@ export async function addPortfolioItem(formData: FormData) {
     // Revalidate paths and tags
     revalidatePath("/benchmark/add-projects")
     revalidateTag('user-benchmark')
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${userId}`)
+    revalidateTag(`leaderboard:rank:${userId}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
     return completeItem
   } catch (error) {
     console.error("Error adding portfolio item:", error)
@@ -175,6 +181,12 @@ export async function importGithubShowcasedItem(repoData: GithubRepoDataType) {
     // Revalidate paths and tags
     revalidatePath("/benchmark/add-projects")
     revalidateTag('user-benchmark')
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${userId}`)
+    revalidateTag(`leaderboard:rank:${userId}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
     return completeItem
   } catch (error) {
     console.error("Error importing GitHub showcased item:", error)
@@ -242,6 +254,12 @@ export async function updatePortfolioItem(itemId: string, formData: FormData) {
     // Revalidate paths and tags
     revalidatePath("/benchmark/add-projects")
     revalidateTag('user-benchmark')
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${userId}`)
+    revalidateTag(`leaderboard:rank:${userId}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
     return completeItem
   } catch (error) {
     console.error("Error updating portfolio item:", error)
@@ -274,6 +292,12 @@ export async function deletePortfolioItem(itemId: string) {
     // Revalidate paths and tags
     revalidatePath("/benchmark/add-projects")
     revalidateTag('user-benchmark')
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${userId}`)
+    revalidateTag(`leaderboard:rank:${userId}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
     return { success: true }
   } catch (error) {
     console.error("Error deleting portfolio item:", error)

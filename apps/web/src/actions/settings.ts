@@ -28,7 +28,7 @@ import {
 } from "@0unveiled/database"
 import { eq, and, or, not, ne, desc } from "drizzle-orm"
 import { getCurrentUser } from '@/data/user'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Define types for map parameters based on the schema
 type ExperienceInput = z.infer<typeof experienceEducationFormSchema>["experience"][number]
@@ -257,6 +257,11 @@ export async function onboarding(data: z.infer<typeof onboardingFormSchema>, sup
       }
     }
 
+    // Invalidate username cache if username was set
+    if (data.username) {
+      revalidateTag(`user:by-username:${data.username.toLowerCase()}`)
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error in onboarding:", error);
@@ -482,6 +487,11 @@ export const profileOnboarding = async (
     await db.update(users).set({
       ...values,
     }).where(eq(users.id, dbUser.id))
+    // Invalidate username cache if username was updated
+    if (values.username && values.username !== dbUser.username) {
+      revalidateTag(`user:by-username:${dbUser.username?.toLowerCase()}`)
+      revalidateTag(`user:by-username:${values.username.toLowerCase()}`)
+    }
     return { success: "Profile Updated" }
   } catch (error) {
     console.error("Profile Update Error:", error)
@@ -678,6 +688,13 @@ export const createPortfolioItem = async (
        provider: newItem.provider,
      };
 
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${dbUser.id}`)
+    revalidateTag(`leaderboard:rank:${dbUser.id}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
+
     return { success: "Portfolio item created successfully.", data: returnData }
   } catch (error) {
     console.error("Error creating portfolio item (ShowcasedItem):", error)
@@ -748,6 +765,13 @@ export const updatePortfolioItem = async (
        provider: updatedItem.provider,
      };
 
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${dbUser.id}`)
+    revalidateTag(`leaderboard:rank:${dbUser.id}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
+
     return { success: "Portfolio item updated successfully.", data: returnData }
   } catch (error) {
     console.error("Error updating portfolio item (ShowcasedItem):", error)
@@ -781,6 +805,12 @@ export const deletePortfolioItem = async (
      // Optional: Check provider if only CUSTOM items should be deletable via this action
 
     await db.delete(showcasedItems).where(eq(showcasedItems.id, itemId))
+    // Invalidate leaderboard caches for this user
+    revalidateTag(`leaderboard:user:${dbUser.id}`)
+    revalidateTag(`leaderboard:rank:${dbUser.id}:GENERAL::`)
+    // Invalidate general leaderboard caches
+    revalidateTag('leaderboard:type:GENERAL:::50')
+    revalidateTag('leaderboard:type:GENERAL:::100')
     return { success: "Portfolio item deleted successfully." }
   } catch (error) {
     console.error("Error deleting portfolio item (ShowcasedItem):", error)

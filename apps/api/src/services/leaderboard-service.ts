@@ -1,6 +1,33 @@
 import { db } from "@0unveiled/database";
-import { users, showcasedItems, projects, leaderboardScores, NewLeaderboardScore, leaderboardTypeEnum } from "@0unveiled/database/schema";
+import { users, showcasedItems, projects, leaderboardScores, NewLeaderboardScore, leaderboardTypeEnum } from "@0unveiled/database";
 import { eq, and, desc, isNotNull } from "drizzle-orm";
+
+interface RepositoryMetadata {
+  repository?: {
+    languages?: Record<string, number>;
+    stargazers_count?: number;
+    forks_count?: number;
+    watchers_count?: number;
+    open_issues_count?: number;
+    language?: string;
+    description?: string;
+    has_readme?: boolean;
+    license?: any;
+  };
+  languages?: Record<string, number>;
+  stargazers_count?: number;
+  forks_count?: number;
+  watchers_count?: number;
+  open_issues_count?: number;
+  language?: string;
+  description?: string;
+  topics?: string[];
+  ai_insights?: any;
+  security?: { security_score: number };
+  quality?: any;
+  code_metrics?: any;
+  tech_stack?: any;
+}
 
 const getTechStackAndDomain = (repo: any): { techStack: string | null, domain: string | null } => {
   // Handle both old and new metadata formats
@@ -173,7 +200,7 @@ const getMaturityBonus = (maturity: string, stage: string): number => {
 const getLanguageModernityScore = (language: string): number => {
   if (!language) return 15;
   
-  const modernLanguages = {
+  const modernLanguages: { [key: string]: number } = {
     'TypeScript': 25, 'Rust': 25, 'Go': 24, 'Swift': 23, 'Kotlin': 22,
     'Python': 21, 'JavaScript': 20, 'Java': 18, 'C#': 17, 'Ruby': 16,
     'PHP': 14, 'C++': 13, 'C': 12
@@ -293,7 +320,7 @@ export const updateLeaderboards = async () => {
       }
     }
 
-    const scores = userShowcasedItems.map(item => calculateAdvancedScore(item.metadata));
+    const scores: number[] = userShowcasedItems.map((item: any) => calculateAdvancedScore(item.metadata as RepositoryMetadata));
     const totalScore = scores.length > 0 ? scores.reduce((acc, score) => acc + score, 0) / scores.length : 0;
 
     const newScore: NewLeaderboardScore = {
