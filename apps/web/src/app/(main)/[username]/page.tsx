@@ -30,7 +30,6 @@ import { Metadata } from "next"
 import { PortfolioCard } from "@/components/profile/portfolio-card"
 import { ProfileActions } from "@/components/profile/profile-actions"
 import { ProfileAnalyzer } from "@/components/profile/profile-analyzer"
-import { AIVerifiedSkills } from "@/components/profile/ai-verified-skills"
 // Removed GitHubAnalyzedProjects separate section; PortfolioCard now renders AI data inline
 
 import { fetchRepoCode } from "@/actions/portfolioActions"
@@ -251,59 +250,143 @@ async function ProfileDetail({
                   </Button>
                 )}
               </CardHeader>
-              <CardContent className="">
+              <CardContent className="space-y-4">
                 {topSkills.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {topSkills.map((userSkill) => {
-                      // Check if this skill appears in aiVerifiedSkills
-                      const isVerified = aiVerifiedSkills?.languages?.some(
-                        (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
-                      );
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">User Skills</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {topSkills.map((userSkill) => {
+                        // Check if this skill appears in aiVerifiedSkills across all categories
+                        const isVerified = 
+                          (aiVerifiedSkills?.languages?.some(
+                            (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
+                          )) || 
+                          (aiVerifiedSkills?.frameworks?.some(
+                            (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
+                          )) || 
+                          // Handle potential missing technologies property
+                          (aiVerifiedSkills && 'technologies' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.technologies) && 
+                            (aiVerifiedSkills.technologies as any[]).some(
+                              (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
+                            ));
 
-                      return (
-                        <div key={userSkill.skillId} className="relative inline-flex group">
-                          <Badge
-                            className={`${isVerified ? "pr-7" : ""}`}
-                            variant={isVerified ? "default" : "secondary"}
-                          >
-                            {userSkill.skill.name}
+                        return (
+                          <div key={userSkill.skillId} className="relative inline-flex group">
+                            <Badge
+                              className={`${isVerified ? "pr-7" : ""}`}
+                              variant={isVerified ? "default" : "secondary"}
+                            >
+                              {userSkill.skill.name}
+                              {isVerified && (
+                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="text-background"
+                                  >
+                                    <path d="M20 6L9 17l-5-5" />
+                                  </svg>
+                                </span>
+                              )}
+                            </Badge>
                             {isVerified && (
-                              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="text-background"
-                                >
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              </span>
+                              <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity pointer-events-none whitespace-nowrap">
+                                Verified through projects
+                              </div>
                             )}
-                          </Badge>
-                          {isVerified && (
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity pointer-events-none whitespace-nowrap">
-                              Verified through projects
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No skills listed.</p>
+                  <p className="text-sm text-muted-foreground">No user-added skills listed.</p>
+                )}
+
+                {/* Show AI-detected skills from projects */}
+                {aiVerifiedSkills && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 flex items-center">
+                      <Code2 className="h-4 w-4 mr-1.5" />
+                      Tech Stack from Projects
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Languages */}
+                      {aiVerifiedSkills && 'languages' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.languages) && (aiVerifiedSkills.languages as any[]).map((skill: any) => {
+                        const isAddedByUser = topSkills.some(
+                          userSkill => userSkill.skill.name.toLowerCase() === skill.skillName?.toLowerCase()
+                        );
+                        // Only show skills not already displayed in user skills
+                        if (!isAddedByUser && skill.skillName) {
+                          return (
+                            <Badge key={`lang-${skill.skillName}`} variant="outline" className="bg-primary/5 text-primary">
+                              {skill.skillName}
+                              {skill.confidenceScore && skill.confidenceScore > 0.7 && (
+                                <span className="ml-1 text-xs opacity-70">(High)</span>
+                              )}
+                              {skill.confidenceScore && skill.confidenceScore > 0.4 && skill.confidenceScore <= 0.7 && (
+                                <span className="ml-1 text-xs opacity-70">(Medium)</span>
+                              )}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      {/* Frameworks */}
+                      {aiVerifiedSkills && 'frameworks' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.frameworks) && (aiVerifiedSkills.frameworks as any[]).map((skill: any) => {
+                        const isAddedByUser = topSkills.some(
+                          userSkill => userSkill.skill.name.toLowerCase() === skill.skillName?.toLowerCase()
+                        );
+                        // Only show skills not already displayed in user skills
+                        if (!isAddedByUser && skill.skillName) {
+                          return (
+                            <Badge key={`fw-${skill.skillName}`} variant="outline" className="bg-secondary/5 text-secondary">
+                              {skill.skillName}
+                              {skill.confidenceScore && skill.confidenceScore > 0.7 && (
+                                <span className="ml-1 text-xs opacity-70">(High)</span>
+                              )}
+                              {skill.confidenceScore && skill.confidenceScore > 0.4 && skill.confidenceScore <= 0.7 && (
+                                <span className="ml-1 text-xs opacity-70">(Medium)</span>
+                              )}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      {/* Technologies */}
+                      {aiVerifiedSkills && 'technologies' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.technologies) && (aiVerifiedSkills.technologies as any[]).map((skill: any) => {
+                        const isAddedByUser = topSkills.some(
+                          userSkill => userSkill.skill.name.toLowerCase() === skill.skillName?.toLowerCase()
+                        );
+                        // Only show skills not already displayed in user skills
+                        if (!isAddedByUser && skill.skillName) {
+                          return (
+                            <Badge key={`tech-${skill.skillName}`} variant="outline" className="bg-accent/5 text-accent">
+                              {skill.skillName}
+                              {skill.confidenceScore && skill.confidenceScore > 0.7 && (
+                                <span className="ml-1 text-xs opacity-70">(High)</span>
+                              )}
+                              {skill.confidenceScore && skill.confidenceScore > 0.4 && skill.confidenceScore <= 0.7 && (
+                                <span className="ml-1 text-xs opacity-70">(Medium)</span>
+                              )}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
-
-            {/* AI-Verified Skills Section */}
-            {aiVerifiedSkills && aiVerifiedSkills.totalSkills > 0 && (
-              <AIVerifiedSkills skills={aiVerifiedSkills} />
-            )}
             
             {currentProjects.length > 0 && (
               <Card className={''}>
