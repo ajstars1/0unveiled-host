@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -28,7 +29,7 @@ export default function AnalyzeProfilePage() {
     startedRef.current = true;
 
     async function start() {
-      try {
+     try {
         const username = params.username;
         
         // Give the UI a head start
@@ -66,6 +67,8 @@ export default function AnalyzeProfilePage() {
           let analysisResult: any = null;
           let streamComplete = false;
           const decoder = new TextDecoder();
+          let buffer = ''; // Buffer to store partial chunks
+          let partialLine = ''; // Store incomplete lines
 
           // Stream the analysis progress
           while (!streamComplete) {
@@ -76,72 +79,127 @@ export default function AnalyzeProfilePage() {
             }
 
             const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim());
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
+            buffer += chunk; // Add to buffer instead of processing immediately
+            
+            // Process complete events in the buffer
+            let eventStart = 0;
+            while (true) {
+              // Find the start of an event
+              const dataStart = buffer.indexOf('data: ', eventStart);
+              if (dataStart === -1) break; // No more events found
+              
+              // Find the end of this event (start of next event or end of buffer)
+              const nextDataStart = buffer.indexOf('data: ', dataStart + 6);
+              
+              // If we found a complete event
+              if (nextDataStart !== -1) {
+                // Extract the event data
+                const eventData = buffer.substring(dataStart + 6, nextDataStart).trim();
+                
                 try {
-                  const data = JSON.parse(line.slice(6));
-                  console.log("Stream event received:", data);
-                  
-                  if (data.step) {
-                    setStatus(data.step);
-                    console.log("Status updated:", data.step);
+                  if (eventData) {
+                    const data = JSON.parse(eventData);
+                    console.log("Stream event received:", data.step || data.error || "Event");
+                    
+                    if (data.step) {
+                      setStatus(data.step);
+                      console.log("Status updated:", data.step);
+                    }
+                    
+                    if (typeof data.progress === 'number') {
+                      setProgress(data.progress);
+                      console.log("Progress updated:", data.progress);
+                    }
+                    
+                    if (data.result) {
+                      console.log("Analysis result received");
+                      analysisResult = data.result;
+                      setStatus("Analysis complete");
+                      setProgress(100);
+                      streamComplete = true;
+                    }
+                    
+                    if (data.error) {
+                      console.error("Stream error:", data.error);
+                      throw new Error(data.error);
+                    }
+
+                    // Check for completion indicators
+                    if (data.progress === 100 || (data.step && data.step.toLowerCase().includes('complete'))) {
+                      console.log("Completion detected based on progress/step");
+                      setStatus("Analysis complete");
+                      setProgress(100);
+                    }
                   }
-                  
-                  if (typeof data.progress === 'number') {
-                    setProgress(data.progress);
-                    console.log("Progress updated:", data.progress);
-                  }
-                  
+                } catch (parseError) {
+                  console.error("Error parsing stream event:", parseError);
+                  // Continue processing other events
+                }
+                
+                // Move to the next event
+                eventStart = nextDataStart;
+              } else {
+                // We have an incomplete event at the end of the buffer
+                // Keep it for the next iteration and process only complete events
+                buffer = buffer.substring(dataStart);
+                break;
+              }
+            }
+            
+            // Safety check: if buffer gets too large (over 1MB), trim it
+            if (buffer.length > 1000000) {
+              const lastEvent = buffer.lastIndexOf('data: ');
+              if (lastEvent !== -1) {
+                buffer = buffer.substring(lastEvent);
+              } else {
+                // If we can't find a recent event, keep only the last part
+                buffer = buffer.substring(buffer.length - 10000);
+              }
+              console.warn("Buffer was too large and has been trimmed, current size:", buffer.length);
+            }
+          }
+          
+          // Process any remaining complete event in the buffer
+          if (buffer.includes('data: ') && !analysisResult) {
+            try {
+              // Find the last complete data event in the buffer
+              const lastDataIndex = buffer.lastIndexOf('data: ');
+              if (lastDataIndex !== -1) {
+                const eventData = buffer.substring(lastDataIndex + 6).trim();
+                if (eventData) {
+                  const data = JSON.parse(eventData);
                   if (data.result) {
-                    console.log("Analysis result received");
+                    console.log("Analysis result received from final buffer");
                     analysisResult = data.result;
                     setStatus("Analysis complete");
                     setProgress(100);
-                    streamComplete = true;
                   }
-                  
-                  if (data.error) {
-                    console.error("Stream error:", data.error);
-                    throw new Error(data.error);
-                  }
-
-                  // Check for completion indicators
-                  if (data.progress === 100 || (data.step && data.step.toLowerCase().includes('complete'))) {
-                    console.log("Completion detected based on progress/step");
-                    setStatus("Analysis complete");
-                    setProgress(100);
-                    streamComplete = true;
-                  }
-                } catch (parseError) {
-                  console.error("Error parsing stream data:", parseError, "Raw line:", line);
-                  // Don't break the stream for parsing errors, continue
                 }
               }
+            } catch (finalError) {
+              console.error("Error parsing final buffer:", finalError, "Buffer:", buffer.substring(buffer.lastIndexOf('data: ')));
             }
           }
 
-            console.log("Stream processing completed. Result available:", !!analysisResult);
+          console.log("Stream processing completed. Result available:", !!analysisResult);
 
           if (analysisResult) {
             // Store the result in sessionStorage for the results page
-            try {
-              sessionStorage.setItem("profileAnalysisResult", JSON.stringify({
-                success: true,
-                data: analysisResult,
-                timestamp: Date.now()
-              }));
+              try {
+                sessionStorage.setItem("profileAnalysisResult", JSON.stringify({
+                  success: true,
+                  data: analysisResult,
+                  timestamp: Date.now()
+                }));
 
-              console.log("Profile analysis result stored in sessionStorage");
-              
-              // Clear the timeout
-              if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-              }
-              
-              setProgress(100);
+                console.log("Profile analysis result stored in sessionStorage, size:", 
+                  JSON.stringify(analysisResult).length);
+                
+                // Clear the timeout
+                if (timeoutRef.current) {
+                  clearTimeout(timeoutRef.current);
+                  timeoutRef.current = null;
+                }              setProgress(100);
               setStatus("Analysis complete");
               setComplete(true);
               

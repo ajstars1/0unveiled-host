@@ -288,14 +288,14 @@ export function ProfileActions({
 
   const renderDropdownContent = () => (
     <DropdownMenuContent align="end" className="">
-      <DropdownMenuItem inset="start" onClick={handleShareProfile} className="cursor-pointer">
+      <DropdownMenuItem inset onClick={handleShareProfile} className="cursor-pointer">
         <Share2 className="mr-2 h-4 w-4" /> Share Profile
       </DropdownMenuItem>
 
       {connectionStatus === 'PENDING_SENT' && (
          <AlertDialog>
            <AlertDialogTrigger asChild>
-             <DropdownMenuItem onSelect={(e: React.MouseEvent<HTMLDivElement>) => e.preventDefault()} className="text-destructive focus:text-destructive cursor-pointer" inset="start">
+             <DropdownMenuItem onSelect={(e: Event) => e.preventDefault()} className="text-destructive focus:text-destructive cursor-pointer" inset>
                <LogOut className="mr-2 h-4 w-4"/> Cancel Request
              </DropdownMenuItem>
            </AlertDialogTrigger>
@@ -317,7 +317,7 @@ export function ProfileActions({
       {connectionStatus === 'CONNECTED' && (
          <AlertDialog>
            <AlertDialogTrigger asChild>
-             <DropdownMenuItem onSelect={(e: React.MouseEvent<HTMLDivElement>) => e.preventDefault()} className="text-destructive focus:text-destructive cursor-pointer" inset="start">
+             <DropdownMenuItem onSelect={(e: Event) => e.preventDefault()} className="text-destructive focus:text-destructive cursor-pointer" inset>
                <Trash2 className="mr-2 h-4 w-4"/> Remove Connection
              </DropdownMenuItem>
            </AlertDialogTrigger>

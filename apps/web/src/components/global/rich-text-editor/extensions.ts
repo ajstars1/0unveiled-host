@@ -4,11 +4,11 @@ import {
   StarterKit,
   TaskItem,
   TaskList,
-  Image as TiptapImage,
-  Link as TiptapLink,
   UpdatedImage,
   UploadImagesPlugin,
 } from "novel"
+import { Image as TiptapImage } from "@tiptap/extension-image"
+import { Link as TiptapLink } from "@tiptap/extension-link"
 
 import { cx } from "class-variance-authority"
 

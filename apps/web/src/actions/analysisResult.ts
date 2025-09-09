@@ -155,3 +155,53 @@ export const saveGitHubAnalysisAsProject = async (
     return { error: 'Failed to save analysis as project' }
   }
 }
+
+/**
+ * Saves multiple GitHub repository analyses as projects in a single operation
+ */
+export async function saveMultipleGitHubAnalysesAsProjects(
+  projects: {
+    owner: string;
+    repo: string;
+    aiSummary: string;
+    techStack: string[];
+    analysisData: any;
+  }[]
+): Promise<{ success: boolean; projects?: any[]; error?: string }> {
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) {
+      return { success: false, error: "Authentication required" }
+    }
+
+    const savedProjects = []
+
+    for (const project of projects) {
+      const { owner, repo, aiSummary, techStack, analysisData } = project
+      
+      // Use the existing function to save each project
+      const result = await saveGitHubAnalysisAsProject(
+        owner, 
+        repo, 
+        aiSummary, 
+        techStack, 
+        analysisData
+      )
+      
+      if (result.success) {
+        savedProjects.push(result.project)
+      }
+    }
+
+    return { 
+      success: true, 
+      projects: savedProjects 
+    }
+  } catch (error) {
+    console.error("Error saving multiple GitHub analyses:", error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Unknown error occurred" 
+    }
+  }
+}

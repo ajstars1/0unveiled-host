@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { saveProfileAnalysisAsProject } from "@/actions/profileAnalysisResult";
+import { saveMultipleGitHubAnalysesAsProjects } from "@/actions/analysisResult";
+import { extractTechStack, extractAISummary } from "@/lib/analysisHelpers";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -163,9 +166,12 @@ interface ProfileAnalysisResult {
 const ProfileAnalysisResults = () => {
   const params = useParams<{ username: string }>();
   const router = useRouter();
+  const { toast } = useToast();
   const [analysisData, setAnalysisData] = useState<ProfileAnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+  const [isBatchSaving, setIsBatchSaving] = useState(false);
+  const [batchSaveCount, setBatchSaveCount] = useState(0);
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedDescriptions, setExpandedDescriptions] = useState<{[key: string]: boolean}>({});
   
@@ -174,6 +180,70 @@ const ProfileAnalysisResults = () => {
       ...prev,
       [id]: !prev[id]
     }));
+  };
+
+  // Function to process and save all projects from the analysis
+  const processAndSaveAllProjects = async (analysisResults: ProfileAnalysisResult) => {
+    if (!analysisResults.repositoryAnalysis.detailedAnalyses ||
+        analysisResults.repositoryAnalysis.detailedAnalyses.length === 0) {
+      return;
+    }
+
+    setIsBatchSaving(true);
+    setBatchSaveCount(0);
+
+    try {
+      const projectsToSave = analysisResults.repositoryAnalysis.detailedAnalyses.map((repoAnalysis) => {
+        // Extract owner and repo from the repository info
+        const owner = repoAnalysis.repository.full_name?.split('/')[0] ||
+                     repoAnalysis.analysis?.repository?.owner ||
+                     repoAnalysis.analysis?.repository_info?.owner;
+
+        const repo = repoAnalysis.repository.name ||
+                    repoAnalysis.repository.full_name?.split('/')[1] ||
+                    repoAnalysis.analysis?.repository?.name ||
+                    repoAnalysis.analysis?.repository_info?.name;
+
+        if (!owner || !repo) return null;
+
+        // Extract tech stack and AI summary
+        const techStack = extractTechStack(repoAnalysis.analysis);
+        const aiSummary = extractAISummary(repoAnalysis.analysis);
+
+        return {
+          owner,
+          repo,
+          aiSummary,
+          techStack,
+          analysisData: repoAnalysis.analysis
+        };
+      }).filter((project): project is NonNullable<typeof project> => project !== null); // Filter out null values and assert type
+
+      if (projectsToSave.length > 0) {
+        console.log(`Saving ${projectsToSave.length} projects to database...`);
+        const saveResult = await saveMultipleGitHubAnalysesAsProjects(projectsToSave);
+
+        if (saveResult.success) {
+          setBatchSaveCount(saveResult.projects?.length || 0);
+          console.log(`Successfully saved ${saveResult.projects?.length || 0} projects`);
+          toast({
+            title: "Projects Saved Successfully",
+            description: `Saved ${saveResult.projects?.length || 0} projects with their tech stacks and AI descriptions.`,
+          });
+        } else {
+          console.error("Failed to save projects:", saveResult.error);
+          toast({
+            title: "Failed to Save Projects",
+            description: saveResult.error || "An error occurred while saving projects.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error in batch saving projects:", error);
+    } finally {
+      setIsBatchSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -205,7 +275,7 @@ const ProfileAnalysisResults = () => {
   useEffect(() => {
     const saveAnalysisToDb = async () => {
       if (analysisData && !isSaved) {
-        // Save to database
+        // Save profile analysis first
         const result = await saveProfileAnalysisAsProject(
           params.username,
           analysisData
@@ -214,6 +284,9 @@ const ProfileAnalysisResults = () => {
         if (result.success) {
           console.log("Profile analysis saved to database", result);
           setIsSaved(true);
+
+          // Now save all individual projects
+          await processAndSaveAllProjects(analysisData);
         } else {
           console.error(
             "Failed to save profile analysis to database:",
@@ -668,6 +741,17 @@ const ProfileAnalysisResults = () => {
                 {analysisData.overallScore}/100
               </div>
               <div className="text-xs md:text-sm text-muted-foreground">Overall Score</div>
+              {isBatchSaving && (
+                <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+                  Saving projects...
+                </div>
+              )}
+              {!isBatchSaving && batchSaveCount > 0 && (
+                <div className="text-xs text-green-600 mt-1">
+                  ✓ {batchSaveCount} projects saved
+                </div>
+              )}
             </div>
           </div>
         </div>

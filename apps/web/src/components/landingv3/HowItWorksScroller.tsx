@@ -43,7 +43,7 @@ const StepCard = ({ step, isActive, onActivate }: StepCardProps) => {
 
   const controls = useAnimation();
   const cardRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(cardRef, { threshold: 0.3 });
+  const isInView = useInView(cardRef, { amount: 0.3 });
 
   useEffect(() => {
     if (isActive && isInView) {

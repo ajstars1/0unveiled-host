@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { useGoogleAuth } from "@/hooks/authentication"
-import { Google } from "@/icons"
 import { Loader } from "../loader"
 import { FaGoogle, FaGooglePlus } from "react-icons/fa6"
 
