@@ -254,11 +254,45 @@ async function ProfileDetail({
               <CardContent className="">
                 {topSkills.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {topSkills.map((userSkill) => (
-                      <Badge className={''} key={userSkill.skillId} variant="secondary">
-                        {userSkill.skill.name}
-                      </Badge>
-                    ))}
+                    {topSkills.map((userSkill) => {
+                      // Check if this skill appears in aiVerifiedSkills
+                      const isVerified = aiVerifiedSkills?.languages?.some(
+                        (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
+                      );
+
+                      return (
+                        <div key={userSkill.skillId} className="relative inline-flex group">
+                          <Badge
+                            className={`${isVerified ? "pr-7" : ""}`}
+                            variant={isVerified ? "default" : "secondary"}
+                          >
+                            {userSkill.skill.name}
+                            {isVerified && (
+                              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="text-background"
+                                >
+                                  <path d="M20 6L9 17l-5-5" />
+                                </svg>
+                              </span>
+                            )}
+                          </Badge>
+                          {isVerified && (
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity pointer-events-none whitespace-nowrap">
+                              Verified through projects
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No skills listed.</p>

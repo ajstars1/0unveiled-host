@@ -338,7 +338,7 @@ export function ProfileActions({
 
       {(connectionStatus === 'PENDING_SENT' || connectionStatus === 'CONNECTED') && <DropdownMenuSeparator className="my-1" />}
 
-      <DropdownMenuItem inset="start" onClick={handleReportUser} className="text-destructive focus:text-destructive cursor-pointer">
+      <DropdownMenuItem onClick={handleReportUser} className="text-destructive focus:text-destructive cursor-pointer">
         <AlertTriangle className="mr-2 h-4 w-4" /> Report User (TODO)
       </DropdownMenuItem>
     </DropdownMenuContent>
