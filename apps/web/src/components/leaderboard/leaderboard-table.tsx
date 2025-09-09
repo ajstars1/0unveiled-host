@@ -120,9 +120,8 @@ export function LeaderboardTable({ data }: { data: LeaderboardEntry[] }) {
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
                   <span className={`font-bold text-lg ${getScoreColor(entry.score)}`}>
-                    {(entry.score / 100).toFixed(1)}
+                    {(entry.score)}
                   </span>
-                  <span className="text-sm text-muted-foreground">/100</span>
                 </div>
               </TableCell>
             </TableRow>
