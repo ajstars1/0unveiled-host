@@ -6,7 +6,6 @@ import {
   projects, 
   projectSkills, 
   skills,
-  aiVerifiedSkills,
 } from '@0unveiled/database'
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
@@ -199,7 +198,17 @@ export const saveProfileAnalysisAsProject = async (
         
         if (techStack) {
           // Extract skills from different categories
-          const categories = ['languages', 'frameworks', 'libraries', 'databases', 'tools']
+          const categories = [
+            'languages',
+            'frameworks',
+            'libraries',
+            'databases',
+            'tools',
+            'testing_frameworks',
+            'build_tools',
+            'deployment_tools',
+            'platforms',
+          ]
           
           for (const category of categories) {
             const items = techStack[category]
@@ -216,35 +225,26 @@ export const saveProfileAnalysisAsProject = async (
       }
     }
     
-    // Save the AI-verified skills
+    // Save the project skills (do not write to AIVerifiedSkill here; API route handles it with richer data)
     if (techSkills.length > 0) {
       for (const skillName of techSkills) {
         // Find or create the skill
         let skill = await db.query.skills.findFirst({
           where: eq(skills.name, skillName)
         })
-        
+
         if (!skill) {
           const [newSkill] = await db.insert(skills).values({
             name: skillName
           }).returning()
-          
+
           skill = newSkill
         }
-        
+
         // Connect skill to project
         await db.insert(projectSkills).values({
           projectId,
           skillId: skill.id,
-        }).onConflictDoNothing()
-        
-        // Add as AI-verified skill
-        await db.insert(aiVerifiedSkills).values({
-          userId: currentUser.id,
-          skillId: skill.id,
-          source: 'PROFILE_ANALYSIS',
-          confidence: 85, // High confidence for profile analysis
-          verifiedAt: new Date(),
         }).onConflictDoNothing()
       }
     }

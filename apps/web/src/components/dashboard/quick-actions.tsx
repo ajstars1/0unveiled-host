@@ -18,28 +18,28 @@ const actions = [
     description: "Start a new collaboration",
     icon: PlusCircle,
     href: "/app/projects/new",
-    variant: "outline-solid" as const,
+  variant: "outline" as const,
   },
   {
     title: "Find Collaborators",
     description: "Connect with other users",
     icon: UserPlus,
     href: "/app/profiles",
-    variant: "outline-solid" as const,
+  variant: "outline" as const,
   },
   {
     title: "Export Resume",
     description: "Download your profile as PDF",
     icon: Download,
     href: "#",
-    variant: "outline-solid" as const,
+  variant: "outline" as const,
   },
   {
     title: "Share Profile",
     description: "Get a shareable link",
     icon: Share2,
     href: "#",
-    variant: "outline-solid" as const,
+  variant: "outline" as const,
   },
 ]
 

@@ -82,9 +82,7 @@ async function saveAIVerifiedSkills(
   detailedAnalyses: Array<{repository: RepositoryData; analysis: any}>
 ) {
   try {
-    // Clear existing AI-verified skills for this user
-    await db.delete(aiVerifiedSkills).where(eq(aiVerifiedSkills.userId, userId));
-    
+  // Build the list of skills to insert first (avoid destructive delete until we know we have new data)
     const skillsToInsert: Array<{
       userId: string;
       skillName: string;
@@ -96,7 +94,7 @@ async function saveAIVerifiedSkills(
       isVisible: boolean;
     }> = [];
     
-    // Process all categories of tech stack
+  // Process all categories of tech stack
     Object.entries(comprehensiveTechStack).forEach(([categoryKey, skills]) => {
       const skillsArray = skills as any[];
       skillsArray.forEach((skill: any) => {
@@ -121,6 +119,9 @@ async function saveAIVerifiedSkills(
     
     // Insert new AI-verified skills in batches
     if (skillsToInsert.length > 0) {
+      // Clear existing AI-verified skills for this user only when we have new data
+      await db.delete(aiVerifiedSkills).where(eq(aiVerifiedSkills.userId, userId));
+
       // Batch insert to handle large numbers of skills
       const batchSize = 50;
       for (let i = 0; i < skillsToInsert.length; i += batchSize) {
@@ -131,7 +132,9 @@ async function saveAIVerifiedSkills(
       console.log(`Saved ${skillsToInsert.length} AI-verified skills for user ${userId}`);
       return { success: true, count: skillsToInsert.length };
     }
-    
+
+    // No new skills detected; don't delete existing entries
+    console.log(`No AI-verified skills detected for user ${userId}; skipping delete/insert.`);
     return { success: true, count: 0 };
   } catch (error) {
     console.error('Error saving AI-verified skills:', error);
@@ -586,6 +589,20 @@ function getComprehensiveTechStack(detailedAnalyses: Array<{repository: Reposito
 } {
   const techStackMap: Map<string, {type: string, count: number, confidence: number, linesOfCode: number}> = new Map();
   
+  const upsert = (rawName: any, type: string, confidenceBoost: number = 80, lines: number = 0) => {
+    const name = String(typeof rawName === 'string' ? rawName : rawName?.name ?? rawName?.label ?? rawName?.id ?? '')
+      .trim()
+      .toLowerCase();
+    if (!name) return;
+    const existing = techStackMap.get(name) || { type, count: 0, confidence: 0, linesOfCode: 0 };
+    techStackMap.set(name, {
+      type: existing.type || type,
+      count: existing.count + 1,
+      confidence: Math.max(existing.confidence, confidenceBoost),
+      linesOfCode: existing.linesOfCode + (lines || 0),
+    });
+  };
+  
   detailedAnalyses.forEach(({repository, analysis}) => {
     const analysisData = analysis?.data || analysis;
     
@@ -626,6 +643,48 @@ function getComprehensiveTechStack(detailedAnalyses: Array<{repository: Reposito
         }
       });
     }
+
+    // NEW: Extract from technology_stack if available (backend analyzer output)
+    const tech = analysisData?.technology_stack || analysisData?.tech_stack || {};
+    if (tech) {
+      // Languages
+      if (Array.isArray(tech.languages)) tech.languages.forEach((t: any) => upsert(t, 'LANGUAGE', 88));
+      // Frameworks
+      if (Array.isArray(tech.frameworks)) tech.frameworks.forEach((t: any) => upsert(t, 'FRAMEWORK', 85));
+      // Libraries
+      if (Array.isArray(tech.libraries)) tech.libraries.forEach((t: any) => upsert(t, 'LIBRARY', 82));
+      // Databases
+      if (Array.isArray(tech.databases)) tech.databases.forEach((t: any) => upsert(t, 'DATABASE', 82));
+      // Tools
+      if (Array.isArray(tech.tools)) tech.tools.forEach((t: any) => upsert(t, 'TOOL', 80));
+      // Testing frameworks -> Tools (support aliases: testing_frameworks | testing)
+      const testingArr = (tech as any).testing_frameworks || (tech as any).testing;
+      if (Array.isArray(testingArr)) testingArr.forEach((t: any) => upsert(t, 'TOOL', 78));
+      // Build tools -> Tools
+      if (Array.isArray((tech as any).build_tools)) (tech as any).build_tools.forEach((t: any) => upsert(t, 'TOOL', 78));
+      // Deployment tools -> Cloud/Tool heuristic
+      if (Array.isArray((tech as any).deployment_tools)) (tech as any).deployment_tools.forEach((t: any) => {
+        const name = String(typeof t === 'string' ? t : t?.name ?? '').toLowerCase();
+        const isCloud = /aws|azure|gcp|google\s*cloud|vercel|netlify|heroku|digitalocean|firebase/.test(name);
+        upsert(t, isCloud ? 'CLOUD' : 'TOOL', isCloud ? 80 : 75);
+      });
+      // Platforms -> Cloud/Tool heuristic
+      if (Array.isArray((tech as any).platforms)) (tech as any).platforms.forEach((t: any) => {
+        const name = String(typeof t === 'string' ? t : t?.name ?? '').toLowerCase();
+        const isCloud = /aws|azure|gcp|google\s*cloud|vercel|netlify|heroku|digitalocean|firebase/.test(name);
+        upsert(t, isCloud ? 'CLOUD' : 'TOOL', isCloud ? 80 : 75);
+      });
+    }
+
+    // Fallback: Use repository.languages breakdown if provided by analyzer
+    try {
+      const repoLangs = analysisData?.repository?.languages as Record<string, number> | undefined;
+      if (repoLangs && Object.keys(repoLangs).length > 0) {
+        Object.entries(repoLangs).forEach(([lang, lines]) => {
+          upsert(lang, 'LANGUAGE', 85, Number(lines) || 0);
+        });
+      }
+    } catch {}
     
     // Extract tools from patterns in file names and content
     if (analysisData?.files) {
@@ -707,7 +766,7 @@ function getComprehensiveTechStack(detailedAnalyses: Array<{repository: Reposito
   
   techStackMap.forEach((data, name) => {
     const skill = {
-      name: name.charAt(0).toUpperCase() + name.slice(1),
+  name: name.charAt(0).toUpperCase() + name.slice(1),
       type: data.type as any,
       count: data.count,
       confidence: Math.round(data.confidence),
