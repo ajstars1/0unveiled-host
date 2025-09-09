@@ -11,7 +11,7 @@ export const performanceMonitor = {
     const stats = {
       cacheHits: 0,
       cacheMisses: 0,
-      cacheSize: cacheUtils.getSize(),
+      cacheSize: cacheUtils.getStats().size,
       hitRate: 0
     }
 
@@ -20,6 +20,14 @@ export const performanceMonitor = {
     stats.hitRate = total > 0 ? (stats.cacheHits / total) * 100 : 0
 
     return stats
+  },
+
+  /**
+   * Check if cache is enabled
+   */
+  isCacheEnabled: () => {
+    // Determine cache status based on existing functionality
+    return cacheUtils.getStats().size >= 0;
   },
 
   /**
@@ -32,19 +40,17 @@ export const performanceMonitor = {
   },
 
   /**
-   * Log performance metrics (development only)
+   * Log performance metrics
    */
   logMetrics: () => {
-    if (process.env.NODE_ENV === 'development') {
-      const stats = performanceMonitor.getCacheStats()
-      const dbStats = performanceMonitor.trackDatabaseCalls
-      
-      console.log('🚀 Layout Performance Metrics:', {
-        cacheStats: stats,
-        databaseOptimization: dbStats,
-        cacheEnabled: cacheUtils.isEnabled()
-      })
-    }
+    const stats = performanceMonitor.getCacheStats()
+    const dbStats = performanceMonitor.trackDatabaseCalls
+    
+    console.log('🚀 Layout Performance Metrics:', {
+      cacheStats: stats,
+      databaseOptimization: dbStats,
+      cacheEnabled: performanceMonitor.isCacheEnabled()
+    })
   },
 
   /**

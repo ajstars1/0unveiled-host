@@ -13,6 +13,16 @@ const ProjectVisibilityValues = ["PUBLIC", "PRIVATE"] as const;
 const MemberRoleValues = ["OWNER", "ADMIN", "LEADER", "MEMBER"] as const;
 const NotificationTypeValues = ["CONNECTION_REQUEST", "PROJECT_INVITE", "TASK_ASSIGNMENT", "MENTION", "GENERAL"] as const;
 
+// Define the Connection interface
+interface Connection {
+  id: string;
+  userOneId: string;
+  userTwoId: string;
+  status: typeof ConnectionStatusValues[number];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Define the structure for the dashboard data
 export interface DashboardData {
   userProfile: {
@@ -86,7 +96,92 @@ export const getDashboardData = async (): Promise<DashboardData | null> => {
     }
     const userId = currentUser.id;
 
+    // Define interface for connection requests
+    interface ConnectionRequestBasic {
+      id: string;
+      requesterId: string;
+      recipientId: string;
+      status: typeof ConnectionStatusValues[number];
+    }
+
     // Fetch all data in parallel using Promise.all
+    // Define interfaces for the query results
+    interface UserProfileData {
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      username: string | null;
+      headline: string | null;
+      profilePicture: string | null;
+      bio: string | null;
+      college: string | null;
+      location: string | null;
+      skills: Array<{ skillId: string }>;
+      education: any[];
+      experience: any[];
+    }
+
+    interface ProjectMemberData {
+      project: {
+        id: string;
+        title: string;
+        status: typeof ProjectStatusValues[number];
+        visibility: typeof ProjectVisibilityValues[number];
+        ownerId: string;
+        owner: {
+          username: string | null;
+        };
+        applications: Array<{ id: string }>;
+      };
+      role: typeof MemberRoleValues[number];
+      createdAt: Date;
+    }
+
+    interface ApplicationSentData {
+      id: string;
+      status: typeof ApplicationStatusValues[number];
+      submittedAt: Date;
+      project: {
+        id: string;
+        title: string;
+      };
+      projectRole: {
+        id: string;
+        title: string;
+      } | null;
+    }
+
+    interface ConnectionRequestData {
+      id: string;
+      createdAt: Date;
+      requester: {
+        id: string;
+        username: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        profilePicture: string | null;
+        headline: string | null;
+      };
+    }
+
+    interface UserSkillData {
+      level?: number | null;
+      skill: {
+        id: string;
+        name: string;
+        category: string | null;
+      };
+    }
+
+    interface NotificationData {
+      id: string;
+      type: typeof NotificationTypeValues[number];
+      content: string;
+      linkUrl: string | null;
+      isRead: boolean;
+      createdAt: Date;
+    }
+
     const [
       userProfileData,
       connectionCount,
@@ -96,6 +191,15 @@ export const getDashboardData = async (): Promise<DashboardData | null> => {
       connectionRequestsReceivedData,
       skillsData,
       notificationsData
+    ]: [
+      UserProfileData | undefined,
+      number,
+      number,
+      ProjectMemberData[],
+      ApplicationSentData[],
+      ConnectionRequestData[],
+      UserSkillData[],
+      NotificationData[]
     ] = await Promise.all([
       // 1. User Profile with Completion
       db.query.users.findFirst({
@@ -118,55 +222,54 @@ export const getDashboardData = async (): Promise<DashboardData | null> => {
             }
           },
           education: {
-            columns: {
-              id: true
-            }
+            columns: {}
           },
           experience: {
-            columns: {
-              id: true
-            }
+            columns: {}
           }
         }
       }),
       // 2. Connection Count
       db.query.connections.findMany({
-        where: or(eq(connections.userOneId, userId), eq(connections.userTwoId, userId))
-      }).then(connections => connections.length),
+        where: or(
+          eq(connections.userOneId, userId),
+          eq(connections.userTwoId, userId)
+        )
+      }).then((connections: Connection[]): number => connections.length),
       // 3. Pending Incoming Connection Requests Count
       db.query.connectionRequests.findMany({
         where: and(eq(connectionRequests.recipientId, userId), eq(connectionRequests.status, "PENDING"))
-      }).then(requests => requests.length),
+      }).then((requests: ConnectionRequestBasic[]): number => requests.length),
       // 4. Projects (Owned & Member)
       db.query.projectMembers.findMany({
         where: eq(projectMembers.userId, userId),
         with: {
           project: {
+        columns: {
+          id: true,
+          title: true,
+          status: true,
+          visibility: true,
+          ownerId: true
+        },
+        with: {
+          owner: {
             columns: {
-              id: true,
-              title: true,
-              status: true,
-              visibility: true,
-              ownerId: true
-            },
-            with: {
-              owner: {
-                columns: {
-                  username: true
-                }
-              },
-              applications: {
-                where: eq(projectApplications.status, "PENDING"),
-                columns: {
-                  id: true
-                }
-              }
+          username: true
+            }
+          },
+          applications: {
+            where: eq(projectApplications.status, "PENDING"),
+            columns: {
+          id: true
             }
           }
+        }
+          }
         },
-        orderBy: [desc(projectMembers.createdAt)],
+        orderBy: [desc(projects.createdAt)],
         limit: 5
-      }),
+      }) as Promise<ProjectMemberData[]>,
       // 5. Applications Sent
       db.query.projectApplications.findMany({
         where: eq(projectApplications.userId, userId),

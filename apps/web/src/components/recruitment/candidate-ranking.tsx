@@ -297,7 +297,7 @@ export function CandidateRanking({ jobPostingId }: CandidateRankingProps) {
 
       {/* Candidates List */}
       <div className="grid gap-4">
-        {candidates?.map((match) => (
+        {candidates?.map((match: CandidateMatch) => (
           <Card key={match.id} className="p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start gap-6">
               {/* Avatar */}
@@ -354,7 +354,7 @@ export function CandidateRanking({ jobPostingId }: CandidateRankingProps) {
 
                 {/* Skills */}
                 <div className="flex flex-wrap gap-1">
-                  {match.candidate.topSkills.map((skill) => (
+                  {match.candidate.topSkills.map((skill: string) => (
                     <Badge key={skill} variant="outline" className="text-xs">
                       {skill}
                     </Badge>
@@ -393,7 +393,7 @@ export function CandidateRanking({ jobPostingId }: CandidateRankingProps) {
                       </TabsContent>
                       <TabsContent value="strengths" className="mt-3">
                         <ul className="text-sm space-y-1">
-                          {match.matchReasoning.strengths.map((strength, idx) => (
+                          {match.matchReasoning.strengths.map((strength: string, idx: number) => (
                             <li key={idx} className="flex items-start gap-2">
                               <ThumbsUp className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
                               {strength}
@@ -404,7 +404,7 @@ export function CandidateRanking({ jobPostingId }: CandidateRankingProps) {
                       <TabsContent value="concerns" className="mt-3">
                         {match.matchReasoning.concerns.length > 0 ? (
                           <ul className="text-sm space-y-1">
-                            {match.matchReasoning.concerns.map((concern, idx) => (
+                            {match.matchReasoning.concerns.map((concern: string, idx: number) => (
                               <li key={idx} className="flex items-start gap-2">
                                 <Lightbulb className="w-3 h-3 text-yellow-600 mt-0.5 flex-shrink-0" />
                                 {concern}
@@ -424,7 +424,7 @@ export function CandidateRanking({ jobPostingId }: CandidateRankingProps) {
                   {/* Rating */}
                   <div className="flex items-center gap-1">
                     <span className="text-sm text-muted-foreground mr-2">Your rating:</span>
-                    {[1, 2, 3, 4, 5].map((star) => (
+                    {[1, 2, 3, 4, 5].map((star: number) => (
                       <Star
                         key={star}
                         className={`w-4 h-4 cursor-pointer transition-colors ${

@@ -167,7 +167,7 @@ export default function PersonalInfoForm({ user }: PersonalInfoFormProps) {
   // Restore effect to update currentSkills (Skill[]) state
    useEffect(() => {
      if (fetchedSkillsData) {
-      const mappedSkills = fetchedSkillsData.map(mapPrismaSkillToFormSkill).filter(skill => skill !== null) as Skill[];
+      const mappedSkills: Skill[] = fetchedSkillsData.map(mapPrismaSkillToFormSkill).filter((skill: Skill | null): skill is Skill => skill !== null);
       setCurrentSkills(mappedSkills);
       // Also update the form default if it hasn't been touched yet
       if (!form.formState.isDirty) {

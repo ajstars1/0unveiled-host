@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { saveProfileAnalysisAsProject } from "@/actions/profileAnalysisResult";
 import { saveMultipleGitHubAnalysesAsProjects } from "@/actions/analysisResult";
 import { extractTechStack, extractAISummary } from "@/lib/analysisHelpers";
@@ -59,6 +60,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import React from "react";
+import dynamic from "next/dynamic";
 import ReactFlow, {
   Node,
   Edge,
@@ -67,6 +69,32 @@ import ReactFlow, {
   Controls,
 } from "reactflow";
 import "reactflow/dist/style.css";
+
+const ReactFlowClient: any = dynamic(async () => {
+  const mod = await import("reactflow");
+  const RF = (props: any) => (
+    <mod.default {...props}>
+      <mod.Background variant={mod.BackgroundVariant.Dots} color="rgba(0, 0, 0, 0.15)" gap={16} size={1} />
+      <mod.Controls showInteractive={false} />
+    </mod.default>
+  );
+  return RF as any;
+}, {
+  ssr: false,
+  loading: () => (
+    <div className="h-[280px] w-full rounded-md border border-gray-200 bg-white">
+      <div className="h-full w-full animate-pulse bg-[linear-gradient(110deg,rgba(0,0,0,0.03),45%,rgba(0,0,0,0.06),55%,rgba(0,0,0,0.03))] bg-[length:200%_100%]" />
+    </div>
+  )
+});
+
+// Add a minimal type for leaderboard response
+type LeaderboardGeneral = {
+  success: true;
+  rank: number;
+  score: number;
+  leaderboardScore: { rank: number; score: number };
+} | { success?: false; error: string };
 
 interface ProfileAnalysisResult {
   profileSummary: {
@@ -174,6 +202,8 @@ const ProfileAnalysisResults = () => {
   const [batchSaveCount, setBatchSaveCount] = useState(0);
   const [activeTab, setActiveTab] = useState("overview");
   const [expandedDescriptions, setExpandedDescriptions] = useState<{[key: string]: boolean}>({});
+  const [leaderboard, setLeaderboard] = useState<{ rank: number | null; score: number | null }>({ rank: null, score: null });
+  const [leaderboardLoading, setLeaderboardLoading] = useState<boolean>(true);
   
   const toggleDescription = (id: string) => {
     setExpandedDescriptions(prev => ({
@@ -298,6 +328,40 @@ const ProfileAnalysisResults = () => {
 
     saveAnalysisToDb();
   }, [analysisData, isSaved, params.username]);
+  
+  // Fetch leaderboard GENERAL score/rank for this username.
+  // Important: place this before any early return to keep hook order stable across renders.
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchLeaderboard = async () => {
+      try {
+        setLeaderboardLoading(true);
+        const res = await fetch(
+          `/api/leaderboard/by-username?username=${encodeURIComponent(params.username)}`,
+          { signal: controller.signal }
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json: any = await res.json();
+        if (json?.success && json?.data?.success) {
+          const d = json.data;
+          setLeaderboard({ rank: d.rank ?? null, score: d.score ?? null });
+        } else if (json?.success && json?.data && !json.data.error) {
+          // handle shape where data is already flattened
+          setLeaderboard({ rank: json.data.rank ?? null, score: json.data.score ?? null });
+        } else {
+          setLeaderboard({ rank: null, score: null });
+        }
+      } catch (e: any) {
+        if (e?.name !== 'AbortError') {
+          console.error('Failed to load leaderboard data', e);
+        }
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+    if (params?.username) fetchLeaderboard();
+    return () => controller.abort();
+  }, [params.username]);
   // ---------- Aggregations and memos must be declared before any early returns to keep hook order stable ----------
   const COLORS = ["#000000", "#404040", "#808080", "#a0a0a0", "#c0c0c0"];
 
@@ -713,6 +777,10 @@ const ProfileAnalysisResults = () => {
   const roadmapNodes = createRoadmapNodes();
   const hasRoadmap = roadmapNodes.length > 0;
 
+  // helper to show score safely
+  const generalScore = leaderboard.score ?? analysisData?.overallScore ?? 0;
+  const generalRank = leaderboard.rank;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -737,10 +805,16 @@ const ProfileAnalysisResults = () => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xl md:text-2xl font-bold text-primary">
-                {analysisData.overallScore}/100
+              <div className="flex items-center justify-end">
+                {leaderboardLoading ? (
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-card-foreground shadow-sm">
+                    Rank {generalRank != null ? `#${generalRank}` : 'N/A'}
+                  </span>
+                )}
               </div>
-              <div className="text-xs md:text-sm text-muted-foreground">Overall Score</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">General Leaderboard</div>
               {isBatchSaving && (
                 <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                   <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
@@ -757,10 +831,10 @@ const ProfileAnalysisResults = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
+  <div className="container mx-auto px-4 py-8">
         {/* Main Navigation Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid grid-cols-4 mb-6 w-full md:w-auto">
+          <TabsList className="grid grid-cols-4 mb-6 w-full md:w-auto bg-muted/40">
             <TabsTrigger value="overview">
               <BarChart className="h-4 w-4 mr-2 hidden sm:inline" />
               Overview
@@ -782,7 +856,7 @@ const ProfileAnalysisResults = () => {
           {/* OVERVIEW TAB */}
           <TabsContent value="overview" className="space-y-6">
             {/* Profile Summary */}
-            <Card>
+            <Card className="border-muted/60">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4 flex-wrap md:flex-nowrap">
                   <Avatar className="h-16 w-16 flex-shrink-0">
@@ -838,10 +912,17 @@ const ProfileAnalysisResults = () => {
                   </div>
                   
                   <div className="flex flex-col items-center bg-muted/30 p-3 rounded-lg mt-2 md:mt-0">
-                    <div className={`w-16 h-16 rounded-full ${getScoreColor(analysisData.overallScore)} flex items-center justify-center text-white font-bold`}>
-                      {analysisData.overallScore}
+                    <div className={`w-16 h-16 rounded-full ${getScoreColor(generalScore)} flex items-center justify-center text-white font-bold`}>
+                      {generalScore}
                     </div>
-                    <span className="text-xs mt-1">Profile Score</span>
+                    <span className="text-xs mt-1 flex items-center gap-1">
+                      General Score
+                      {leaderboardLoading ? (
+                        <Skeleton className="h-3 w-10 rounded" />
+                      ) : (
+                        <>{generalRank != null ? `· #${generalRank}` : '· N/A'}</>
+                      )}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -1244,25 +1325,15 @@ const ProfileAnalysisResults = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[280px] w-full bg-white rounded-md border border-gray-200 overflow-hidden">
-                    <ReactFlow
+                    <ReactFlowClient
                       nodes={roadmapNodes}
                       edges={createRoadmapEdges()}
                       fitView
                       fitViewOptions={{ padding: 0.2 }}
-                      defaultEdgeOptions={{
-                        style: { stroke: "#3b82f6", strokeWidth: 2 },
-                      }}
+                      defaultEdgeOptions={{ style: { stroke: "#3b82f6", strokeWidth: 2 } }}
                       attributionPosition="bottom-left"
                       style={{ backgroundColor: "white" }}
-                    >
-                      <Background
-                        variant={BackgroundVariant.Dots}
-                        color="rgba(0, 0, 0, 0.15)"
-                        gap={16}
-                        size={1}
-                      />
-                      <Controls showInteractive={false} />
-                    </ReactFlow>
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -1498,6 +1569,34 @@ const ProfileAnalysisResults = () => {
                       <p className="text-sm">{recommendation}</p>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* General Leaderboard */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart className="h-4 w-4" />
+                  General Leaderboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-3">
+                  <div className={`w-16 h-16 rounded-full ${getScoreColor(generalScore)} flex items-center justify-center text-white font-bold`}>
+                    {generalScore}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-xl font-bold text-primary">{generalScore}</div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2 mt-0.5">
+                      Rank
+                      {leaderboardLoading ? (
+                        <Skeleton className="h-3 w-12 rounded" />
+                      ) : (
+                        <span className="font-medium">{generalRank != null ? `#${generalRank}` : 'N/A'}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
