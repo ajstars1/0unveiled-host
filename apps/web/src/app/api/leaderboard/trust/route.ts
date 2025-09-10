@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
-import { getGeneralLeaderboard } from "@/data/leaderboard"
+import { db } from "@/lib/drizzle"
+import { leaderboardScores, users } from "@0unveiled/database"
+import { eq, and, desc, asc, isNotNull, ne } from "drizzle-orm"
 
 function toInitials(name: string) {
   return name
@@ -19,18 +21,39 @@ export async function GET(request: Request) {
     const limitParam = searchParams.get("limit")
     const limit = Math.min(Math.max(parseInt(limitParam || "12", 10) || 12, 1), 24)
 
-    const result = await getGeneralLeaderboard(limit)
-    if (!("success" in result) || !result.success) {
-      return NextResponse.json(
-        { success: false, error: (result as any)?.error || "Failed to fetch leaderboard" },
-        { status: 500 }
+    // Directly query the database instead of using the helper function that's having issues
+    const scores = await db
+      .select({
+        id: leaderboardScores.id,
+        rank: leaderboardScores.rank,
+        score: leaderboardScores.score,
+        techStack: leaderboardScores.techStack,
+        domain: leaderboardScores.domain,
+        user: {
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profilePicture: users.profilePicture,
+          headline: users.headline,
+        },
+      })
+      .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+      .where(
+        and(
+          eq(leaderboardScores.leaderboardType, "GENERAL"),
+          isNotNull(users.username),
+          ne(users.username, ""),
+          eq(users.onboarded, true)
+        )
       )
-    }
+      .orderBy(asc(leaderboardScores.rank), desc(leaderboardScores.score))
+      .limit(limit);
 
-    const scores = result.scores || []
-    const maxScore = scores.reduce((m, s) => Math.max(m, s.score ?? 0), 0) || 1
+    const maxScore = scores.reduce((m: number, s: any) => Math.max(m, s.score ?? 0), 0) || 1
 
-    const items = scores.map((s, idx) => {
+    const items = scores.map((s: any, idx: number) => {
       const first = s.user?.firstName?.trim() || ""
       const last = s.user?.lastName?.trim() || ""
       const fullName = (first || last)
@@ -40,7 +63,7 @@ export async function GET(request: Request) {
       const avatar = s.user?.profilePicture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(toInitials(fullName) || "U")}`
       const techs = (s.techStack || "")
         .split(",")
-        .map((t) => t.trim())
+        .map((t: string) => t.trim())
         .filter(Boolean)
 
       const rating = clamp(Math.round(((s.score || 0) / maxScore) * 5), 3, 5)

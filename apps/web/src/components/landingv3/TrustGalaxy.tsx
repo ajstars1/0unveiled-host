@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from 'react'
-import { motion, useAnimation, useReducedMotion } from 'motion/react'
+import { motion, useAnimation, useReducedMotion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -129,8 +129,14 @@ function TrustCard({ testimonial, index, totalCount, isHovered, onHover, onSkill
   const reducedMotion = useReducedMotion()
   const [isOpen, setIsOpen] = useState(false)
 
-  const orbitRadius = 120 + (index * 30)
-  const orbitDuration = 20 + (index * 5)
+  // Better distribution of cards around the orbit
+  const orbitRadius = Math.min(200 + (index * 20), 400) // Cap maximum radius
+  
+  // Slower rotation for better readability
+  const orbitDuration = 60 + (index * 8) // Slower orbits
+  
+  // Different starting positions to prevent overlap
+  const startingAngle = (360 / Math.max(totalCount, 1)) * index + (index % 2 === 0 ? 15 : -15)
 
   useEffect(() => {
     if (reducedMotion) return
@@ -162,7 +168,7 @@ function TrustCard({ testimonial, index, totalCount, isHovered, onHover, onSkill
             transformOrigin: `0 ${orbitRadius}px`
           }}
           animate={controls}
-          initial={{ rotate: (360 / Math.max(totalCount, 1)) * index }}
+          initial={{ rotate: startingAngle }} 
           onHoverStart={() => onHover(testimonial.id)}
           onHoverEnd={() => onHover(null)}
           whileHover={{ scale: 1.05, zIndex: 10 }}
@@ -170,34 +176,35 @@ function TrustCard({ testimonial, index, totalCount, isHovered, onHover, onSkill
         >
           <Card 
             className={`
-              w-64 bg-primary text-primary-foreground cursor-pointer transition-all duration-300 
+              w-48 bg-primary text-primary-foreground cursor-pointer transition-all duration-300 
               ${shouldHighlight ? 'ring-2 ring-accent shadow-lg' : ''}
               ${selectedSkill && !shouldHighlight ? 'opacity-40' : ''}
             `}
             style={{
-              transform: `translate(-50%, -${orbitRadius}px)`
+              transform: `translate(-50%, -${orbitRadius}px)`,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
             }}
           >
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 ring-2 ring-accent">
+            <CardContent className="p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8 ring-1 ring-accent">
                   <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                  <AvatarFallback className="bg-accent text-accent-foreground font-medium">
+                  <AvatarFallback className="bg-accent text-accent-foreground font-medium text-xs">
                     {testimonial.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm truncate">{testimonial.name}</h3>
+                  <h3 className="font-medium text-xs truncate">{testimonial.name}</h3>
                   <p className="text-xs text-primary-foreground/70 truncate">{testimonial.role}</p>
                 </div>
               </div>
               
               <div className="flex flex-wrap gap-1">
-                {testimonial.skills.slice(0, 3).map((skill) => (
+                {testimonial.skills.slice(0, 2).map((skill) => (
                   <Badge 
                     key={skill}
                     variant="secondary"
-                    className="text-xs px-2 py-0.5 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                    className="text-[10px] px-1.5 py-0 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
                     onClick={(e) => {
                       e.stopPropagation()
                       onSkillClick(skill)
@@ -206,22 +213,16 @@ function TrustCard({ testimonial, index, totalCount, isHovered, onHover, onSkill
                     {skill}
                   </Badge>
                 ))}
+                {testimonial.skills.length > 2 && (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0">
+                    +{testimonial.skills.length - 2}
+                  </Badge>
+                )}
               </div>
 
-              {testimonial.projects && testimonial.projects.length > 0 && (
-                <div className="grid grid-cols-2 gap-2">
-                  {testimonial.projects.slice(0, 2).map((project, idx) => (
-                    <div key={idx} className="bg-primary-foreground/10 rounded-md p-2">
-                      <div className="h-8 bg-primary-foreground/20 rounded mb-1"></div>
-                      <p className="text-xs text-primary-foreground/70 truncate">{project.title}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 mt-1">
                 {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="h-3 w-3 fill-accent text-accent" />
+                  <Star key={i} className="h-2.5 w-2.5 fill-accent text-accent" />
                 ))}
               </div>
             </CardContent>
@@ -365,25 +366,41 @@ export default function TrustGalaxy() {
         </div>
 
         {/* Trust Galaxy */}
-        <div className="relative mx-auto" style={{ height: '600px', maxWidth: '800px' }}>
+        <div className="relative mx-auto" style={{ height: '700px', maxWidth: '900px' }}>
           <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent rounded-full opacity-50"></div>
+          
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-10 w-10 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-            </div>
-          )}
-          {error && !loading && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-sm text-muted-foreground">{error}</div>
+              <div className="flex flex-col items-center">
+                <div className="h-10 w-10 rounded-full border-2 border-accent border-t-transparent animate-spin mb-3" />
+                <p className="text-sm text-muted-foreground">Loading talent galaxy...</p>
+              </div>
             </div>
           )}
           
-      {filtered.map((testimonial, index) => (
+          {error && !loading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-destructive/10 p-4 rounded-lg">
+                <p className="text-sm text-destructive">{error}</p>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="mt-2"
+                  onClick={() => window.location.reload()}
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* User cards */}
+          {!loading && !error && filtered.map((testimonial, index) => (
             <TrustCard
               key={testimonial.id}
               testimonial={testimonial}
               index={index}
-        totalCount={filtered.length}
+              totalCount={filtered.length}
               isHovered={hoveredCard === testimonial.id}
               onHover={setHoveredCard}
               onSkillClick={handleSkillClick}
@@ -393,7 +410,9 @@ export default function TrustGalaxy() {
 
           {/* Center indicator */}
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="w-4 h-4 bg-accent rounded-full opacity-60"></div>
+            <div className="w-6 h-6 bg-accent rounded-full opacity-70 shadow-lg shadow-accent/20 flex items-center justify-center">
+              <div className="w-3 h-3 bg-background rounded-full"></div>
+            </div>
           </div>
         </div>
 

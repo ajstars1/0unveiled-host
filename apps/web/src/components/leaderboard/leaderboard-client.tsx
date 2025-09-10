@@ -73,7 +73,7 @@ export function LeaderboardClient() {
   const hasPrevPage = currentPage > 1;
 
   return (
-    <div className="container mx-auto max-w-6xl px-4">
+    <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
       <div className="mb-8 text-center">
         <h1 className="text-4xl md:text-5xl font-semibold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Leaderboards
@@ -84,7 +84,7 @@ export function LeaderboardClient() {
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 shadow-sm">
         <CardContent className="p-4 md:p-6">
           <LeaderboardFilters
             leaderboardType={leaderboardType}
