@@ -1,6 +1,6 @@
 import { db } from "@0unveiled/database";
 import { users, showcasedItems, projects, leaderboardScores, NewLeaderboardScore, leaderboardTypeEnum } from "@0unveiled/database";
-import { eq, and, desc, isNotNull } from "drizzle-orm";
+import { eq, and, desc, isNotNull, ne } from "drizzle-orm";
 
 interface RepositoryMetadata {
   repository?: {
@@ -226,7 +226,11 @@ const calculateBasicQualityScore = (repo: any): number => {
 };
 
 export const updateLeaderboards = async () => {
-  const allUsers = await db.select().from(users);
+  // Only process users who are onboarded (i.e., have a non-empty username)
+  const allUsers = await db
+    .select()
+    .from(users)
+    .where(and(isNotNull(users.username), ne(users.username, "")));
 
   for (const user of allUsers) {
     const userShowcasedItems = await db
@@ -353,8 +357,22 @@ export const updateLeaderboards = async () => {
     }
   }
 
-  // Update ranks
-  const generalLeaderboard = await db.select().from(leaderboardScores).where(eq(leaderboardScores.leaderboardType, 'GENERAL')).orderBy(desc(leaderboardScores.score));
+  // Update ranks (only for users with username)
+  const generalLeaderboard = await db
+    .select({
+      id: leaderboardScores.id,
+      score: leaderboardScores.score,
+    })
+    .from(leaderboardScores)
+    .innerJoin(users, eq(leaderboardScores.userId, users.id))
+    .where(
+      and(
+        eq(leaderboardScores.leaderboardType, 'GENERAL'),
+        isNotNull(users.username),
+        ne(users.username, '')
+      )
+    )
+    .orderBy(desc(leaderboardScores.score));
 
   for (let i = 0; i < generalLeaderboard.length; i++) {
     await db.update(leaderboardScores).set({ rank: i + 1 }).where(eq(leaderboardScores.id, generalLeaderboard[i].id));
@@ -362,12 +380,19 @@ export const updateLeaderboards = async () => {
 
   // Update ranks for tech stack leaderboards
   const techStackLeaderboards = await db
-    .select()
+    .select({
+      id: leaderboardScores.id,
+      score: leaderboardScores.score,
+      techStack: leaderboardScores.techStack,
+    })
     .from(leaderboardScores)
+    .innerJoin(users, eq(leaderboardScores.userId, users.id))
     .where(
       and(
         eq(leaderboardScores.leaderboardType, 'TECH_STACK'),
-        isNotNull(leaderboardScores.techStack)
+        isNotNull(leaderboardScores.techStack),
+        isNotNull(users.username),
+        ne(users.username, '')
       )
     )
     .orderBy(desc(leaderboardScores.score));
@@ -390,12 +415,19 @@ export const updateLeaderboards = async () => {
 
   // Update ranks for domain leaderboards
   const domainLeaderboards = await db
-    .select()
+    .select({
+      id: leaderboardScores.id,
+      score: leaderboardScores.score,
+      domain: leaderboardScores.domain,
+    })
     .from(leaderboardScores)
+    .innerJoin(users, eq(leaderboardScores.userId, users.id))
     .where(
       and(
         eq(leaderboardScores.leaderboardType, 'DOMAIN'),
-        isNotNull(leaderboardScores.domain)
+        isNotNull(leaderboardScores.domain),
+        isNotNull(users.username),
+        ne(users.username, '')
       )
     )
     .orderBy(desc(leaderboardScores.score));

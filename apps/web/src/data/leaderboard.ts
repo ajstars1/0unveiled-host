@@ -148,8 +148,10 @@ export const getLeaderboardByType = async (
       { revalidate: 300, tags: [key] }
     )
 
-    const scores = await cachedFn()
-    return { success: true, scores }
+  const scores = await cachedFn()
+  // Defense-in-depth: only return entries for users with a username
+  const filtered = (scores || []).filter(s => !!s.user?.username && s.user.username.trim() !== '')
+  return { success: true, scores: filtered }
   } catch (error) {
     console.error('Error fetching leaderboard by type:', error)
     return { error: 'Failed to fetch leaderboard' }

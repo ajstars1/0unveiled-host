@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@0unveiled/database";
-import { leaderboardScores, users } from "@0unveiled/database/schema";
-import { eq, and, desc, isNotNull, like, or } from "drizzle-orm";
+import { leaderboardScores, users } from "@0unveiled/database";
+import { eq, and, desc, isNotNull, like, or, SQL, ne } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -19,7 +19,13 @@ router.get("/", async (req, res, next) => {
   try {
     const query = leaderboardQuerySchema.parse(req.query);
 
-    let conditions = [eq(leaderboardScores.leaderboardType, query.type)];
+    let conditions = [
+      eq(leaderboardScores.leaderboardType, query.type),
+      // Only include onboarded users (with a username)
+      isNotNull(users.username),
+      ne(users.username, ""),
+      eq(users.onboarded, true),
+    ];
 
     if (query.type === "TECH_STACK" && query.techStack) {
       conditions.push(eq(leaderboardScores.techStack, query.techStack));
@@ -30,13 +36,18 @@ router.get("/", async (req, res, next) => {
     // Add search functionality
     if (query.search) {
       const searchTerm = `%${query.search}%`;
-      conditions.push(
-        or(
-          like(users.firstName, searchTerm),
-          like(users.lastName, searchTerm),
-          like(users.username, searchTerm)
-        )
-      );
+      const searchConditions = [
+        like(users.firstName, searchTerm),
+        like(users.lastName, searchTerm),
+        like(users.username, searchTerm)
+      ].filter(Boolean) as SQL<unknown>[];
+      
+      if (searchConditions.length > 0) {
+        const orCondition = or(...searchConditions);
+        if (orCondition) {
+          conditions.push(orCondition);
+        }
+      }
     }
 
     const data = await db
@@ -52,15 +63,37 @@ router.get("/", async (req, res, next) => {
           profilePicture: users.profilePicture,
         },
       })
-      .from(leaderboardScores)
-      .where(and(...conditions))
-      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+  .from(leaderboardScores)
+  .innerJoin(users, eq(leaderboardScores.userId, users.id))
+  .where(and(...conditions))
       .orderBy(desc(leaderboardScores.score), leaderboardScores.rank)
       .limit(query.limit)
       .offset(query.offset);
 
     // Ensure unique users (remove potential duplicates)
-    const uniqueData = data.reduce((acc, current) => {
+    // Define interfaces for type safety
+    interface User {
+      id: string;
+      username: string;
+      firstName: string;
+      lastName: string;
+      profilePicture: string | null;
+    }
+
+    interface LeaderboardItem {
+      rank: number;
+      score: number;
+      userId: string;
+      user: User;
+    }
+
+    interface LeaderboardItemWithoutUserId {
+      rank: number;
+      score: number;
+      user: User;
+    }
+
+    const uniqueData = data.reduce((acc: LeaderboardItemWithoutUserId[], current: LeaderboardItem) => {
       const existingIndex = acc.findIndex(item => item.user.id === current.user.id);
       if (existingIndex === -1) {
         // Remove the userId field from the response
@@ -74,7 +107,7 @@ router.get("/", async (req, res, next) => {
         }
       }
       return acc;
-    }, [] as any[]);
+    }, [] as LeaderboardItemWithoutUserId[]);
 
     res.json({ success: true, data: uniqueData });
   } catch (error) {
@@ -89,10 +122,14 @@ router.get("/options", async (req, res, next) => {
     const techStacks = await db
       .selectDistinct({ techStack: leaderboardScores.techStack })
       .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
       .where(
         and(
           eq(leaderboardScores.leaderboardType, "TECH_STACK"),
-          isNotNull(leaderboardScores.techStack)
+          isNotNull(leaderboardScores.techStack),
+          isNotNull(users.username),
+          ne(users.username, ""),
+          eq(users.onboarded, true)
         )
       );
 
@@ -100,20 +137,40 @@ router.get("/options", async (req, res, next) => {
     const domains = await db
       .selectDistinct({ domain: leaderboardScores.domain })
       .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
       .where(
         and(
           eq(leaderboardScores.leaderboardType, "DOMAIN"),
-          isNotNull(leaderboardScores.domain)
+          isNotNull(leaderboardScores.domain),
+          isNotNull(users.username),
+          ne(users.username, ""),
+          eq(users.onboarded, true)
         )
       );
 
-    res.json({
+    // Define interfaces for type safety
+    interface OptionsData {
+      techStacks: string[];
+      domains: string[];
+    }
+
+    interface OptionsResponse {
+      success: boolean;
+      data: OptionsData;
+    }
+
+    const filteredTechStacks: string[] = techStacks.map((t: { techStack: string | null }) => t.techStack).filter(Boolean) as string[];
+    const filteredDomains: string[] = domains.map((d: { domain: string | null }) => d.domain).filter(Boolean) as string[];
+
+    const response: OptionsResponse = {
       success: true,
       data: {
-        techStacks: techStacks.map(t => t.techStack).filter(Boolean),
-        domains: domains.map(d => d.domain).filter(Boolean),
+      techStacks: filteredTechStacks,
+      domains: filteredDomains,
       },
-    });
+    };
+
+    res.json(response);
   } catch (error) {
     next(error);
   }
