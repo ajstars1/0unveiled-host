@@ -1,36 +1,40 @@
 import {
-  Github,
-  Linkedin,
-  Globe,
-  MapPin,
   Briefcase as BriefcaseIcon,
-  GraduationCap,
   Building,
   CalendarDays,
-  Twitter,
-  Dribbble,
-  Eye,
-  Pin,
-  List,
-  Edit,
-  Star,
   Code2,
+  Trophy,
+  ArrowRight,
+  GraduationCap,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { getUserByUsername, getCurrentUser } from "@/data/user"
 import { getAIVerifiedSkillsByUsername } from "@/data/user"
 import { notFound } from "next/navigation"
-import { formatShortDate } from "@/lib/utils"
+import { formatShortDate, cn } from "@/lib/utils"
 import { Metadata } from "next"
-import { PortfolioCard } from "@/components/profile/portfolio-card"
-import { ProfileActions } from "@/components/profile/profile-actions"
-import { ProfileAnalyzer } from "@/components/profile/profile-analyzer"
-// Removed GitHubAnalyzedProjects separate section; PortfolioCard now renders AI data inline
+import { getLeaderboardDataByUsername } from "@/data/leaderboard"
+
+// Import optimized components
+import ProfileHeader from "@/components/profile/profile-header"
+import { ProfileSkills } from "@/components/profile/profile-skills"
+import ProfilePortfolio from "@/components/profile/profile-portfolio"
+
+// Define props for ProfileHeader component
+interface ProfileHeaderProps {
+  user: any;
+  fullName: string;
+  isOwnProfile: boolean;
+  username: string;
+}
+
+// Remove dynamic imports for now as they're causing TypeScript errors
+// import dynamic from "next/dynamic"
+// const ProfileAnalyzer = dynamic(() => import("@/components/profile/profile-analyzer").then(mod => mod.ProfileAnalyzer), { ssr: true })
+// const ProfileActions = dynamic(() => import("@/components/profile/profile-actions").then(mod => mod.ProfileActions), { ssr: true })
 
 import { fetchRepoCode } from "@/actions/portfolioActions"
 
@@ -103,8 +107,13 @@ async function ProfileDetail({
 
   // Fetch currentUser first
   const currentUser = await getCurrentUser()
-  // Pass currentUser.id to getUserByUsername
-  const user = await getUserByUsername(username, currentUser?.id)
+  
+  // Parallelize data fetching for better performance
+  const [user, aiVerifiedSkills, leaderboardData] = await Promise.all([
+    getUserByUsername(username, currentUser?.id),
+    getAIVerifiedSkillsByUsername(username),
+    getLeaderboardDataByUsername(username)
+  ]);
 
   if (!user) {
     notFound()
@@ -113,130 +122,127 @@ async function ProfileDetail({
     notFound()
   }
 
-  // Fetch AI-verified skills
-  const aiVerifiedSkills = await getAIVerifiedSkillsByUsername(username);
+  // Process data once
+  const hasLeaderboardData = leaderboardData && 'success' in leaderboardData;
+  const userRank = hasLeaderboardData ? leaderboardData.rank : null;
+  const userScore = hasLeaderboardData ? leaderboardData.score : null;
 
   // isOwnProfile can also be determined by connectionStatus === 'SELF'
-  // const isOwnProfile = !!currentUser && currentUser.id === user.id
   const isOwnProfile = user.connectionStatus === 'SELF'
-
   const fullName = `${user.firstName} ${user.lastName || ''}`.trim()
 
+  // Prepare data for components
   const topSkills = user.skills?.slice(0, 10) || []
   const allSkills = user.skills || []
-
   const allPortfolioItems = user.showcasedItems || []
   const pinnedPortfolioItems = allPortfolioItems.filter(item => item.isPinned)
-
-  // Get all projects, including GitHub analyzed projects
   const allProjects = user.projectsOwned || [];
-  
-  // Filter active/planning projects for the "Currently Working On" section
-  const currentProjects = [
-    ...(user.projectsOwned?.filter(p => p.status === 'ACTIVE' || p.status === 'PLANNING')
-      .map(p => ({ ...p, role: 'Founder', type: 'ownedProject' })) || []),
-    ...(user.projectsMemberOf?.filter(m => m.project && (m.project.status === 'ACTIVE' || m.project.status === 'PLANNING'))
-      .map(m => ({ ...m.project, role: m.role || 'Member', type: 'memberProject' })) || [])
-  ].filter((p, index, self) => index === self.findIndex((t) => t.id === p.id))
-  
-  // Removed separate GitHub analyzed projects parsing; data will surface directly in cards
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-secondary/10 text-foreground">
-      <div className="h-40 md:h-48 w-full bg-linear-to-r from-primary/5 via-secondary/5 to-accent/5 relative">
-         <div className="absolute inset-0 bg-linear-to-t from-background/80 via-background/10 to-transparent" />
-      </div>
-
+    <div className="py-20 lg:py-24">
       <div className="container mx-auto px-4 relative z-10 -mt-16 md:-mt-20">
-        <Card className="mb-6 shadow-lg border border-border/10 overflow-visible">
-          <CardContent className="p-4 md:p-6 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 relative">
-            <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-md mt-[-48px] md:mt-[-60px] shrink-0">
-              <AvatarImage className={''} src={user.profilePicture ?? undefined} alt={`${fullName}'s profile picture`} />
-              <AvatarFallback className="text-4xl">
-                {user.firstName?.charAt(0) || ''}
-                {user.lastName?.charAt(0) || ''}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="flex-1 text-center md:text-left w-full md:w-auto">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{fullName}</h1>
-              {user.username && <p className="text-sm text-muted-foreground -mt-1">@{user.username}</p>}
-
-              {user.headline && (
-                <p className="text-lg text-primary mt-1 font-medium">{user.headline}</p>
-              )}
-              {!user.headline && user.experience?.[0]?.current && (
-                <p className="text-lg text-primary mt-1 font-medium">
-                  {user.experience[0].jobTitle} at {user.experience[0].companyName}
-                </p>
-              )}
-
-              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
-                {user.college && (
-                  <div className="flex items-center gap-1.5 font-medium">
-                    <GraduationCap className="h-4 w-4 shrink-0 text-primary/80"/>
-                    <span>{user.college}</span>
-                  </div>
-                )}
-                {user.location && (
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4 shrink-0"/>
-                    <span>{user.location}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-center md:justify-start flex-wrap gap-1 mt-3">
-                {user.githubUrl && <Link href={user.githubUrl} target="_blank" rel="noopener noreferrer" passHref><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8"><Github className="h-4 w-4" /></Button></Link>}
-                {user.linkedinUrl && <Link href={user.linkedinUrl} target="_blank" rel="noopener noreferrer" passHref><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8"><Linkedin className="h-4 w-4" /></Button></Link>}
-                {user.twitterUrl && <Link href={user.twitterUrl} target="_blank" rel="noopener noreferrer" passHref><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8"><Twitter className="h-4 w-4" /></Button></Link>}
-                {user.dribbbleUrl && <Link href={user.dribbbleUrl} target="_blank" rel="noopener noreferrer" passHref><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8"><Dribbble className="h-4 w-4" /></Button></Link>}
-                {user.websiteUrl && <Link href={user.websiteUrl} target="_blank" rel="noopener noreferrer" passHref><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8"><Globe className="h-4 w-4" /></Button></Link>}
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-4 md:mt-0 md:ml-auto shrink-0 items-center">
-              {isOwnProfile ? (
-                <>
-                <ProfileAnalyzer username={username} isOwnProfile={isOwnProfile} />
-               {/* <Link href="/benchmark/analyzing" passHref>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="text-primary hover:bg-primary/10"
-                  
-                >
-                  <Code2 className="h-4 w-4 mr-1.5" /> Analyze Portfolio
-                </Button>
-              </Link> */}
-                <Link href="/profile/edit" passHref>
-                   <Button size="sm" variant="default" className="">
-                     <Edit className="h-4 w-4 mr-1.5" /> Edit Profile
-                   </Button>
-                </Link>
-                </>
-              ) : user ? (
-                 <ProfileActions
-                   profileUserId={user.id}
-                   initialConnectionStatus={user.connectionStatus}
-                   initialConnectionRequestId={user.connectionRequestId}
-                   profileUsername={user.username || ''}
-                   isUserLoggedIn={!!currentUser}
-                 />
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Profile Header Component */}
+        <ProfileHeader 
+          user={user}
+          fullName={fullName}
+          isOwnProfile={isOwnProfile}
+          username={username}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
+            {/* Leaderboard Card */}
+            {(userRank !== null || userScore !== null) && (
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-primary" /> Leaderboard
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      {userRank !== null && (
+                        <div className="space-y-0.5">
+                          <div className="text-sm font-medium text-muted-foreground">
+                            Rank
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-2xl font-bold text-foreground mr-1">
+                              #{userRank}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className="bg-primary/10 text-primary"
+                            >
+                              Global
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
+
+                      {userScore !== null && (
+                        <div className="space-y-0.5 mt-3">
+                          <div className="text-sm font-medium text-muted-foreground">
+                            Score
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-2xl font-bold text-foreground">
+                              {userScore}
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-1">
+                              pts
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="relative flex items-center justify-center">
+                      <div
+                        className={cn(
+                          "h-24 w-24 rounded-full flex items-center justify-center",
+                          "bg-gradient-to-br from-primary/10 to-secondary/10 border border-border"
+                        )}
+                      >
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-primary">
+                            {userScore !== null ? userScore : "-"}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Points
+                          </div>
+                        </div>
+                      </div>
+                      {userRank !== null && userRank <= 10 && (
+                        <div className="absolute -top-4 -right-1 bg-primary text-primary-foreground rounded-full h-10 w-10 flex items-center justify-center text-xs font-semibold text-center">
+                          Top {userRank <= 3 ? userRank : 10}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <Link href="/leaderboard" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full">
+                        <span>View Full Leaderboard</span>
+                        <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {user.bio && (
               <Card className="">
                 <CardHeader className="">
                   <CardTitle className="text-lg font-semibold">About</CardTitle>
                 </CardHeader>
                 <CardContent className="">
-                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">{user.bio}</p>
+                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                    {user.bio}
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -244,240 +250,20 @@ async function ProfileDetail({
             <Card className="">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-semibold">Skills</CardTitle>
-                {allSkills.length > topSkills.length && (
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    <Eye className="h-3.5 w-3.5 mr-1"/> View All
-                  </Button>
-                )}
               </CardHeader>
               <CardContent className="space-y-4">
-                {topSkills.length > 0 ? (
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">User Skills</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {topSkills.map((userSkill) => {
-                        // Check if this skill appears in aiVerifiedSkills across all categories
-                        const isVerified = 
-                          (aiVerifiedSkills?.languages?.some(
-                            (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
-                          )) || 
-                          (aiVerifiedSkills?.frameworks?.some(
-                            (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
-                          )) || 
-                          // Handle potential missing technologies property
-                          (aiVerifiedSkills && 'technologies' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.technologies) && 
-                            (aiVerifiedSkills.technologies as any[]).some(
-                              (verifiedSkill) => verifiedSkill.skillName?.toLowerCase() === userSkill.skill.name.toLowerCase()
-                            ));
-
-                        return (
-                          <div key={userSkill.skillId} className="relative inline-flex group">
-                            <Badge
-                              className={`${isVerified ? "pr-7" : ""}`}
-                              variant={isVerified ? "default" : "secondary"}
-                            >
-                              {userSkill.skill.name}
-                              {isVerified && (
-                                <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                                  <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="3"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="text-background"
-                                  >
-                                    <path d="M20 6L9 17l-5-5" />
-                                  </svg>
-                                </span>
-                              )}
-                            </Badge>
-                            {isVerified && (
-                              <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity pointer-events-none whitespace-nowrap">
-                                Verified through projects
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No user-added skills listed.</p>
-                )}
-
-                {/* Show AI-detected skills from projects */}
-                {aiVerifiedSkills && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-2 flex items-center">
-                      <Code2 className="h-4 w-4 mr-1.5" />
-                      Tech Stack from Projects
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {/* Languages */}
-                      {aiVerifiedSkills && 'languages' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.languages) && (aiVerifiedSkills.languages as any[]).map((skill: any) => {
-                        const isAddedByUser = topSkills.some(
-                          userSkill => userSkill.skill.name.toLowerCase() === skill.skillName?.toLowerCase()
-                        );
-                        // Only show skills not already displayed in user skills
-                        if (!isAddedByUser && skill.skillName) {
-                          return (
-                            <Badge key={`lang-${skill.skillName}`} variant="outline" className="bg-primary/5 text-primary">
-                              {skill.skillName}
-                              {skill.confidenceScore && skill.confidenceScore > 0.7 && (
-                                <span className="ml-1 text-xs opacity-70">(High)</span>
-                              )}
-                              {skill.confidenceScore && skill.confidenceScore > 0.4 && skill.confidenceScore <= 0.7 && (
-                                <span className="ml-1 text-xs opacity-70">(Medium)</span>
-                              )}
-                            </Badge>
-                          );
-                        }
-                        return null;
-                      })}
-                      
-                      {/* Frameworks */}
-                      {aiVerifiedSkills && 'frameworks' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.frameworks) && (aiVerifiedSkills.frameworks as any[]).map((skill: any) => {
-                        const isAddedByUser = topSkills.some(
-                          userSkill => userSkill.skill.name.toLowerCase() === skill.skillName?.toLowerCase()
-                        );
-                        // Only show skills not already displayed in user skills
-                        if (!isAddedByUser && skill.skillName) {
-                          return (
-                            <Badge key={`fw-${skill.skillName}`} variant="outline" className="bg-secondary/5 text-secondary">
-                              {skill.skillName}
-                              {skill.confidenceScore && skill.confidenceScore > 0.7 && (
-                                <span className="ml-1 text-xs opacity-70">(High)</span>
-                              )}
-                              {skill.confidenceScore && skill.confidenceScore > 0.4 && skill.confidenceScore <= 0.7 && (
-                                <span className="ml-1 text-xs opacity-70">(Medium)</span>
-                              )}
-                            </Badge>
-                          );
-                        }
-                        return null;
-                      })}
-                      
-                      {/* Technologies */}
-                      {aiVerifiedSkills && 'technologies' in aiVerifiedSkills && Array.isArray(aiVerifiedSkills.technologies) && (aiVerifiedSkills.technologies as any[]).map((skill: any) => {
-                        const isAddedByUser = topSkills.some(
-                          userSkill => userSkill.skill.name.toLowerCase() === skill.skillName?.toLowerCase()
-                        );
-                        // Only show skills not already displayed in user skills
-                        if (!isAddedByUser && skill.skillName) {
-                          return (
-                            <Badge key={`tech-${skill.skillName}`} variant="outline" className="bg-accent/5 text-accent">
-                              {skill.skillName}
-                              {skill.confidenceScore && skill.confidenceScore > 0.7 && (
-                                <span className="ml-1 text-xs opacity-70">(High)</span>
-                              )}
-                              {skill.confidenceScore && skill.confidenceScore > 0.4 && skill.confidenceScore <= 0.7 && (
-                                <span className="ml-1 text-xs opacity-70">(Medium)</span>
-                              )}
-                            </Badge>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-                  </div>
-                )}
+                {/* Use optimized skills component */}
+                <ProfileSkills 
+                  topSkills={topSkills as any}
+                  aiVerifiedSkills={aiVerifiedSkills as any}
+                />
               </CardContent>
             </Card>
-            
-            {currentProjects.length > 0 && (
-              <Card className={''}>
-                <CardHeader className={''}>
-                  <CardTitle className="text-lg font-semibold">Currently Working On</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {currentProjects.map((project) => (
-                    <Link key={project.id} href={`/project/${project.id}`} className="block p-3 rounded-md hover:bg-muted/50 transition-colors border border-border/50">
-                      <div className="flex justify-between items-center mb-1">
-                        <h4 className="font-medium text-sm truncate">{project.title}</h4>
-                        <Badge variant={project.status === 'ACTIVE' ? 'default' : 'secondary'} className="capitalize text-xs h-5 px-1.5">
-                          {project.status?.toLowerCase()}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Role: {project.role}</p>
-                    </Link>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
 
-          <div className="lg:col-span-2 space-y-6">
-            <Tabs defaultValue="pinned" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger className={''} value="pinned">
-                  <Pin className="h-4 w-4 mr-1.5"/> Pinned
-                </TabsTrigger>
-                <TabsTrigger className={''} value="all">
-                  <List className="h-4 w-4 mr-1.5"/> All Projects
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent className={''} value="pinned">
-                {pinnedPortfolioItems.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {pinnedPortfolioItems.map((item) => (
-                      <PortfolioCard
-                        key={item.id}
-                        item={{
-                          ...item,
-                          skills: item.skills || []
-                        }}
-                        isOwnProfile={isOwnProfile}
-                        isPinned={item.isPinned}
-                        username={username}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="">
-                    <CardContent className="p-6 text-center text-muted-foreground">
-                      <p className="text-sm">{isOwnProfile ? "Pin items from the 'All Projects' tab to feature them here." : "No pinned items yet."}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent className={''} value="all">
-                {allPortfolioItems.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {allPortfolioItems.map((item) => (
-                      <PortfolioCard
-                        key={item.id}
-                        item={{
-                          ...item,
-                          skills: item.skills || []
-                        }}
-                        isOwnProfile={isOwnProfile}
-                        isPinned={item.isPinned}
-                        username={username}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className={''}>
-                    <CardContent className="p-6 text-center text-muted-foreground">
-                      <p className="text-sm">No portfolio items or projects to display yet.</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-              
-              {/* Removed GitHub tab; AI data is displayed within each PortfolioCard */}
-            </Tabs>
-
-            <Card className={''}>
-              <CardHeader className={''}>
+            <Card className="">
+              <CardHeader>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <BriefcaseIcon className="h-5 w-5 text-primary"/> Experience
+                  <BriefcaseIcon className="h-5 w-5 text-primary" /> Experience
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -492,57 +278,93 @@ async function ProfileDetail({
                       </div>
                       <h4 className="font-medium text-sm">{exp.jobTitle}</h4>
                       <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                        <Building className="h-3.5 w-3.5"/>{exp.companyName} {exp.location && `· ${exp.location}`}
+                        <Building className="h-3.5 w-3.5" />
+                        {exp.companyName} {exp.location && `· ${exp.location}`}
                       </p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <CalendarDays className="h-3.5 w-3.5"/>
-                        {formatShortDate(exp.startDate)} - {exp.current ? 'Present' : exp.endDate ? formatShortDate(exp.endDate) : 'N/A'}
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {formatShortDate(exp.startDate)} -{" "}
+                        {exp.current
+                          ? "Present"
+                          : exp.endDate
+                            ? formatShortDate(exp.endDate)
+                            : "N/A"}
                       </p>
-                      {exp.description && <p className="mt-2 text-sm text-muted-foreground">{exp.description}</p>}
+                      {exp.description && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {exp.description}
+                        </p>
+                      )}
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No work experience listed.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No work experience listed.
+                  </p>
                 )}
               </CardContent>
             </Card>
 
-            <Card className={''}>
-              <CardHeader className={''}>
+            <Card className={""}>
+              <CardHeader className={""}>
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                   <GraduationCap className="h-5 w-5 text-primary"/> Education
+                  <GraduationCap className="h-5 w-5 text-primary" /> Education
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
                 {user.education?.length > 0 ? (
                   user.education.map((edu, index) => (
-                     <div key={edu.id} className="relative pl-6 pb-4 last:pb-0">
-                        {index < user.education.length - 1 && (
-                          <div className="absolute left-[7px] top-5 h-full w-0.5 bg-border" />
-                        )}
-                       <div className="absolute left-0 top-2 flex h-3 w-3 items-center justify-center rounded-full bg-primary">
-                         <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
-                       </div>
-                      <h4 className="font-medium text-sm">{edu.degree || edu.fieldOfStudy || 'Studies'}</h4>
-                      <p className="text-sm text-muted-foreground">{edu.institution}</p>
-                       <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                         <CalendarDays className="h-3.5 w-3.5"/>
-                         {formatShortDate(edu.startDate)} - {edu.current ? 'Present' : edu.endDate ? formatShortDate(edu.endDate) : 'N/A'}
-                            </p>
-                      {edu.description && <p className="mt-2 text-sm text-muted-foreground">{edu.description}</p>}
-                        </div>
-                      ))
-                    ) : (
-                  <p className="text-sm text-muted-foreground">No education details available.</p>
-                    )}
+                    <div key={edu.id} className="relative pl-6 pb-4 last:pb-0">
+                      {index < user.education.length - 1 && (
+                        <div className="absolute left-[7px] top-5 h-full w-0.5 bg-border" />
+                      )}
+                      <div className="absolute left-0 top-2 flex h-3 w-3 items-center justify-center rounded-full bg-primary">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+                      </div>
+                      <h4 className="font-medium text-sm">
+                        {edu.degree || edu.fieldOfStudy || "Studies"}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {edu.institution}
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {formatShortDate(edu.startDate)} -{" "}
+                        {edu.current
+                          ? "Present"
+                          : edu.endDate
+                            ? formatShortDate(edu.endDate)
+                            : "N/A"}
+                      </p>
+                      {edu.description && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {edu.description}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No education details available.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            {/* Optimized Portfolio Component */}
+            <ProfilePortfolio
+              pinnedItems={pinnedPortfolioItems as any}
+              allItems={allPortfolioItems as any}
+              isOwnProfile={isOwnProfile}
+              username={username}
+            />
+          </div>
         </div>
       </div>
-      <div className="h-16 md:h-24"></div>
     </div>
-  )
+  );
 }
 
 export default ProfileDetail

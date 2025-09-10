@@ -38,7 +38,7 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
   const profileUsername = profile.username ?? 'profile'; // Fallback username for URL
 
   return (
-    <Card className="flex flex-col items-center p-6 overflow-hidden h-full hover:shadow-lg transition-shadow duration-200 bg-card text-center">
+    <Card className="flex flex-col gap-3 items-center p-6 overflow-hidden h-full hover:shadow-lg transition-shadow duration-200 bg-card text-center">
       <Avatar className="h-20 w-20 border mb-4">
         <AvatarImage src={profile.profilePicture || undefined} alt={fullName} />
         <AvatarFallback>{getInitials(profile.firstName, profile.lastName)}</AvatarFallback>
