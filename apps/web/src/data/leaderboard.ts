@@ -9,7 +9,7 @@ import {
   type User,
   leaderboardTypeEnum
 } from "@0unveiled/database"
-import { eq, and, desc, asc } from "drizzle-orm"
+import { eq, and, desc, asc, isNotNull, ne } from "drizzle-orm"
 
 // Type for leaderboard score with user information
 export type LeaderboardScoreWithUser = LeaderboardScore & {
@@ -27,29 +27,35 @@ export const getLeaderboardScoresByUserId = async (userId: string) => {
       return { error: 'User ID is required' }
     }
 
-    // Cache per-user leaderboard snapshot for a short period.
+        // Cache per-user leaderboard snapshot for a short period.
     const cacheKey = `leaderboard:user:${userId}`
     const cachedFn = unstable_cache(
       async () => {
-        const scores = await db.query.leaderboardScores.findMany({
-          where: eq(leaderboardScores.userId, userId),
-          // Only fetch necessary user columns to reduce payload
-          with: {
+        const scores = await db
+          .select({
+            id: leaderboardScores.id,
+            userId: leaderboardScores.userId,
+            leaderboardType: leaderboardScores.leaderboardType,
+            score: leaderboardScores.score,
+            rank: leaderboardScores.rank,
+            techStack: leaderboardScores.techStack,
+            domain: leaderboardScores.domain,
+            updatedAt: leaderboardScores.updatedAt,
             user: {
-              columns: {
-                id: true,
-                username: true,
-                firstName: true,
-                lastName: true,
-                profilePicture: true,
-                headline: true,
-              },
+              id: users.id,
+              username: users.username,
+              firstName: users.firstName,
+              lastName: users.lastName,
+              profilePicture: users.profilePicture,
+              headline: users.headline,
             },
-          },
-          // Prefer rank asc, tie-breaker by score desc
-          orderBy: [asc(leaderboardScores.rank), desc(leaderboardScores.score)],
-        })
-        return scores
+          })
+          .from(leaderboardScores)
+          .innerJoin(users, eq(leaderboardScores.userId, users.id))
+          .where(eq(leaderboardScores.userId, userId))
+          .orderBy(asc(leaderboardScores.rank), desc(leaderboardScores.score));
+
+        return scores as LeaderboardScoreWithUser[]
       },
       [cacheKey],
       { revalidate: 300, tags: [cacheKey] }
@@ -112,46 +118,49 @@ export const getLeaderboardByType = async (
     }
 
     const pageSize = Math.min(Math.max(limit ?? 50, 1), 100)
-    const key = `leaderboard:type:${type}:${techStack ?? ''}:${domain ?? ''}:limit:${pageSize}`
 
-    const cachedFn = unstable_cache(
-      async () => {
-        let whereCondition = and(eq(leaderboardScores.leaderboardType, type))
-
-        if (type === 'TECH_STACK' && techStack) {
-          whereCondition = and(whereCondition, eq(leaderboardScores.techStack, techStack))
-        } else if (type === 'DOMAIN' && domain) {
-          whereCondition = and(whereCondition, eq(leaderboardScores.domain, domain))
-        }
-
-        const scores = await db.query.leaderboardScores.findMany({
-          where: whereCondition,
-          with: {
-            user: {
-              columns: {
-                id: true,
-                username: true,
-                firstName: true,
-                lastName: true,
-                profilePicture: true,
-                headline: true,
-              },
-            },
-          },
-          orderBy: [asc(leaderboardScores.rank), desc(leaderboardScores.score)],
-          limit: pageSize,
-        })
-
-        return scores as LeaderboardScoreWithUser[]
-      },
-      [key],
-      { revalidate: 300, tags: [key] }
+    // Use direct query instead of relations to avoid the referencedTable error
+    let whereCondition = and(
+      eq(leaderboardScores.leaderboardType, type),
+      isNotNull(users.username),
+      ne(users.username, ""),
+      eq(users.onboarded, true)
     )
 
-  const scores = await cachedFn()
-  // Defense-in-depth: only return entries for users with a username
-  const filtered = (scores || []).filter(s => !!s.user?.username && s.user.username.trim() !== '')
-  return { success: true, scores: filtered }
+    if (type === 'TECH_STACK' && techStack) {
+      whereCondition = and(whereCondition, eq(leaderboardScores.techStack, techStack))
+    } else if (type === 'DOMAIN' && domain) {
+      whereCondition = and(whereCondition, eq(leaderboardScores.domain, domain))
+    }
+
+    const scores = await db
+      .select({
+        id: leaderboardScores.id,
+        userId: leaderboardScores.userId,
+        leaderboardType: leaderboardScores.leaderboardType,
+        score: leaderboardScores.score,
+        rank: leaderboardScores.rank,
+        techStack: leaderboardScores.techStack,
+        domain: leaderboardScores.domain,
+        updatedAt: leaderboardScores.updatedAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profilePicture: users.profilePicture,
+          headline: users.headline,
+        },
+      })
+      .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+      .where(whereCondition)
+      .orderBy(asc(leaderboardScores.rank), desc(leaderboardScores.score))
+      .limit(pageSize);
+
+    // Defense-in-depth: only return entries for users with a username
+    const filtered = (scores || []).filter((s: any) => !!s.user?.username && s.user.username.trim() !== '')
+    return { success: true, scores: filtered }
   } catch (error) {
     console.error('Error fetching leaderboard by type:', error)
     return { error: 'Failed to fetch leaderboard' }

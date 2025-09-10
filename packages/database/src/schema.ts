@@ -1564,18 +1564,10 @@ export const usersRelationsUpdated = relations(users, ({ many }) => ({
   achievements: many(achievements),
 }));
 
-export const userBadgesRelationsUpdated = relations(userBadges, ({ one }) => ({
-  badge: one(badges, {
-    fields: [userBadges.badgeId],
-    references: [badges.id],
-  }),
+export const leaderboardScoresRelations = relations(leaderboardScores, ({ one }) => ({
   user: one(users, {
-    fields: [userBadges.userId],
+    fields: [leaderboardScores.userId],
     references: [users.id],
-  }),
-  verificationRequest: one(verificationRequests, {
-    fields: [userBadges.verificationRequestId],
-    references: [verificationRequests.id],
   }),
 }));
 // Export types

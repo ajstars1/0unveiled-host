@@ -229,8 +229,10 @@ export default function LeaderboardTeaser() {
   const [speed, setSpeed] = useState<SpeedSetting>("normal")
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all")
   const [selectedEntry, setSelectedEntry] = useState<LeaderboardEntry | null>(null)
-  const [data, setData] = useState(mockData)
+  const [data, setData] = useState<LeaderboardEntry[]>(mockData)
   const [isHovered, setIsHovered] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const speedSettings = {
@@ -239,20 +241,61 @@ export default function LeaderboardTeaser() {
     fast: 100
   }
 
-  // Simulate live score updates
+  // Fetch real leaderboard data
   useEffect(() => {
+    const fetchLeaderboardData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await fetch('/api/leaderboard/teaser?limit=10')
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch leaderboard: ${response.status}`)
+        }
+        
+        const result = await response.json()
+        
+        if (!result.success || !result.entries) {
+          throw new Error(result.error || 'Invalid response format')
+        }
+        
+        if (result.entries.length === 0) {
+          // Use mock data if API returns empty
+          setData(mockData)
+        } else {
+          setData(result.entries)
+        }
+      } catch (err) {
+        console.error('Error fetching leaderboard teaser data:', err)
+        setError((err as Error).message || 'Failed to load leaderboard data')
+        // Fall back to mock data on error
+        setData(mockData)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchLeaderboardData()
+  }, [])
+
+  // Simulate live score updates (only when we have real data)
+  useEffect(() => {
+    if (isLoading || error || data === mockData) return
+
     const interval = setInterval(() => {
-      setData(prev => prev.map(entry => ({
-        ...entry,
-        score: entry.score + Math.floor(Math.random() * 10) - 3
-      })).sort((a, b) => b.score - a.score).map((entry, index) => ({
-        ...entry,
-        rank: index + 1
-      })))
-    }, 5000)
+      // Refetch data to get latest scores
+      fetch('/api/leaderboard/teaser?limit=10')
+        .then(response => response.json())
+        .then(result => {
+          if (result.success && result.entries && result.entries.length > 0) {
+            setData(result.entries)
+          }
+        })
+        .catch(err => console.error('Error updating leaderboard:', err))
+    }, 30000) // Update every 30 seconds
 
     return () => clearInterval(interval)
-  }, [])
+  }, [isLoading, error, data, mockData])
 
   // Check for rank changes and announce
   useEffect(() => {
@@ -297,8 +340,14 @@ export default function LeaderboardTeaser() {
             <h2 className="text-lg font-heading font-semibold">Live Leaderboard</h2>
           </div>
           <div className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} />
-            <span className="text-xs text-gray-300">LIVE</span>
+            <div className={`w-2 h-2 rounded-full ${
+              isLoading ? 'bg-yellow-400 animate-pulse' : 
+              error ? 'bg-red-400' : 
+              'bg-green-400 animate-pulse'
+            }`} />
+            <span className="text-xs text-gray-300">
+              {isLoading ? 'LOADING' : error ? 'ERROR' : 'LIVE'}
+            </span>
           </div>
         </div>
         
@@ -350,70 +399,87 @@ export default function LeaderboardTeaser() {
         aria-label="Live leaderboard ticker"
         aria-live="polite"
       >
-        <motion.div
-          ref={scrollRef}
-          className="flex gap-4 absolute top-0 left-0 h-full"
-          animate={isPlaying && !isHovered ? {
-            x: [`0%`, `-${100 / 3}%`]
-          } : {}}
-          transition={{
-            duration: speedSettings[speed],
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        >
-          {extendedData.map((entry, index) => (
-            <motion.div
-              key={`${entry.id}-${index}`}
-              className="flex items-center gap-3 bg-white/10 hover:bg-white/20 rounded-lg p-3 min-w-fit cursor-pointer transition-all duration-200 group"
-              onClick={() => handleEntryClick(entry)}
-              onKeyDown={(e) => handleKeyDown(e, entry)}
-              tabIndex={0}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-bold text-accent w-6 text-center">
-                  #{entry.rank}
-                </div>
-                <div className="relative">
-                  <Avatar className={`h-10 w-10 transition-all duration-200 ${
-                    entry.rank <= 3 
-                      ? 'ring-2 ring-accent group-hover:ring-accent group-hover:shadow-lg shadow-accent/50' 
-                      : 'group-hover:ring-2 group-hover:ring-white/30'
-                  }`}>
-                    <AvatarImage src={entry.avatar} alt={entry.name} />
-                    <AvatarFallback className="bg-white/20 text-white">
-                      {entry.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  {entry.rank <= 3 && (
-                    <motion.div
-                      className="absolute -top-1 -right-1 bg-accent text-accent-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      {entry.rank}
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex flex-col min-w-0">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex items-center gap-2 text-white/70">
+              <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              <span className="ml-2 text-sm">Loading leaderboard...</span>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-white/70">
+              <span className="text-sm">⚠️ {error}</span>
+            </div>
+          </div>
+        ) : (
+          <motion.div
+            ref={scrollRef}
+            className="flex gap-4 absolute top-0 left-0 h-full"
+            animate={isPlaying && !isHovered ? {
+              x: [`0%`, `-${100 / 3}%`]
+            } : {}}
+            transition={{
+              duration: speedSettings[speed],
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          >
+            {extendedData.map((entry, index) => (
+              <motion.div
+                key={`${entry.id}-${index}`}
+                className="flex items-center gap-3 bg-white/10 hover:bg-white/20 rounded-lg p-3 min-w-fit cursor-pointer transition-all duration-200 group"
+                onClick={() => handleEntryClick(entry)}
+                onKeyDown={(e) => handleKeyDown(e, entry)}
+                tabIndex={0}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-white truncate">{entry.name}</span>
-                  <Badge variant="secondary" className="text-xs bg-white/20 text-white/80 hover:bg-white/30">
-                    {entry.role}
-                  </Badge>
+                  <div className="text-sm font-bold text-accent w-6 text-center">
+                    #{entry.rank}
+                  </div>
+                  <div className="relative">
+                    <Avatar className={`h-10 w-10 transition-all duration-200 ${
+                      entry.rank <= 3 
+                        ? 'ring-2 ring-accent group-hover:ring-accent group-hover:shadow-lg shadow-accent/50' 
+                        : 'group-hover:ring-2 group-hover:ring-white/30'
+                    }`}>
+                      <AvatarImage src={entry.avatar} alt={entry.name} />
+                      <AvatarFallback className="bg-white/20 text-white">
+                        {entry.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    {entry.rank <= 3 && (
+                      <motion.div
+                        className="absolute -top-1 -right-1 bg-accent text-accent-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold"
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        {entry.rank}
+                      </motion.div>
+                    )}
+                  </div>
                 </div>
-                <div className="text-sm text-white/70">
-                  <AnimatedScore score={entry.score} isTop3={entry.rank <= 3} />
-                  <span className="ml-1">pts</span>
+                
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white truncate">{entry.name}</span>
+                    <Badge variant="secondary" className="text-xs bg-white/20 text-white/80 hover:bg-white/30">
+                      {entry.role}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-white/70">
+                    <AnimatedScore score={entry.score} isTop3={entry.rank <= 3} />
+                    <span className="ml-1">pts</span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
 
       <AnimatePresence>
