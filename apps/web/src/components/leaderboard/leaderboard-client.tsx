@@ -1,11 +1,14 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LeaderboardTable } from './leaderboard-table';
 import { LeaderboardFilters } from './leaderboard-filters';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const fetchLeaderboardData = async (
@@ -70,73 +73,101 @@ export function LeaderboardClient() {
   const hasPrevPage = currentPage > 1;
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Leaderboards</h1>
-        <p className="text-muted-foreground">
-          Discover top performers across different technologies and domains based on CRUISM scores
+    <div className="container mx-auto max-w-6xl px-4">
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          Leaderboards
+        </h1>
+        <p className="mt-3 text-base md:text-lg text-muted-foreground">
+          Explore top builders across stacks and domains — powered by CRUISM scores
         </p>
       </div>
-      
-      <LeaderboardFilters
-        leaderboardType={leaderboardType}
-        setLeaderboardType={handleTypeChange}
-        setCategory={handleCategoryChange}
-        search={search}
-        setSearch={handleSearchChange}
-      />
-      
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="p-4 md:p-6">
+          <LeaderboardFilters
+            leaderboardType={leaderboardType}
+            setLeaderboardType={handleTypeChange}
+            setCategory={handleCategoryChange}
+            search={search}
+            setSearch={handleSearchChange}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Loading state */}
       {isLoading && (
-        <div className="flex justify-center items-center py-8">
-          <p>Loading leaderboard data...</p>
-        </div>
+        <Card>
+          <CardContent className="p-4 md:p-6">
+            <div className="space-y-4">
+              <Skeleton className="h-9 w-40" />
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
-      
+
+      {/* Error state */}
       {error && (
-        <div className="flex justify-center items-center py-8">
-          <p className="text-red-500">Error fetching data. Please try again.</p>
-        </div>
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>Failed to load leaderboards</AlertTitle>
+          <AlertDescription>
+            An error occurred while fetching data. Please adjust filters or try again.
+          </AlertDescription>
+        </Alert>
       )}
-      
+
+      {/* Empty state */}
       {data && data.length === 0 && (
-        <div className="flex justify-center items-center py-8">
-          <p className="text-muted-foreground">No results found for the current filters.</p>
-        </div>
-      )}
-      
-      {data && data.length > 0 && (
-        <>
-          <LeaderboardTable data={data} />
-          
-          {/* Pagination */}
-          <div className="flex justify-between items-center mt-6">
-            <p className="text-sm text-muted-foreground">
-              Showing page {currentPage} ({data.length} results)
+        <Card className="border-dashed">
+          <CardContent className="p-10 text-center">
+            <h3 className="text-lg font-medium">No results</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try changing the leaderboard type, category, or search query.
             </p>
-            
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Table + Pagination */}
+      {data && data.length > 0 && (
+        <Card>
+          <CardContent className="p-0 overflow-hidden">
+            <LeaderboardTable data={data} />
+          </CardContent>
+          <CardFooter className="flex items-center justify-between gap-4 p-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              Page {currentPage} · {data.length} results
+            </p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => prev - 1)}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
                 disabled={!hasPrevPage}
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Previous
               </Button>
-              
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => prev + 1)}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
                 disabled={!hasNextPage}
               >
                 Next
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
-          </div>
-        </>
+          </CardFooter>
+        </Card>
       )}
     </div>
   );

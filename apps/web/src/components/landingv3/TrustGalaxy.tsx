@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, useAnimation, useReducedMotion } from 'motion/react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Star, X, Filter } from 'lucide-react'
+import { Star, Filter } from 'lucide-react'
 
-interface Testimonial {
+interface TrustItem {
   id: string
   name: string
   role: string
@@ -29,7 +29,8 @@ interface CompanyLogo {
   logo: string
 }
 
-const testimonials: Testimonial[] = [
+// Fallback placeholders (used only if API returns no data)
+const fallbackItems: TrustItem[] = [
   {
     id: '1',
     name: 'Sarah Chen',
@@ -114,15 +115,16 @@ const companyLogos: CompanyLogo[] = [
 ]
 
 interface TrustCardProps {
-  testimonial: Testimonial
+  testimonial: TrustItem
   index: number
+  totalCount: number
   isHovered: boolean
   onHover: (id: string | null) => void
   onSkillClick: (skill: string) => void
   selectedSkill: string | null
 }
 
-function TrustCard({ testimonial, index, isHovered, onHover, onSkillClick, selectedSkill }: TrustCardProps) {
+function TrustCard({ testimonial, index, totalCount, isHovered, onHover, onSkillClick, selectedSkill }: TrustCardProps) {
   const controls = useAnimation()
   const reducedMotion = useReducedMotion()
   const [isOpen, setIsOpen] = useState(false)
@@ -160,7 +162,7 @@ function TrustCard({ testimonial, index, isHovered, onHover, onSkillClick, selec
             transformOrigin: `0 ${orbitRadius}px`
           }}
           animate={controls}
-          initial={{ rotate: (360 / testimonials.length) * index }}
+          initial={{ rotate: (360 / Math.max(totalCount, 1)) * index }}
           onHoverStart={() => onHover(testimonial.id)}
           onHoverEnd={() => onHover(null)}
           whileHover={{ scale: 1.05, zIndex: 10 }}
@@ -206,14 +208,16 @@ function TrustCard({ testimonial, index, isHovered, onHover, onSkillClick, selec
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                {testimonial.projects.slice(0, 2).map((project, idx) => (
-                  <div key={idx} className="bg-primary-foreground/10 rounded-md p-2">
-                    <div className="h-8 bg-primary-foreground/20 rounded mb-1"></div>
-                    <p className="text-xs text-primary-foreground/70 truncate">{project.title}</p>
-                  </div>
-                ))}
-              </div>
+              {testimonial.projects && testimonial.projects.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {testimonial.projects.slice(0, 2).map((project, idx) => (
+                    <div key={idx} className="bg-primary-foreground/10 rounded-md p-2">
+                      <div className="h-8 bg-primary-foreground/20 rounded mb-1"></div>
+                      <p className="text-xs text-primary-foreground/70 truncate">{project.title}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="flex items-center gap-1">
                 {[...Array(testimonial.rating)].map((_, i) => (
@@ -257,17 +261,19 @@ function TrustCard({ testimonial, index, isHovered, onHover, onSkillClick, selec
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="font-medium">Featured Projects</h4>
-            <div className="grid grid-cols-2 gap-3">
-              {testimonial.projects.map((project, idx) => (
-                <div key={idx} className="bg-muted rounded-lg p-3">
-                  <div className="h-20 bg-muted-foreground/10 rounded mb-2"></div>
-                  <p className="text-sm font-medium">{project.title}</p>
-                </div>
-              ))}
+          {testimonial.projects && testimonial.projects.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="font-medium">Featured Projects</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {testimonial.projects.map((project, idx) => (
+                  <div key={idx} className="bg-muted rounded-lg p-3">
+                    <div className="h-20 bg-muted-foreground/10 rounded mb-2"></div>
+                    <p className="text-sm font-medium">{project.title}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Rating:</span>
@@ -286,12 +292,37 @@ function TrustCard({ testimonial, index, isHovered, onHover, onSkillClick, selec
 export default function TrustGalaxy() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null)
+  const [items, setItems] = useState<TrustItem[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const reducedMotion = useReducedMotion()
 
-  const allSkills = Array.from(new Set(testimonials.flatMap(t => t.skills)))
-  const filteredTestimonials = selectedSkill 
-    ? testimonials.filter(t => t.skills.includes(selectedSkill))
-    : testimonials
+  useEffect(() => {
+    let isActive = true
+    const fetchItems = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch('/api/leaderboard/trust?limit=12', { cache: 'no-store' })
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+        const data = await res.json() as { success: boolean; items?: TrustItem[]; error?: string }
+        if (!data.success || !data.items) throw new Error(data.error || 'Failed to load data')
+        if (isActive) setItems(data.items)
+      } catch (e: any) {
+        if (isActive) setError(e?.message || 'Failed to load data')
+      } finally {
+        if (isActive) setLoading(false)
+      }
+    }
+    fetchItems()
+    return () => { isActive = false }
+  }, [])
+
+  const data = useMemo<TrustItem[]>(() => items && items.length > 0 ? items : fallbackItems, [items])
+  const allSkills = useMemo(() => Array.from(new Set(data.flatMap(t => t.skills))).slice(0, 12), [data])
+  const filtered = useMemo(
+    () => selectedSkill ? data.filter(t => t.skills.includes(selectedSkill)) : data,
+    [selectedSkill, data]
+  )
 
   const handleSkillClick = (skill: string) => {
     setSelectedSkill(selectedSkill === skill ? null : skill)
@@ -320,7 +351,7 @@ export default function TrustGalaxy() {
             <Filter className="h-3 w-3 mr-1" />
             All
           </Button>
-          {allSkills.slice(0, 8).map((skill) => (
+          {allSkills.map((skill) => (
             <Button
               key={skill}
               variant={selectedSkill === skill ? "default" : "outline"}
@@ -336,12 +367,23 @@ export default function TrustGalaxy() {
         {/* Trust Galaxy */}
         <div className="relative mx-auto" style={{ height: '600px', maxWidth: '800px' }}>
           <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-transparent rounded-full opacity-50"></div>
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+            </div>
+          )}
+          {error && !loading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-sm text-muted-foreground">{error}</div>
+            </div>
+          )}
           
-          {testimonials.map((testimonial, index) => (
+      {filtered.map((testimonial, index) => (
             <TrustCard
               key={testimonial.id}
               testimonial={testimonial}
               index={index}
+        totalCount={filtered.length}
               isHovered={hoveredCard === testimonial.id}
               onHover={setHoveredCard}
               onSkillClick={handleSkillClick}
@@ -359,7 +401,7 @@ export default function TrustGalaxy() {
         {selectedSkill && (
           <div className="text-center mt-8">
             <p className="text-sm text-muted-foreground">
-              Showing {filteredTestimonials.length} expert{filteredTestimonials.length !== 1 ? 's' : ''} in{' '}
+              Showing {filtered.length} expert{filtered.length !== 1 ? 's' : ''} in{' '}
               <span className="font-medium text-foreground">{selectedSkill}</span>
             </p>
           </div>
