@@ -582,8 +582,21 @@ export const getAIVerifiedSkillsByUsername = async (
 
     if (!user) return null;
 
-    // Get AI-verified skills for this user
     const verifiedSkills = await getAIVerifiedSkillsByUserId(user.id);
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[AI Skills Debug] Username:', username, 'UserId:', user.id);
+      console.log('[AI Skills Debug] Raw verified skills count:', verifiedSkills?.length || 0);
+      if (verifiedSkills && verifiedSkills.length > 0) {
+        console.log('[AI Skills Debug] First 3 skills sample:', verifiedSkills.slice(0,3).map(s => ({
+          skillName: s.skillName,
+          skillType: s.skillType,
+          confidenceScore: s.confidenceScore,
+          isVisible: s.isVisible,
+          verifiedAt: s.verifiedAt
+        })));
+      }
+    }
 
     if (!verifiedSkills) {
       return {
@@ -598,7 +611,6 @@ export const getAIVerifiedSkillsByUsername = async (
       };
     }
 
-    // Group skills by type
     const groupedSkills = {
       languages: verifiedSkills.filter(skill => skill.skillType === 'LANGUAGE'),
       frameworks: verifiedSkills.filter(skill => skill.skillType === 'FRAMEWORK'),
@@ -611,6 +623,18 @@ export const getAIVerifiedSkillsByUsername = async (
         ? verifiedSkills.sort((a, b) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime())[0].verifiedAt.toISOString()
         : null
     };
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[AI Skills Debug] Grouped counts:', {
+        languages: groupedSkills.languages.length,
+        frameworks: groupedSkills.frameworks.length,
+        libraries: groupedSkills.libraries.length,
+        tools: groupedSkills.tools.length,
+        databases: groupedSkills.databases.length,
+        cloud: groupedSkills.cloud.length,
+        total: groupedSkills.totalSkills
+      });
+    }
 
     return groupedSkills;
 

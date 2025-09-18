@@ -51,7 +51,7 @@ export async function generateMetadata({
   }
   
   // Fetch currentUser first to get the ID for the profile fetch
-  const currentUser = await getCurrentUser()
+  const currentUser: Awaited<ReturnType<typeof getCurrentUser>> = await getCurrentUser()
   const user = await getUserByUsername(username, currentUser?.id) // Pass current user ID
 
   if (!user) {
@@ -109,7 +109,7 @@ async function ProfileDetail({
   const currentUser = await getCurrentUser()
   
   // Parallelize data fetching for better performance
-  const [user, aiVerifiedSkills, leaderboardData] = await Promise.all([
+  const [user, aiVerifiedSkillsData, leaderboardData] = await Promise.all([
     getUserByUsername(username, currentUser?.id),
     getAIVerifiedSkillsByUsername(username),
     getLeaderboardDataByUsername(username)
@@ -127,13 +127,36 @@ async function ProfileDetail({
   const userRank = hasLeaderboardData ? leaderboardData.rank : null;
   const userScore = hasLeaderboardData ? leaderboardData.score : null;
 
+  // Transform AI skills to match expected AIVerifiedSkillsData type
+  const aiVerifiedSkills = aiVerifiedSkillsData ? {
+    languages: aiVerifiedSkillsData.languages || [],
+    frameworks: aiVerifiedSkillsData.frameworks || [],
+    libraries: aiVerifiedSkillsData.libraries || [],
+    tools: aiVerifiedSkillsData.tools || [],
+    databases: aiVerifiedSkillsData.databases || [],
+    cloud: aiVerifiedSkillsData.cloud || [],
+    totalSkills: aiVerifiedSkillsData.totalSkills,
+    lastVerified: aiVerifiedSkillsData.lastVerified
+  } : undefined;
+
   // isOwnProfile can also be determined by connectionStatus === 'SELF'
   const isOwnProfile = user.connectionStatus === 'SELF'
   const fullName = `${user.firstName} ${user.lastName || ''}`.trim()
 
   // Prepare data for components
-  const topSkills = user.skills?.slice(0, 10) || []
-  const allSkills = user.skills || []
+  // Transform user skills to match expected UserSkill type
+  const transformedSkills = (user.skills || []).map(skill => ({
+    skillId: skill.skillId,
+    userId: skill.userId,
+    skill: {
+      id: skill.skill.id,
+      name: skill.skill.name,
+      category: skill.skill.category || undefined // Convert null to undefined
+    },
+    level: skill.level || undefined // Convert null to undefined
+  }));
+  const topSkills = transformedSkills.slice(0, 10)
+  const allSkills = transformedSkills
   const allPortfolioItems = user.showcasedItems || []
   const pinnedPortfolioItems = allPortfolioItems.filter(item => item.isPinned)
   const allProjects = user.projectsOwned || [];
@@ -253,9 +276,12 @@ async function ProfileDetail({
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Use optimized skills component */}
-                <ProfileSkills 
-                  topSkills={topSkills as any}
-                  aiVerifiedSkills={aiVerifiedSkills as any}
+                <ProfileSkills
+                  topSkills={topSkills}
+                  aiVerifiedSkills={aiVerifiedSkills}
+                  showAll={false}
+                  // compact={false}
+                  // showConfidence={true}
                 />
               </CardContent>
             </Card>

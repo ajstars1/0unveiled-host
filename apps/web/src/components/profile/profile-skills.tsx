@@ -57,50 +57,41 @@ export const ProfileSkills = memo(function ProfileSkills({
   const verifiedSkillsMap = new Map<string, VerifiedSkillData>();
   
   if (aiVerifiedSkills) {
-    // Create a map of all verified skills for O(1) lookup
-    if (aiVerifiedSkills.languages) {
-      aiVerifiedSkills.languages.forEach(skill => {
-        if (skill.skillName) {
-          verifiedSkillsMap.set(skill.skillName.toLowerCase(), { 
-            type: 'language',
-            confidence: skill.confidenceScore || undefined
-          });
+    type SkillArrayKey = 'languages' | 'frameworks' | 'libraries' | 'tools' | 'databases' | 'cloud' | 'technologies';
+    const categories: { key: SkillArrayKey; type: VerifiedSkillData['type'] }[] = [
+      { key: 'languages', type: 'language' },
+      { key: 'frameworks', type: 'framework' },
+      { key: 'libraries', type: 'library' },
+      { key: 'tools', type: 'tool' },
+      { key: 'databases', type: 'database' },
+      { key: 'cloud', type: 'cloud' },
+      { key: 'technologies', type: 'technology' }, // optional / legacy
+    ];
+
+    categories.forEach(({ key, type }) => {
+      const list = aiVerifiedSkills[key] as unknown;
+      if (!Array.isArray(list)) return; // Guards against number/string fields
+      (list as AIVerifiedSkill[]).forEach((skill) => {
+        if (!skill?.skillName) return;
+        let confidence: number | undefined = skill.confidenceScore ?? undefined;
+        if (typeof confidence === 'number') {
+          if (confidence > 1) confidence = confidence / 100;
+          confidence = Math.max(0, Math.min(1, confidence));
+        }
+        const keyName = skill.skillName.toLowerCase();
+        if (!verifiedSkillsMap.has(keyName)) {
+          verifiedSkillsMap.set(keyName, { type, confidence });
         }
       });
-    }
-    
-    if (aiVerifiedSkills.frameworks) {
-      aiVerifiedSkills.frameworks.forEach(skill => {
-        if (skill.skillName) {
-          verifiedSkillsMap.set(skill.skillName.toLowerCase(), { 
-            type: 'framework',
-            confidence: skill.confidenceScore || undefined
-          });
-        }
-      });
-    }
-    
-    if (aiVerifiedSkills.technologies) {
-      aiVerifiedSkills.technologies?.forEach(skill => {
-        if (skill.skillName) {
-          verifiedSkillsMap.set(skill.skillName.toLowerCase(), { 
-            type: 'technology',
-            confidence: skill.confidenceScore || undefined
-          });
-        }
-      });
-    }
+    });
   }
   
-  // Create a set of user skills for O(1) lookup
   const userSkillsSet = new Set(
     topSkills.map(skill => skill.skill.name.toLowerCase())
   );
   
-  // Prepare AI-verified skills for display (excluding those already in user skills)
   const aiSkillsForDisplay: AISkillForDisplay[] = [];
   
-  // Add skills from verified skills that aren't in user skills
   verifiedSkillsMap.forEach((data, skillName) => {
     if (!userSkillsSet.has(skillName)) {
       aiSkillsForDisplay.push({
@@ -118,7 +109,6 @@ export const ProfileSkills = memo(function ProfileSkills({
           <h4 className="text-sm font-medium mb-2">User Skills</h4>
           <div className="flex flex-wrap gap-2">
             {topSkills.map((userSkill) => {
-              // Check if this skill is verified (O(1) lookup)
               const isVerified = verifiedSkillsMap.has(userSkill.skill.name.toLowerCase());
               
               return (
@@ -161,7 +151,6 @@ export const ProfileSkills = memo(function ProfileSkills({
         </div>
       )}
 
-      {/* Show AI-detected skills from projects */}
       {aiVerifiedSkills && aiSkillsForDisplay.length > 0 && (
         <div>
           <h4 className="text-sm font-medium mb-2 flex items-center">
