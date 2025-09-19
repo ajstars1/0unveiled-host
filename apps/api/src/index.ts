@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import * as helmet from "helmet";
+import helmet from "helmet";
 import dotenv from "dotenv";
 
 import { logger } from "./lib/logger.js";
@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(helmet.default());
+app.use(helmet());
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
