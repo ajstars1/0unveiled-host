@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { default as helmet } from "helmet";
+import * as helmetNs from "helmet";
 import dotenv from "dotenv";
 
 import { logger } from "./lib/logger.js";
@@ -15,8 +15,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Resolve helmet default export consistently across ESM/CJS/TS environments
+const helmetFn: any = (helmetNs as any)?.default ?? (helmetNs as any);
+
 // Middleware
-app.use(helmet());
+app.use(helmetFn());
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
