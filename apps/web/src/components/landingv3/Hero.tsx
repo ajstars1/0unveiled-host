@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Play, Pause, Star, Trophy, Target, Zap } from 'lucide-react'
@@ -18,7 +18,7 @@ interface LeaderboardBadge {
   rank: number
   category: string
   score: number
-  icon: React.ReactNode
+  icon: ReactNode
 }
 
 const projectTiles: ProjectTile[] = [
@@ -42,6 +42,27 @@ export default function Hero() {
   const [showScorePanel, setShowScorePanel] = useState(false)
   const [hoveredBadge, setHoveredBadge] = useState<string | null>(null)
   const shouldReduceMotion = useReducedMotion()
+  const timersRef = useRef<number[]>([])
+
+  // Precompute deterministic tile positions/rotations to avoid hydration mismatches
+  type TileLayout = { initialX: number; initialY: number; initialRotate: number; targetX: number; targetY: number }
+  const tileLayouts: TileLayout[] = useMemo(() => {
+    return projectTiles.map((_, index) => {
+      // Create pseudo-random but deterministic values derived from index
+      const initialX = index % 2 === 0 ? -200 : 200
+      const initialY = 120 + ((index * 137) % 420) // 120..540 range
+      const initialRotate = ((index * 47) % 60) - 30 // -30..30 deg
+      const targetX = 160 + ((index % 3) - 1) * 40
+      const targetY = 200 + (Math.floor(index / 3) - 1) * 60
+      return { initialX, initialY, initialRotate, targetX, targetY }
+    })
+  }, [])
+
+  const clearTimers = () => {
+    // Clear any pending timeouts to avoid state updates on unmounted component
+    timersRef.current.forEach((t) => clearTimeout(t))
+    timersRef.current = []
+  }
 
   const startAnimation = () => {
     if (shouldReduceMotion) {
@@ -51,25 +72,35 @@ export default function Hero() {
     
     setIsPlaying(true)
     setAnimationPhase('tiles')
-    
-    setTimeout(() => setAnimationPhase('scanning'), 1500)
-    setTimeout(() => setAnimationPhase('transform'), 3000)
-    setTimeout(() => {
+    clearTimers()
+    timersRef.current.push(
+      window.setTimeout(() => setAnimationPhase('scanning'), 1500)
+    )
+    timersRef.current.push(
+      window.setTimeout(() => setAnimationPhase('transform'), 3000)
+    )
+    timersRef.current.push(
+      window.setTimeout(() => {
       setAnimationPhase('complete')
       setIsPlaying(false)
     }, 4500)
+    )
   }
 
   const resetAnimation = () => {
     setIsPlaying(false)
     setAnimationPhase('idle')
     setShowScorePanel(false)
+    clearTimers()
   }
 
   useEffect(() => {
     if (!shouldReduceMotion) {
-      const timer = setTimeout(startAnimation, 1000)
-      return () => clearTimeout(timer)
+      const timer = window.setTimeout(startAnimation, 1000)
+      return () => {
+        clearTimeout(timer)
+        clearTimers()
+      }
     } else {
       setAnimationPhase('complete')
     }
@@ -97,6 +128,7 @@ export default function Hero() {
           onClick={isPlaying ? resetAnimation : startAnimation}
           className="bg-card/80 backdrop-blur-sm"
           disabled={shouldReduceMotion ?? undefined}
+          aria-label={isPlaying ? 'Reset hero animation' : 'Replay hero animation'}
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           <span className="ml-2">{isPlaying ? 'Reset' : 'Replay'}</span>
@@ -181,7 +213,7 @@ export default function Hero() {
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/70 rounded-xl"></div>
                   <div>
-                    <h3 className="font-heading font-semibold text-lg">Alex Johnson</h3>
+                    <h3 className="font-heading font-semibold text-lg">Keshav Sharma</h3>
                     <p className="text-muted-foreground">Full Stack Developer</p>
                   </div>
                 </div>
@@ -207,6 +239,7 @@ export default function Hero() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/20 to-transparent"
+                    aria-hidden="true"
                   >
                     <motion.div
                       initial={{ x: '-100%' }}
@@ -224,18 +257,20 @@ export default function Hero() {
             <AnimatePresence>
               {(animationPhase === 'tiles' || animationPhase === 'scanning') && (
                 <>
-                  {projectTiles.map((tile, index) => (
+                  {projectTiles.map((tile, index) => {
+                    const layout = tileLayouts[index]
+                    return (
                     <motion.div
                       key={tile.id}
                       initial={{ 
-                        x: index % 2 === 0 ? -200 : 200,
-                        y: Math.random() * 400 + 100,
-                        rotate: Math.random() * 60 - 30,
+                        x: layout.initialX,
+                        y: layout.initialY,
+                        rotate: layout.initialRotate,
                         opacity: 0
                       }}
                       animate={{ 
-                        x: 160 + (index % 3 - 1) * 40,
-                        y: 200 + (Math.floor(index / 3) - 1) * 60,
+                        x: layout.targetX,
+                        y: layout.targetY,
                         rotate: 0,
                         opacity: 1
                       }}
@@ -251,7 +286,8 @@ export default function Hero() {
                     >
                       {tile.title}
                     </motion.div>
-                  ))}
+                    )
+                  })}
                 </>
               )}
             </AnimatePresence>
@@ -273,7 +309,7 @@ export default function Hero() {
                   <Trophy className="w-6 h-6 text-accent-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold">Alex Johnson</h3>
+                  <h3 className="font-heading font-semibold">Keshav Sharma</h3>
                   <p className="text-primary-foreground/70 text-sm">Ranked #47 globally</p>
                 </div>
               </div>
@@ -283,6 +319,9 @@ export default function Hero() {
                 <button
                   onClick={handleScoreClick}
                   className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-4 border-accent bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors cursor-pointer group"
+                  aria-expanded={showScorePanel}
+                  aria-controls="score-panel"
+                  aria-label="View score metrics"
                 >
                   <div className="text-center">
                     <div className="text-2xl font-bold text-accent">94</div>
@@ -320,6 +359,9 @@ export default function Hero() {
                       exit={{ opacity: 0, y: 10, scale: 0.9 }}
                       transition={{ duration: 0.2 }}
                       className="absolute left-1/2 -translate-x-1/2 top-full mt-4 bg-card text-card-foreground rounded-xl shadow-xl p-4 w-64 z-30"
+                      id="score-panel"
+                      role="dialog"
+                      aria-label="Top metrics panel"
                     >
                       <h4 className="font-semibold mb-3 text-center">Top Metrics</h4>
                       <div className="space-y-2">
@@ -351,7 +393,7 @@ export default function Hero() {
               {(animationPhase === 'complete') && (
                 <>
                   {leaderboardBadges.map((badge, index) => (
-                    <motion.div
+                    <motion.button
                       key={badge.id}
                       initial={{ opacity: 0, scale: 0, rotate: 180 }}
                       animate={{ 
@@ -370,6 +412,11 @@ export default function Hero() {
                       className="absolute top-1/2 left-1/2 w-16 h-16 bg-accent text-accent-foreground rounded-full flex flex-col items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform z-30"
                       onMouseEnter={() => setHoveredBadge(badge.id)}
                       onMouseLeave={() => setHoveredBadge(null)}
+                      onFocus={() => setHoveredBadge(badge.id)}
+                      onBlur={() => setHoveredBadge(null)}
+                      type="button"
+                      aria-label={`${badge.category} rank ${badge.rank}, score ${badge.score}`}
+                      aria-describedby={hoveredBadge === badge.id ? `badge-tooltip-${badge.id}` : undefined}
                     >
                       {badge.icon}
                       <span className="text-xs font-bold">#{badge.rank}</span>
@@ -382,13 +429,15 @@ export default function Hero() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 5 }}
                             className="absolute -top-12 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs whitespace-nowrap"
+                            role="tooltip"
+                            id={`badge-tooltip-${badge.id}`}
                           >
                             {badge.category}: {badge.score}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-primary"></div>
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </motion.div>
+                    </motion.button>
                   ))}
                 </>
               )}
