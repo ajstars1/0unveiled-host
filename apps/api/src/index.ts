@@ -3,7 +3,7 @@ import cors from "cors";
 import * as helmetNs from "helmet";
 import dotenv from "dotenv";
 
-import { logger } from "./lib/logger.js";
+// logger removed
 import { errorHandler } from "./middleware/error-handler.js";
 import { healthRoutes } from "./routes/health.js";
 import { githubRoutes } from "./routes/github.js";
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Request logging
 app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`, {
+  console.info(`${req.method} ${req.path}`, {
     ip: req.ip,
     userAgent: req.get("User-Agent"),
   });
@@ -58,7 +58,7 @@ export default app;
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
-    logger.info(`Server running on port ${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
+    console.info(`Server running on port ${PORT}`);
+    console.info(`Environment: ${process.env.NODE_ENV || "development"}`);
   });
 }

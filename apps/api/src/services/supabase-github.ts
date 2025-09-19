@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Octokit } from "@octokit/rest";
-import { logger } from "../lib/logger.js";
+// logger removed
 import pg from "pg";
 
 interface SupabaseGitHubConfig {
@@ -26,12 +26,12 @@ export class SupabaseGitHubService {
       supabaseServiceKey: serviceKey || anonKey,
     };
 
-    logger.info(
+    console.info(
       `Using Supabase key: ${this.config.supabaseServiceKey ? "configured" : "missing"}`,
     );
 
     if (!this.config.supabaseUrl || !this.config.supabaseServiceKey) {
-      logger.warn(
+      console.warn(
         "Supabase configuration not found - Supabase GitHub features will not work",
       );
       return;
@@ -42,7 +42,7 @@ export class SupabaseGitHubService {
       this.config.supabaseServiceKey,
     );
 
-    logger.info("Supabase GitHub service initialized");
+  console.info("Supabase GitHub service initialized");
   }
 
   /**
@@ -55,11 +55,11 @@ export class SupabaseGitHubService {
       this.initialize();
 
       if (!this.supabase) {
-        logger.warn("Supabase not configured - cannot get GitHub token");
+  console.warn("Supabase not configured - cannot get GitHub token");
         return null;
       }
 
-      logger.info(`Searching for GitHub token for user ID: ${customUserId}`);
+  console.info(`Searching for GitHub token for user ID: ${customUserId}`);
 
       // Try Supabase API first, then fall back to direct database connection
       let data, error;
@@ -79,7 +79,7 @@ export class SupabaseGitHubService {
       }
 
       if (error || !data?.accessToken) {
-        logger.warn(
+        console.warn(
           `Supabase queries failed, trying direct PostgreSQL connection...`,
         );
 
@@ -88,7 +88,7 @@ export class SupabaseGitHubService {
           const directDbUrl =
             process.env.DIRECT_URL || process.env.DATABASE_URL;
           if (directDbUrl) {
-            logger.info("Attempting direct PostgreSQL connection...");
+            console.info("Attempting direct PostgreSQL connection...");
 
             const { Client } = pg;
             const client = new Client({ connectionString: directDbUrl });
@@ -103,33 +103,33 @@ export class SupabaseGitHubService {
             await client.end();
 
             if (result.rows.length > 0 && result.rows[0].accessToken) {
-              logger.info(
+              console.info(
                 `Successfully found GitHub token via direct PostgreSQL connection`,
               );
               return result.rows[0].accessToken;
             } else {
-              logger.warn(
+              console.warn(
                 `No GitHub token found in direct PostgreSQL query for user ${customUserId}`,
               );
             }
           } else {
-            logger.warn("No direct database URL configured");
+            console.warn("No direct database URL configured");
           }
         } catch (e) {
-          logger.error(`Direct PostgreSQL connection failed: ${e}`);
+          console.error(`Direct PostgreSQL connection failed: ${e}`);
         }
 
-        logger.warn(
+        console.warn(
           `No GitHub token found for user ${customUserId} after all attempts`,
         );
         return null;
       }
 
       const token = data.accessToken;
-      logger.info(`Successfully found GitHub token for user ${customUserId}`);
+  console.info(`Successfully found GitHub token for user ${customUserId}`);
       return token;
     } catch (error) {
-      logger.error("Failed to get GitHub token from users table:", error);
+  console.error("Failed to get GitHub token from users table:", error);
       return null;
     }
   }
@@ -147,10 +147,10 @@ export class SupabaseGitHubService {
       const octokit = new Octokit({ auth: token });
       const { data } = await octokit.rest.users.getAuthenticated();
 
-      logger.info(`Fetched GitHub info for user ${customUserId}`);
+  console.info(`Fetched GitHub info for user ${customUserId}`);
       return data;
     } catch (error) {
-      logger.error(
+      console.error(
         `Failed to get GitHub info for user ${customUserId}:`,
         error,
       );
@@ -186,12 +186,12 @@ export class SupabaseGitHubService {
         page: options.page || 1,
       });
 
-      logger.info(
+      console.info(
         `Fetched ${data.length} repositories for user ${customUserId}`,
       );
       return data;
     } catch (error) {
-      logger.error(
+      console.error(
         `Failed to get repositories for user ${customUserId}:`,
         error,
       );
@@ -234,20 +234,20 @@ export class SupabaseGitHubService {
           });
         contributors = contributorData;
       } catch (error) {
-        logger.warn(
+        console.warn(
           `Could not fetch contributors for ${owner}/${repo}:`,
           error,
         );
       }
 
-      logger.info(`Fetched details for repository ${owner}/${repo}`);
+  console.info(`Fetched details for repository ${owner}/${repo}`);
       return {
         repository: repoData,
         languages,
         contributors,
       };
     } catch (error) {
-      logger.error(
+      console.error(
         `Failed to get repository details for ${owner}/${repo}:`,
         error,
       );
@@ -285,10 +285,10 @@ export class SupabaseGitHubService {
         page: options.page || 1,
       });
 
-      logger.info(`Fetched ${data.length} commits for ${owner}/${repo}`);
+  console.info(`Fetched ${data.length} commits for ${owner}/${repo}`);
       return data;
     } catch (error) {
-      logger.error(`Failed to get commits for ${owner}/${repo}:`, error);
+  console.error(`Failed to get commits for ${owner}/${repo}:`, error);
       throw error;
     }
   }
@@ -303,7 +303,7 @@ export class SupabaseGitHubService {
       this.initialize();
 
       if (!this.supabase) {
-        logger.warn("Supabase not configured - cannot get user ID mapping");
+  console.warn("Supabase not configured - cannot get user ID mapping");
         return null;
       }
 
@@ -322,7 +322,7 @@ export class SupabaseGitHubService {
       error = userResult.error;
 
       if (error || (!data?.supabaseId && !data?.supabase_id)) {
-        logger.warn(
+        console.warn(
           `No Supabase ID found for custom user ${customUserId}:`,
           error,
         );
@@ -332,7 +332,7 @@ export class SupabaseGitHubService {
       // Return either supabaseId or supabase_id depending on your schema
       return data.supabaseId || data.supabase_id;
     } catch (error) {
-      logger.error("Failed to get Supabase user ID mapping:", error);
+  console.error("Failed to get Supabase user ID mapping:", error);
       return null;
     }
   }
@@ -345,7 +345,7 @@ export class SupabaseGitHubService {
       const token = await this.getGitHubTokenFromSession(userId);
       return token !== null;
     } catch (error) {
-      logger.error(
+      console.error(
         `Failed to check GitHub connection for user ${userId}:`,
         error,
       );
@@ -367,7 +367,7 @@ export class SupabaseGitHubService {
       await octokit.rest.users.getAuthenticated();
       return true;
     } catch (error) {
-      logger.warn(`GitHub token validation failed for user ${userId}:`, error);
+  console.warn(`GitHub token validation failed for user ${userId}:`, error);
       return false;
     }
   }
@@ -402,7 +402,7 @@ export class SupabaseGitHubService {
         usersError: userError,
       };
     } catch (error) {
-      logger.error("Failed to debug user identities:", error);
+  console.error("Failed to debug user identities:", error);
       return { error: error instanceof Error ? error.message : String(error) };
     }
   }
