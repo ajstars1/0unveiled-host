@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, FileText, Users, DollarSign, LogIn, Sparkles, Bell, User, Settings, LogOut, Briefcase } from "lucide-react";
+import { Home, FileText, DollarSign, LogIn, Sparkles, Bell, User, Settings, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { User as DatabaseUser, Notification } from "@0unveiled/database";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { getUnreadNotificationCount, getRecentNotifications } from '@/actions/optimized-notifications';
 import { useNotificationPreloader } from '@/hooks/use-notification-performance';
@@ -38,13 +39,12 @@ export function OptimizedFloatingNav({
 }: OptimizedFloatingNavProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeItem, setActiveItem] = useState("home");
   const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   
+  const pathname = usePathname();
   const queryClient = useQueryClient();
 
-  // Only run queries if user is logged in
   const isLoggedIn = !!userId && !!initialUser;
   
   // Preload notification data for better performance
@@ -53,51 +53,50 @@ export function OptimizedFloatingNav({
   // Optimized notification count query with caching
   const { data: notificationCount } = useQuery({
     queryKey: ['notificationCount', userId],
-    queryFn: async () => {
-      const count = await getUnreadNotificationCount();
-      return count;
-    },
+    queryFn: async () => getUnreadNotificationCount(),
     initialData: initialNotificationCount,
-    refetchInterval: 30000, // Reduced frequency
+    refetchInterval: 30000,
     refetchOnWindowFocus: true,
-    staleTime: 15000, // Consider data fresh for 15 seconds
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 15000,
+    gcTime: 300000,
     placeholderData: keepPreviousData,
-    enabled: isLoggedIn, // Only run if logged in
+    enabled: isLoggedIn,
   });
 
   // Optimized recent notifications query
   const { data: recentNotifications } = useQuery({
     queryKey: ['recentNotifications', userId],
-    queryFn: async () => {
-      const notifications = await getRecentNotifications(5);
-      return notifications;
-    },
+    queryFn: async () => getRecentNotifications(5),
     initialData: initialRecentNotifications,
-    refetchInterval: 60000, // Less frequent updates
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    gcTime: 300000, // Keep in cache for 5 minutes
+    staleTime: 30000,
+    gcTime: 300000,
     placeholderData: keepPreviousData,
-    enabled: isLoggedIn, // Only run if logged in
+    enabled: isLoggedIn,
   });
 
   // Memoized user initials calculation
   const userInitials = useMemo(() => {
     if (!initialUser?.firstName) return 'U';
-    const firstInitial = initialUser.firstName.charAt(0).toUpperCase();
-    const lastInitial = initialUser.lastName?.charAt(0).toUpperCase() || '';
-    return firstInitial + lastInitial;
+    return `${initialUser.firstName.charAt(0).toUpperCase()}${initialUser.lastName?.charAt(0).toUpperCase() || ''}`;
   }, [initialUser?.firstName, initialUser?.lastName]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 500);
     const supabase = createClient();
+    let visibilityTimer: NodeJS.Timeout | null = null;
+    
+    visibilityTimer = setTimeout(() => setIsVisible(true), 500);
     
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setSessionUser(user);
-      setLoading(false);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setSessionUser(user);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     checkUser();
@@ -114,7 +113,7 @@ export function OptimizedFloatingNav({
     });
 
     return () => {
-      clearTimeout(timer);
+      if (visibilityTimer) clearTimeout(visibilityTimer);
       authListener?.subscription.unsubscribe();
     };
   }, [queryClient]);
@@ -137,26 +136,33 @@ export function OptimizedFloatingNav({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { id: "home", icon: Home, label: "Home", href: "/" },
     { id: "pricing", icon: DollarSign, label: "Pricing", href: "/pricing" },
     { id: "explore", icon: FileText, label: "Explore", href: "/profiles" },
-    // { id: "recruitment", icon: Briefcase, label: "Recruitment", href: "/recruitment" },
     { id: "leaderboard", icon: Sparkles, label: "Leaderboard", href: "/leaderboard" },
-  ];
+  ], []);
+  
+  const isRouteActive = useCallback((href: string): boolean => {
+    if (href === "/" && pathname === "/") return true;
+    if (href !== "/" && pathname.startsWith(href)) return true;
+    return false;
+  }, [pathname]);
 
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    
-    // Clear all cached data on logout
-    queryClient.clear();
-    
-    // Redirect to home
-    window.location.href = '/';
-  };
+  const handleLogout = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      
+      queryClient.clear();
+      
+      window.location.href = '/';
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  }, [queryClient]);
 
-  const renderAuthContent = () => {
+  const renderAuthContent = useCallback(() => {
     if (loading) {
       return <div className="w-28 h-8 rounded-full bg-white/10 animate-pulse" />;
     }
@@ -193,7 +199,6 @@ export function OptimizedFloatingNav({
                   <AvatarImage 
                     src={initialUser.profilePicture || undefined} 
                     alt={initialUser.firstName || 'User'} 
-                    className="" 
                   />
                   <AvatarFallback className="text-xs">
                     {userInitials}
@@ -212,21 +217,21 @@ export function OptimizedFloatingNav({
                   </p>
                 </div>
               </div>
-              <DropdownMenuSeparator className="" />
-              <DropdownMenuItem asChild className="" inset={false}>
-                <Link href={`/${initialUser.username}`} className="w-full  cursor-pointer">
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild inset={false}>
+                <Link href={`/${initialUser.username}`} className="w-full cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="" inset={false}>
-                <Link href="/settings" className="w-full  cursor-pointer">
+              <DropdownMenuItem asChild inset={false}>
+                <Link href="/settings" className="w-full cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="" />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600  cursor-pointer" inset={false}>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 cursor-pointer" inset={false}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>
@@ -278,7 +283,7 @@ export function OptimizedFloatingNav({
         </Link>
       </div>
     );
-  };
+  }, [loading, sessionUser, initialUser, notificationCount, recentNotifications, userId, userInitials, handleLogout]);
 
   return (
     <AnimatePresence>
@@ -336,12 +341,11 @@ export function OptimizedFloatingNav({
               {navItems.map((item) => (
                 <Link key={item.id} href={item.href}>
                   <motion.button
-                    onClick={() => setActiveItem(item.id)}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium",
                       "transition-all duration-300 hover:bg-white/10",
                       "backdrop-blur-sm",
-                      activeItem === item.id 
+                      isRouteActive(item.href)
                         ? "bg-white/20 text-foreground shadow-lg shadow-black/20" 
                         : "text-muted-foreground hover:text-foreground"
                     )}
