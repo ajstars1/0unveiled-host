@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
+import { default as helmet } from "helmet";
 import dotenv from "dotenv";
 
 import { logger } from "./lib/logger.js";
