@@ -48,22 +48,22 @@ packages/
 All shadcn/ui components are available through the 0unveiled:
 
 ```tsx
-// Import from 0unveiled packages
-import { Button } from "@0unveiled/ui/components/button";
+// Import from local components
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@0unveiled/ui/components/card";
-import { Input } from "@0unveiled/ui/components/input";
-import { Label } from "@0unveiled/ui/components/label";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogTrigger,
-} from "@0unveiled/ui/components/dialog";
-import { cn } from "@0unveiled/ui/lib/utils";
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 // Usage example
 export function LoginForm() {
@@ -169,7 +169,7 @@ Components come with multiple variants and sizes:
 /* In your CSS files */
 @import "tailwindcss";
 @import "@0unveiled/tailwind-config";
-@import "@0unveiled/ui/styles.css";
+@import "./globals.css";
 ```
 
 ### 🎨 Utility Classes
@@ -203,9 +203,9 @@ Common utility patterns with v4:
 ### Client-side Usage
 
 ```tsx
-import { supabase } from "@0unveiled/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@0unveiled/ui/components/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export function UserProfile() {
   const [user, setUser] = useState(null);
@@ -241,7 +241,7 @@ export function UserProfile() {
 ```tsx
 import { createClient } from "@/lib/supabase/client";;
 import { cookies } from "next/headers";
-import { Card, CardContent } from "@0unveiled/ui/components/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function PostsPage() {
   const supabase = createClient(cookies());
@@ -313,7 +313,7 @@ export default async function PostsPage() {
 Dark mode is built-in via CSS variables and can be toggled:
 
 ```tsx
-import { Button } from "@0unveiled/ui/components/button";
+import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
 
 export function ThemeToggle() {

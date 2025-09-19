@@ -1,4 +1,4 @@
-import { cn } from "@0unveiled/lib/utils"
+import { cn } from "@/lib/utils"
 
 type SpotlightProps = {
   className?: string

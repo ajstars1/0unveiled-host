@@ -14,7 +14,6 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@0unveiled/ui/lib/utils",
-    "ui": "@0unveiled/ui/components"
+    "utils": "@/lib/utils"
   }
 }

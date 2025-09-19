@@ -3,7 +3,7 @@ import { MainNav } from "./main-nav"
 import MobileNav from "./mobile-nav"
 import { UserNav } from "./user-nav"
 import { Button } from "@/components/ui/button"
-import { createSupabaseServerClient } from "@0unveiled/lib/supabase"
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getUnreadNotificationCount, getRecentNotifications } from '@/actions/notifications'
 import type { Notification } from '@0unveiled/database/schema'
 import { NotificationBell } from './notification-bell'

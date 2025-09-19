@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@0unveiled/ui", "@0unveiled/lib"],
+  transpilePackages: [],
   experimental: {
-    optimizePackageImports: ["@0unveiled/ui"],
+    optimizePackageImports: [],
   },
   webpack: (config, { isServer }) => {
     // Fix for dynamic require of "react" error

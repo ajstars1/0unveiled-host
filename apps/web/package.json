@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "@0unveiled/database": "workspace:*",
-    "@0unveiled/lib": "workspace:*",
-    "@0unveiled/ui": "workspace:*",
     "@google/generative-ai": "^0.24.1",
     "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^5.2.1",

@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@0unveiled/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { useEffect, useRef } from 'react'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
