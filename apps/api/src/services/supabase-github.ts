@@ -403,7 +403,7 @@ export class SupabaseGitHubService {
       };
     } catch (error) {
       logger.error("Failed to debug user identities:", error);
-      return { error: error.message };
+      return { error: error instanceof Error ? error.message : String(error) };
     }
   }
 }

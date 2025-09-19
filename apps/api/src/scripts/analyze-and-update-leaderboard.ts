@@ -48,7 +48,7 @@ async function analyzeRepository(repoUrl: string, userToken: string): Promise<An
       return null;
     }
 
-    const result = await response.json();
+    const result = await response.json() as AnalysisResult;
     logger.info(`✅ Successfully analyzed ${owner}/${cleanRepo}`);
     return result;
 
