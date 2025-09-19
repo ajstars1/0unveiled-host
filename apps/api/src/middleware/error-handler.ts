@@ -1,23 +1,12 @@
 import type { Request, Response } from "express";
 import { ZodError } from "zod";
 
-import { logger } from "../lib/logger.js";
-
 export interface ApiError extends Error {
   statusCode?: number;
   isOperational?: boolean;
 }
 
 export function errorHandler(error: ApiError, req: Request, res: Response) {
-  // Log error
-  logger.error("API Error", {
-    error: error.message,
-    stack: error.stack,
-    path: req.path,
-    method: req.method,
-    statusCode: error.statusCode,
-  });
-
   // Handle Zod validation errors
   if (error instanceof ZodError) {
     return res.status(400).json({

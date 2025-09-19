@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
 import { supabaseGitHubService } from "../services/supabase-github.js";
-import { logger } from "../lib/logger.js";
 
 const router = Router();
 
@@ -47,7 +46,6 @@ router.get("/supabase/user/:userId", async (req, res, next) => {
       data: userInfo,
     });
   } catch (error) {
-    logger.error("Failed to fetch GitHub user info via Supabase:", error);
     next(error);
   }
 });
@@ -88,7 +86,6 @@ router.get("/supabase/repositories/:userId", async (req, res, next) => {
       count: repositories.length,
     });
   } catch (error) {
-    logger.error("Failed to fetch GitHub repositories via Supabase:", error);
     next(error);
   }
 });
@@ -130,7 +127,6 @@ router.get(
         data: repoDetails,
       });
     } catch (error) {
-      logger.error("Failed to fetch repository details via Supabase:", error);
       next(error);
     }
   },
@@ -169,7 +165,6 @@ router.get("/supabase/debug/:userId", async (req, res, next) => {
       },
     });
   } catch (error) {
-    logger.error("Failed to debug GitHub connection:", error);
     next(error);
   }
 });
@@ -203,7 +198,6 @@ router.get("/supabase/status/:userId", async (req, res, next) => {
       },
     });
   } catch (error) {
-    logger.error("Failed to check GitHub status:", error);
     next(error);
   }
 });
@@ -249,10 +243,6 @@ router.post(
       const analyzerServiceUrl =
         process.env.ANALYZER_SERVICE_URL || "http://localhost:8000";
 
-      logger.info(
-        `Starting repository analysis for ${owner}/${repo} via FastAPI service`,
-      );
-
       const analysisResponse = await fetch(
         `${analyzerServiceUrl}/api/auth/analyze-repository`,
         {
@@ -282,14 +272,11 @@ router.post(
 
       const analysisData = await analysisResponse.json();
 
-      logger.info(`Repository analysis completed for ${owner}/${repo}`);
-
       res.json({
         success: true,
         data: analysisData,
       });
     } catch (error) {
-      logger.error("Failed to analyze repository via Supabase:", error);
       next(error);
     }
   },
