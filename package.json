@@ -54,6 +54,7 @@
     "@tabler/icons-react": "^3.35.0",
     "react-markdown": "^10.1.0",
     "reactflow": "^11.11.4",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "resend": "^6.1.0"
   }
 }

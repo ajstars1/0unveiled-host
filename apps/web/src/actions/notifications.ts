@@ -2,6 +2,7 @@
 
 import { db } from '@/lib/drizzle'
 import { getCurrentUser } from '@/data/user'
+import { processEmailNotification } from '@/lib/email'
 import { 
   notifications, 
   users,
@@ -11,6 +12,7 @@ import {
 } from '@0unveiled/database'
 import { eq, and, desc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import logger from '@/lib/logger'
 
 /**
  * Fetches the count of unread notifications for the current user.
@@ -31,7 +33,7 @@ export const getUnreadNotificationCount = async (): Promise<number> => {
     })
     return unreadNotifications.length
   } catch (error) {
-    console.error("Error fetching unread notification count:", error)
+  logger.error("Error fetching unread notification count:", error)
     return 0
   }
 }
@@ -54,7 +56,7 @@ export const getUserNotifications = async (): Promise<Notification[] | null> => 
 
     return userNotifications
   } catch (error) {
-    console.error("Error fetching user notifications:", error)
+  logger.error("Error fetching user notifications:", error)
     return null
   }
 }
@@ -87,7 +89,7 @@ export const markNotificationAsRead = async (
       .returning();
 
     if (updatedNotifications.length === 0) {
-      console.warn(`No notification updated for ID: ${notificationId} and user: ${currentUser.id}. Might be already read or not found.`);
+  logger.warn(`No notification updated for ID: ${notificationId} and user: ${currentUser.id}. Might be already read or not found.`);
     }
 
     // Revalidate paths that display notification counts or lists
@@ -96,7 +98,7 @@ export const markNotificationAsRead = async (
 
     return { success: true };
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+  logger.error('Error marking notification as read:', error);
     return { success: false, error: 'Failed to mark notification as read.' };
   }
 };
@@ -128,13 +130,14 @@ export const markAllNotificationsAsRead = async (): Promise<{
 
     return { success: true };
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+  logger.error('Error marking all notifications as read:', error);
     return { success: false, error: 'Failed to mark all notifications as read.' };
   }
 };
 
 /**
  * Creates a notification for a specific user, respecting their preferences.
+ * Also sends email notifications if the user has enabled them.
  * @param userId - The ID of the user receiving the notification.
  * @param type - The type of notification.
  * @param content - The main text content of the notification.
@@ -152,10 +155,14 @@ export const createNotification = async (
   }
 
   try {
-    // 1. Fetch Recipient User's Settings
+    // 1. Fetch Recipient User's Settings including email preferences
     const recipient = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: {
+        id: true,
+        email: true,
+        firstName: true,
+        emailFrequency: true,
         notifyMessages: true,
         notifyConnections: true,
         notifyProjects: true,
@@ -165,7 +172,7 @@ export const createNotification = async (
     });
 
     if (!recipient) {
-      console.warn(`createNotification: Recipient user ${userId} not found.`);
+  logger.warn(`createNotification: Recipient user ${userId} not found.`);
       return { success: true }; 
     }
 
@@ -196,7 +203,7 @@ export const createNotification = async (
 
     // 3. Conditional Creation
     if (!shouldCreateNotification) {
-      console.log(`Notification of type ${type} suppressed for user ${userId} due to preferences.`);
+  logger.info(`Notification of type ${type} suppressed for user ${userId} due to preferences.`);
       return { success: true };
     }
 
@@ -209,6 +216,26 @@ export const createNotification = async (
       isRead: false, 
     }).returning();
 
+    // 4. Send email notification if enabled
+    try {
+      const emailResult = await processEmailNotification(
+        recipient,
+        type,
+        content,
+        linkUrl
+      );
+      
+      if (!emailResult.success && emailResult.error) {
+  logger.error(`Failed to send email notification: ${emailResult.error}`);
+        // Don't fail the entire operation if email fails
+      } else if (emailResult.messageId) {
+  logger.info(`Email notification sent successfully. Message ID: ${emailResult.messageId}`);
+      }
+    } catch (emailError) {
+  logger.error('Email notification error (non-blocking):', emailError);
+      // Email failure shouldn't prevent notification creation
+    }
+
     // Revalidate the recipient's notification paths
     revalidatePath('/notifications');
     revalidatePath('/layout'); 
@@ -216,7 +243,7 @@ export const createNotification = async (
     return { success: true, notification: newNotification };
 
   } catch (error) {
-    console.error('Error creating notification:', error);
+  logger.error('Error creating notification:', error);
     return { success: false, error: 'Failed to create notification.' };
   }
 };
@@ -241,7 +268,7 @@ export const getRecentNotifications = async (limit: number = 5): Promise<Notific
 
     return recentNotifications;
   } catch (error) {
-    console.error("Error fetching recent user notifications:", error);
+  logger.error("Error fetching recent user notifications:", error);
     return null;
   }
 };
@@ -282,11 +309,7 @@ export const getNotificationSummaryForClient = async (
     };
 
   } catch (error) {
-    console.error("Error fetching notification summary for client:", error);
+  logger.error("Error fetching notification summary for client:", error);
     return null;
   }
-};
-
-// TODO: Add actions for marking notifications as read (single and all)
-
-// Add other notification actions here if needed (e.g., mark as read) 
+}; 

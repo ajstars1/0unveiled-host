@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/data/user' // Corrected import path
 import { eq, and, or } from "drizzle-orm"
 import { showcasedItems, connectionRequests, connections, users } from "@0unveiled/database"
 import { createNotification } from './notifications'; // Import the action
+import logger from '@/lib/logger'
 
 /**
  * Toggles the pinned status of a showcased item.
@@ -65,7 +66,7 @@ export const toggleShowcasedItemPin = async (
 
     return { success: true }
   } catch (error) {
-    console.error('Error toggling showcased item pin:', error)
+  logger.error('Error toggling showcased item pin:', error)
     return { success: false, error: 'Failed to update pin status.' }
   }
 }
@@ -154,7 +155,8 @@ export const sendConnectionRequest = async (
       }
     }
 
-    // Create the new connection request
+    // Create the new connection request (idempotent)
+    // Use upsert to avoid duplicate-key errors on fast double-clicks/races
     const newRequest = await db
       .insert(connectionRequests)
       .values({
@@ -162,13 +164,20 @@ export const sendConnectionRequest = async (
         recipientId: recipientId,
         status: 'PENDING',
       })
+      .onConflictDoNothing({ target: [connectionRequests.requesterId, connectionRequests.recipientId] })
       .returning({ id: connectionRequests.id })
+
+    if (!newRequest.length) {
+      // Nothing inserted means a duplicate existed; treat as already sent
+      return { success: false, error: 'Request already sent.', status: 'ALREADY_SENT' }
+    }
 
     // Create Notification for the recipient
     try {
         const senderName = `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() || currentUser.username || 'A user';
         const notificationContent = `${senderName} sent you a connection request.`;
-        const notificationLink = '/connections?tab=requests';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const notificationLink = `${baseUrl}/connections?tab=requests`;
 
         await createNotification(
             recipientId,
@@ -177,7 +186,7 @@ export const sendConnectionRequest = async (
             notificationLink
         );
     } catch (notificationError) {
-        console.error("Failed to create connection request notification:", notificationError);
+  logger.error("Failed to create connection request notification:", notificationError);
     }
 
     // Revalidate the profile page to update the button state
@@ -185,8 +194,12 @@ export const sendConnectionRequest = async (
 
     return { success: true, status: 'PENDING', connectionRequestId: newRequest[0].id }; // Return the ID
 
-  } catch (error) {
-    console.error('Error sending connection request:', error);
+  } catch (error: any) {
+    // Gracefully handle unique-constraint violations if they occur outside upsert path
+    if (error?.code === '23505' && /ConnectionRequest_requesterId_recipientId_key/.test(String(error?.constraint || ''))) {
+      return { success: false, error: 'Request already sent.', status: 'ALREADY_SENT' }
+    }
+  logger.error('Error sending connection request:', error);
     return { success: false, error: 'Failed to send connection request.' };
   }
 };
@@ -255,7 +268,8 @@ export const acceptConnectionRequest = async (
      try {
         const recipientName = `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() || currentUser.username || 'A user';
         const notificationContent = `${recipientName} accepted your connection request.`;
-        const notificationLink = `/${currentUser.username}`; // Link to the acceptor's profile
+  const baseUrl2 = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const notificationLink = `${baseUrl2}/${currentUser.username}`; // Link to the acceptor's profile
 
         await createNotification(
             connectionRequest.requesterId, // Notify the original requester
@@ -264,7 +278,7 @@ export const acceptConnectionRequest = async (
             notificationLink
         );
     } catch (notificationError) {
-        console.error("Failed to create connection accepted notification:", notificationError);
+  logger.error("Failed to create connection accepted notification:", notificationError);
     }
 
     // Revalidate relevant paths (e.g., dashboard, connections page)
@@ -277,7 +291,7 @@ export const acceptConnectionRequest = async (
     return { success: true };
 
   } catch (error: any) {
-    console.error("Error accepting connection request:", error);
+  logger.error("Error accepting connection request:", error);
     return { success: false, error: error.message || "Failed to accept request." };
   }
 };
@@ -345,7 +359,7 @@ export const rejectOrWithdrawConnectionRequest = async (
     return { success: true };
 
   } catch (error: any) {
-    console.error("Error rejecting/withdrawing connection request:", error);
+  logger.error("Error rejecting/withdrawing connection request:", error);
     return { success: false, error: error.message || "Failed to update request." };
   }
 };
@@ -396,7 +410,7 @@ export const removeConnection = async (
      return { success: true }; 
 
    } catch (error: any) {
-     console.error("Error removing connection:", error);
+  logger.error("Error removing connection:", error);
      return { success: false, error: error.message || "Failed to remove connection." };
    }
  }; 

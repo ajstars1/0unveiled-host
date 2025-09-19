@@ -16,6 +16,7 @@ import {
 import { eq, and, or, desc, asc, isNull, isNotNull } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { createNotification } from './notifications'
+import logger from '@/lib/logger'
 
 // --- Types --- 
 export type MessageWithAuthor = Message & {
@@ -101,7 +102,7 @@ export const getOrCreateDmChannel = async (
 
     return { channelId: newChannel.id };
   } catch (error) {
-    console.error("Error getting or creating DM channel:", error);
+  logger.error("Error getting or creating DM channel:", error);
     return { error: 'Failed to get or create DM channel.' };
   }
 };
@@ -177,7 +178,8 @@ export const sendMessage = async (
             const senderName = `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() || currentUser.username || 'A user';
             // Use trimmedContent for notification preview
             const notificationContent = `${senderName}: ${trimmedContent.substring(0, 50)}${trimmedContent.length > 50 ? '...' : ''}`; 
-            const notificationLink = `/chat/${channelId}`;
+            const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+            const notificationLink = `${baseUrl}/chat/${channelId}`;
 
             await createNotification(
                 recipient.userId,
@@ -186,7 +188,7 @@ export const sendMessage = async (
                 notificationLink
             );
         } catch (notificationError) {
-            console.error(`Failed to create message notification for user ${recipient.userId}:`, notificationError);
+            logger.error(`Failed to create message notification for user ${recipient.userId}:`, notificationError);
         }
     }
     // --- End Notification --- 
@@ -204,7 +206,7 @@ export const sendMessage = async (
     return { message: newMessage };
 
   } catch (error) {
-    console.error("Error sending message:", error);
+  logger.error("Error sending message:", error);
     return { error: 'Failed to send message.' };
   }
 };
@@ -275,7 +277,7 @@ export const getMessagesForChannel = async (
     return { messages: channelMessages.reverse() as MessageWithAuthor[], nextCursor };
 
   } catch (error) {
-    console.error("Error fetching messages:", error);
+  logger.error("Error fetching messages:", error);
     throw new Error('Failed to fetch messages.');
   }
 };
@@ -325,7 +327,7 @@ export const markChannelAsRead = async (channelId: string): Promise<{ success: b
 
         return { success: true };
     } catch (error) {
-        console.error(`Error marking channel ${channelId} as read for user ${currentUser.id}:`, error);
+  logger.error(`Error marking channel ${channelId} as read for user ${currentUser.id}:`, error);
         // Handle potential errors during the upsert operation
         return { success: false, error: 'Failed to mark channel as read.' };
     }
@@ -448,7 +450,7 @@ export const getDmChannelsForCurrentUser = async (): Promise<DmChannelListItem[]
     return sortedDmListItems.map(({ sortTimestamp, ...rest }) => rest);
 
   } catch (error) {
-    console.error("Error fetching DM channels:", error);
+  logger.error("Error fetching DM channels:", error);
     throw new Error('Failed to fetch DM channels.');
   }
 };
@@ -530,7 +532,7 @@ export const getDmChannelDetails = async (channelId: string): Promise<{ otherUse
         return { otherUser: otherMember.user };
 
     } catch (error) {
-        console.error(`Error fetching DM channel details for ${channelId}:`, error);
+  logger.error(`Error fetching DM channel details for ${channelId}:`, error);
         return { otherUser: null, error: 'Failed to fetch channel details.' };
     }
 };
@@ -602,7 +604,7 @@ export const markMessagesAsRead = async (
     return { success: true, count: 0 }; // Note: Drizzle doesn't return count like Prisma
 
   } catch (error) {
-    console.error(`[markMessagesAsRead Error] Failed for channel ${channelId}:`, error);
+  logger.error(`[markMessagesAsRead Error] Failed for channel ${channelId}:`, error);
     return { success: false, error: 'Failed to mark messages as read' };
   }
 }; 

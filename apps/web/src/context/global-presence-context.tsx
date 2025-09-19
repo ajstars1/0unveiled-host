@@ -7,6 +7,7 @@ import { useGlobalPresence, type GlobalPresenceState, type GlobalPresenceContext
 const defaultContextValue: GlobalPresenceContextValue = {
   presenceState: {},
   isLoading: true, // Default to loading
+  connectionStatus: 'DISCONNECTED',
 };
 
 const GlobalPresenceContext = createContext<GlobalPresenceContextValue>(defaultContextValue);

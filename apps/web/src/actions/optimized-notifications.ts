@@ -5,6 +5,7 @@ import { db } from "@0unveiled/database"
 import { notifications } from "@0unveiled/database/schema"
 import { eq, desc, and } from "drizzle-orm"
 import { revalidateTag, unstable_cache } from "next/cache"
+import logger from '@/lib/logger'
 
 // Cached function for getting unread notification count
 export const getCachedUnreadNotificationCount = unstable_cache(
@@ -56,7 +57,7 @@ export async function getUnreadNotificationCount(): Promise<number> {
   try {
     return await getCachedUnreadNotificationCount(currentUser.id);
   } catch (error) {
-    console.error("Error fetching unread notification count:", error);
+    logger.error("Error fetching unread notification count:", error);
     return 0;
   }
 }
@@ -71,7 +72,7 @@ export async function getRecentNotifications(limit: number = 5) {
   try {
     return await getCachedRecentNotifications(currentUser.id, limit);
   } catch (error) {
-    console.error("Error fetching recent notifications:", error);
+    logger.error("Error fetching recent notifications:", error);
     return [];
   }
 }
@@ -91,7 +92,7 @@ export async function getUserNotifications() {
 
     return userNotifications;
   } catch (error) {
-    console.error("Error fetching user notifications:", error);
+    logger.error("Error fetching user notifications:", error);
     return null;
   }
 }
@@ -129,7 +130,7 @@ export async function markNotificationAsRead(notificationId: string): Promise<{ 
     
     return { success: true };
   } catch (error) {
-    console.error("Error marking notification as read:", error);
+    logger.error("Error marking notification as read:", error);
     return { success: false, error: 'Failed to mark notification as read.' };
   }
 }
@@ -162,7 +163,7 @@ export async function markAllNotificationsAsRead(): Promise<{ success: boolean; 
     
     return { success: true };
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
+    logger.error("Error marking all notifications as read:", error);
     return { success: false, error: 'Failed to mark all notifications as read.' };
   }
 }
@@ -186,7 +187,7 @@ export async function getNotificationSummaryForClient(limit: number = 5) {
       hasMore: notifications.length === limit, // Simple check if there might be more
     };
   } catch (error) {
-    console.error("Error fetching notification summary:", error);
+    logger.error("Error fetching notification summary:", error);
     return null;
   }
 }
@@ -218,7 +219,7 @@ export async function createNotification({
     
     return { success: true };
   } catch (error) {
-    console.error("Error creating notification:", error);
+    logger.error("Error creating notification:", error);
     return { success: false, error: 'Failed to create notification.' };
   }
 }
