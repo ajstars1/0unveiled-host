@@ -2,7 +2,7 @@
 export * from "@/components/ui/card";
 
 // Also export individual components for convenience
-export { Button, buttonVariants } from "@0unveiled/ui/components/button";
+export { Button, buttonVariants } from "@/components/ui/button";
 export {
   Card,
   CardHeader,
