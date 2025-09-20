@@ -13,6 +13,10 @@ const protectedRoutes = [
   '/projects/:projectId', // Matches project detail
   '/projects/:projectId/workspace', // Matches workspace base
   '/projects/:projectId/workspace/:subpath*', // Matches workspace subpaths (chat, kanban, etc.)
+  // '/analyze/:username/:repo', // Matches /analyze and any subpaths
+  // '/analyze/profile/:username',
+  '/analyze/:subpath*',
+  // '/analyze/ajstars/ajstars1%2FVirtualQR',
   '/notifications',
   '/connections',
   '/settings',
@@ -113,18 +117,31 @@ export async function middleware(request: NextRequest) {
     const isOnboarded = user.user_metadata?.isOnboarded === true;
     
     if (!isOnboarded && path !== '/onboarding') {
-      // If not onboarded and trying to access any page other than onboarding, redirect to onboarding
-      return NextResponse.redirect(new URL('/onboarding', request.url))
-    } else if (isOnboarded && path === '/onboarding') {
-      // If onboarded and trying to access onboarding page, redirect to dashboard
-      return NextResponse.redirect(new URL('/profile/edit', request.url))
+    // If not onboarded and trying to access any page other than onboarding, redirect to onboarding
+    const onboardingUrl = new URL('/onboarding', request.url)
+    const callback = cookieStore.get('auth_callback')?.value
+    if (callback) {
+      onboardingUrl.searchParams.set('callback', callback)
+    }
+    return NextResponse.redirect(onboardingUrl)
+  } else if (isOnboarded && path === '/onboarding') {
+      // If onboarded and trying to access onboarding page, redirect to callback or dashboard
+      const callback = request.nextUrl.searchParams.get('callback')
+      const redirectUrl = callback ? new URL(callback, request.url) : new URL('/profile/edit', request.url)
+      const response = NextResponse.redirect(redirectUrl)
+      response.cookies.delete('auth_callback')
+      return response
     }
   }
 
   // Protected route handling
   if (!user && isProtectedRoute(path)) {
     // Redirect unauthenticated users trying to access protected routes
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('callback', path)
+    const response = NextResponse.redirect(loginUrl)
+    response.cookies.set('auth_callback', path)
+    return response
   }
 
   

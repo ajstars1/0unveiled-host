@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
 import { Loader2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 // Form & Validation
 import { useForm } from "react-hook-form"
@@ -41,6 +41,7 @@ const mockSearch = async (value: string): Promise<Option[]> => {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(false);
   const [supabaseUserId, setSupabaseUserId] = useState<string | null>(null);
@@ -137,7 +138,8 @@ export default function OnboardingPage() {
           title: "Success",
           description: "Your profile is set up. Redirecting...",
         });
-        router.push("/profile/edit"); // Redirect to profile edit page
+        const callback = searchParams.get('callback');
+        router.push(callback || "/profile/edit"); // Redirect to profile edit page or callback
         router.refresh();
       }
     } catch (error) {
