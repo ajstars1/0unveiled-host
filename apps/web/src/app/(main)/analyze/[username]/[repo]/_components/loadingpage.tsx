@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import TetrisGame from "./tetris-game"
+import { useDeviceDetection } from "@/hooks/use-device-detection"
 
 interface LoadingPageProps {
   currentRepo?: string
@@ -11,6 +12,8 @@ interface LoadingPageProps {
 }
 
 export default function LoadingPage({ currentRepo, status, progress, complete }: LoadingPageProps) {
+  const { isMobile, isTablet } = useDeviceDetection()
+  
   const clampedProgress = useMemo(() => {
     const p = typeof progress === "number" ? progress : undefined
     if (typeof p !== "number") return undefined
@@ -55,6 +58,173 @@ export default function LoadingPage({ currentRepo, status, progress, complete }:
     return Math.max(byStatus, byProgress)
   })()
 
+  // Mobile-specific UI
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-bg-gradient-start to-bg-gradient-end">
+        <div className="h-screen flex flex-col">
+          {/* Mobile Header - Compact Loading Status */}
+          <div className="bg-card/95 backdrop-blur-sm border-b border-border/50 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-6 h-6 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
+                  <div className="absolute inset-0 w-6 h-6 border-2 border-transparent border-t-accent rounded-full animate-spin" style={{ animationDuration: '0.8s' }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-sm font-heading font-bold text-foreground tracking-tight truncate">Processing Analysis</h1>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {status || "Working..."}
+                  </p>
+                </div>
+              </div>
+              {typeof clampedProgress === "number" && (
+                <div className="text-right">
+                  <div className="text-lg font-mono font-bold text-foreground">{Math.round(clampedProgress)}%</div>
+                  <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700 ease-out rounded-full"
+                      style={{ width: `${clampedProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {currentRepo && (
+              <div className="mt-2 text-xs text-muted-foreground font-mono truncate">
+                Analyzing: {currentRepo}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Game Area - Full Screen */}
+          <div className="flex-1 relative bg-gradient-to-br from-primary via-primary/95 to-primary/90">
+            <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_49%,rgba(255,255,255,0.05)_50%,transparent_51%)] bg-[size:20px_20px]" />
+            <div className="relative z-10 h-full flex items-center justify-center p-2">
+              <TetrisGame variant="dark" className="w-full h-full" />
+            </div>
+          </div>
+
+          {/* Mobile Bottom Status Bar */}
+          <div className="bg-card/95 backdrop-blur-sm border-t border-border/50 px-4 py-2">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 overflow-x-auto flex-1">
+                {PHASES.slice(0, 4).map((p, idx) => {
+                  const isDone = currentPhaseIndex > idx
+                  const isCurrent = currentPhaseIndex === idx
+                  return (
+                    <div key={p.key} className={`flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                      isCurrent ? "text-foreground font-semibold" : "text-muted-foreground/70"
+                    }`}>
+                      <div className={`w-2 h-2 rounded-full ${
+                        isDone ? "bg-primary" : isCurrent ? "bg-accent animate-pulse" : "bg-muted-foreground/30"
+                      }`} />
+                      <span className="text-xs">{p.label.split(' ')[0]}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              {complete && (
+                <div className="flex items-center gap-1.5 text-accent-foreground ml-2">
+                  <div className="w-3 h-3 bg-accent rounded-full flex items-center justify-center">
+                    <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-semibold">Complete!</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Tablet Layout - Slightly different from mobile
+  if (isTablet) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-bg-gradient-start to-bg-gradient-end">
+        <div className="h-screen flex flex-col">
+          {/* Tablet Header */}
+          <div className="bg-card/95 backdrop-blur-sm border-b border-border/50 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
+                  <div className="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-accent rounded-full animate-spin" style={{ animationDuration: '0.8s' }} />
+                </div>
+                <div>
+                  <h1 className="text-lg font-heading font-bold text-foreground tracking-tight">Processing Analysis</h1>
+                  <p className="text-sm text-muted-foreground">{status || "Working..."}</p>
+                </div>
+              </div>
+              {typeof clampedProgress === "number" && (
+                <div className="text-right">
+                  <div className="text-2xl font-mono font-bold text-foreground">{Math.round(clampedProgress)}%</div>
+                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-700 ease-out rounded-full"
+                      style={{ width: `${clampedProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {currentRepo && (
+              <div className="mt-3 text-sm text-muted-foreground font-mono">
+                Analyzing: {currentRepo}
+              </div>
+            )}
+          </div>
+
+          {/* Tablet Game Area */}
+          <div className="flex-1 relative bg-gradient-to-br from-primary via-primary/95 to-primary/90">
+            <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_49%,rgba(255,255,255,0.05)_50%,transparent_51%)] bg-[size:20px_20px]" />
+            <div className="relative z-10 h-full flex items-center justify-center p-4">
+              <TetrisGame variant="dark" className="w-full h-full" />
+            </div>
+          </div>
+
+          {/* Tablet Bottom Status */}
+          <div className="bg-card/95 backdrop-blur-sm border-t border-border/50 px-6 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 overflow-x-auto flex-1">
+                {PHASES.slice(0, 6).map((p, idx) => {
+                  const isDone = currentPhaseIndex > idx
+                  const isCurrent = currentPhaseIndex === idx
+                  return (
+                    <div key={p.key} className={`flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
+                      isCurrent ? "text-foreground font-semibold" : "text-muted-foreground/70"
+                    }`}>
+                      <div className={`w-3 h-3 rounded-full ${
+                        isDone ? "bg-primary" : isCurrent ? "bg-accent animate-pulse" : "bg-muted-foreground/30"
+                      }`} />
+                      <span className="text-sm">{p.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              {complete && (
+                <div className="flex items-center gap-2 text-accent-foreground ml-4">
+                  <div className="w-4 h-4 bg-accent rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold">Analysis Complete!</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop Layout - Original side-by-side design
   return (
     <div className="min-h-screen bg-gradient-to-b from-bg-gradient-start to-bg-gradient-end">
       <div className="h-screen max-w-7xl mx-auto p-6 md:p-8">

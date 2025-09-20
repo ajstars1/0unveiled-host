@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useDeviceDetection } from "@/hooks/use-device-detection"
 
 type Cell = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 // 0 empty, 1..7 pieces
 
@@ -175,6 +176,7 @@ export interface TetrisGameProps {
 }
 
 export default function TetrisGame({ className, variant = "light" }: TetrisGameProps) {
+  const { isMobile, isTablet } = useDeviceDetection()
   const isDark = variant === "dark"
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const nextRef = useRef<HTMLCanvasElement>(null)
@@ -595,6 +597,254 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
     return null
   }, [running, gameOver, mode, score, linesCleared, level, seedQueue, initActiveFromQueue])
 
+  // Mobile Layout - Full screen game with minimal controls
+  if (isMobile) {
+    return (
+      <div className={`relative w-full h-full flex flex-col ${className ?? ""}`}>
+        {/* Mobile Game Canvas - Takes most of the space */}
+        <div className="flex-1 relative select-none overflow-hidden flex items-center justify-center">
+          {overlay}
+          <canvas
+            ref={canvasRef}
+            width={BOARD_W}
+            height={BOARD_H}
+            className={`block border rounded-lg shadow-md max-w-full max-h-full ${isDark ? "border-white/20 shadow-black/20" : "border-gray-200 shadow-gray-200/50"}`}
+            onClick={onCanvasClick}
+            style={{ 
+              maxWidth: '100%', 
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto'
+            }}
+          />
+        </div>
+
+        {/* Mobile Bottom Controls - Compact */}
+        <div className={`p-3 border-t ${isDark ? "border-white/20 bg-primary/80" : "border-gray-200 bg-white"}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className={`text-xs font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Mode:</div>
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value as typeof mode)}
+                disabled={running}
+                className={`text-xs rounded px-2 py-1 border font-medium transition-all duration-200 ${
+                  isDark
+                    ? "bg-primary/50 border-white/30 text-white"
+                    : "bg-gray-50 border-gray-300 text-gray-700"
+                } ${running ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {(["easy", "medium", "hard", "insane"] as const).map((m) => (
+                  <option key={m} value={m}>
+                    {m[0].toUpperCase() + m.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1">
+                <span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Score:</span>
+                <span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{score.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Level:</span>
+                <span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{level}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <canvas 
+                ref={nextRef} 
+                width={3 * TILE} 
+                height={3 * TILE} 
+                className={`border rounded shadow-sm ${isDark ? "border-white/20 shadow-black/20" : "border-gray-100 shadow-gray-200/30"}`}
+                style={{ width: '36px', height: '36px' }}
+              />
+              <div className="text-xs">
+                <div className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Next</div>
+                <div className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{linesCleared} lines</div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                className={`text-xs rounded px-3 py-1.5 font-semibold transition-all duration-200 disabled:opacity-50 ${
+                  isDark ? "bg-white text-black hover:bg-white/90" : "bg-black text-white hover:bg-black/90"
+                }`}
+                onClick={() => {
+                  if (!running) {
+                    if (gameOver) {
+                      setBoard(createEmptyBoard())
+                      setScore(0)
+                      setLevel(0)
+                      setLinesCleared(0)
+                      dropIntervalRef.current = BASE_INTERVAL[mode]
+                      lastDropRef.current = 0
+                      setGameOver(false)
+                      bagRef.current = bagGenerator()
+                      const q = seedQueue()
+                      setNext(q)
+                      initActiveFromQueue(q)
+                    } else {
+                      dropIntervalRef.current = BASE_INTERVAL[mode]
+                      lastDropRef.current = 0
+                    }
+                    setRunning(true)
+                  }
+                }}
+                disabled={running}
+              >
+                {gameOver ? "Play Again" : running ? "Playing" : "Start"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Tablet Layout - Similar to mobile but with more space
+  if (isTablet) {
+    return (
+      <div className={`relative w-full h-full flex flex-col ${className ?? ""}`}>
+        {/* Tablet Game Canvas */}
+        <div className="flex-1 relative select-none overflow-hidden flex items-center justify-center">
+          {overlay}
+          <canvas
+            ref={canvasRef}
+            width={BOARD_W}
+            height={BOARD_H}
+            className={`block border rounded-lg shadow-md max-w-full max-h-full ${isDark ? "border-white/20 shadow-black/20" : "border-gray-200 shadow-gray-200/50"}`}
+            onClick={onCanvasClick}
+            style={{ 
+              maxWidth: '100%', 
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto'
+            }}
+          />
+        </div>
+
+        {/* Tablet Bottom Controls */}
+        <div className={`p-4 border-t ${isDark ? "border-white/20 bg-primary/80" : "border-gray-200 bg-white"}`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-4">
+              <div className={`text-sm font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Difficulty Mode</div>
+              <div className="flex gap-2">
+                {(["easy", "medium", "hard", "insane"] as const).map((m) => (
+                  <button
+                    key={m}
+                    disabled={running}
+                    className={`text-xs rounded-md px-3 py-1.5 border font-medium transition-all duration-200 ${
+                      mode === m
+                        ? isDark
+                          ? "bg-white text-black border-white shadow-md"
+                          : "bg-black text-white border-black shadow-md"
+                        : isDark
+                          ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50"
+                          : "border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                    } ${running ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}`}
+                    onClick={() => setMode(m)}
+                  >
+                    {m[0].toUpperCase() + m.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Score:</span>
+                <span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{score.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Level:</span>
+                <span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{level}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Lines:</span>
+                <span className={`font-bold font-mono ${isDark ? "text-white" : ""}`}>{linesCleared}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <canvas 
+                ref={nextRef} 
+                width={4 * TILE} 
+                height={4 * TILE} 
+                className={`border rounded shadow-sm ${isDark ? "border-white/20 shadow-black/20" : "border-gray-100 shadow-gray-200/30"}`}
+                style={{ width: '48px', height: '48px' }}
+              />
+              <div className="text-sm">
+                <div className={`font-medium ${isDark ? "text-white/70" : "text-gray-500"}`}>Next Piece</div>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                className={`text-sm rounded-md px-4 py-2 font-semibold transition-all duration-200 disabled:opacity-50 ${
+                  isDark ? "bg-white text-black hover:bg-white/90 shadow-md" : "bg-black text-white hover:bg-black/90 shadow-md"
+                }`}
+                onClick={() => {
+                  if (!running) {
+                    if (gameOver) {
+                      setBoard(createEmptyBoard())
+                      setScore(0)
+                      setLevel(0)
+                      setLinesCleared(0)
+                      dropIntervalRef.current = BASE_INTERVAL[mode]
+                      lastDropRef.current = 0
+                      setGameOver(false)
+                      bagRef.current = bagGenerator()
+                      const q = seedQueue()
+                      setNext(q)
+                      initActiveFromQueue(q)
+                    } else {
+                      dropIntervalRef.current = BASE_INTERVAL[mode]
+                      lastDropRef.current = 0
+                    }
+                    setRunning(true)
+                  }
+                }}
+                disabled={running}
+              >
+                {gameOver ? "Play Again" : running ? "Playing" : "Start Game"}
+              </button>
+              <button
+                className={`text-sm border rounded-md px-4 py-2 font-medium transition-all duration-200 ${
+                  isDark ? "border-white/30 text-white hover:bg-white/10 hover:border-white/50" : "border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                }`}
+                onClick={() => {
+                  setBoard(createEmptyBoard())
+                  setScore(0)
+                  setLevel(0)
+                  setLinesCleared(0)
+                  dropIntervalRef.current = BASE_INTERVAL[mode]
+                  lastDropRef.current = 0
+                  setRunning(false)
+                  setGameOver(false)
+                  bagRef.current = bagGenerator()
+                  const q: Exclude<Cell, 0>[] = seedQueue()
+                  setNext(q)
+                  const t = q[0]
+                  const shape = SHAPES[t]
+                  setActive({ shape, type: t, x: Math.floor((COLS - shape.length) / 2), y: -2 })
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop Layout - Original side-by-side design
   return (
     <div className={`relative flex gap-6 ${className ?? ""}`}>
       <div className="relative select-none overflow-hidden">
