@@ -3,7 +3,7 @@
 import os
 from typing import List
 
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 
 
@@ -19,14 +19,19 @@ class Settings(BaseSettings):
     port: int = Field(default=8080, alias="PORT")
     
     # CORS
-    cors_origins: List[str] = Field(
-        default=[
-            "http://localhost:3000",
-            "https://www.0unveiled.com",
-            "https://0unveiled.com"
-        ],
+    cors_origins_str: str = Field(
+        default="http://localhost:3000,https://www.0unveiled.com,https://0unveiled.com",
         alias="CORS_ORIGINS"
     )
+
+    @computed_field
+    @property
+    def cors_origins(self) -> List[str]:
+        """Return a list of CORS origins, filtering for production if needed."""
+        origins = [origin.strip() for origin in self.cors_origins_str.split(',') if origin.strip()]
+        if self.environment == "production":
+            return [origin for origin in origins if "localhost" not in origin]
+        return origins
 
     # GitHub Integration
     github_token: str = Field(default="", alias="GITHUB_TOKEN")
@@ -71,12 +76,6 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
-        
-        @classmethod
-        def parse_env_var(cls, field_name: str, raw_val: str) -> any:
-            if field_name == 'cors_origins':
-                return [item.strip() for item in raw_val.split(',')]
-            return raw_val
 
 
 # Global settings instance
