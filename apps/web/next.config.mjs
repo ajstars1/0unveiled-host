@@ -4,7 +4,6 @@ const nextConfig = {
   transpilePackages: [],
   experimental: {
     optimizePackageImports: [],
-    globalNotFound: true,
   },
   webpack: (config, { isServer }) => {
     // Fix for dynamic require of "react" error
