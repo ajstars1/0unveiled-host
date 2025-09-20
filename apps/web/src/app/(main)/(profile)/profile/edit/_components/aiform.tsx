@@ -43,7 +43,7 @@ const profileEditTabs = [
   { value: "integrations", label: "Integrations" },
 ];
 
-export default function ProfileEditPage() {
+export default function ProfileEditForm() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const searchParams = useSearchParams()
