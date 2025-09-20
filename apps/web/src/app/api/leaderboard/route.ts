@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { db } from '@/lib/drizzle';
+import { leaderboardScores, users } from '@0unveiled/database';
+import { eq, and, desc, asc, isNotNull, like, or, SQL, ne } from 'drizzle-orm';
 
 const leaderboardQuerySchema = z.object({
   type: z.enum(["GENERAL", "TECH_STACK", "DOMAIN"]).default("GENERAL"),
@@ -22,31 +25,97 @@ export async function GET(request: NextRequest) {
       search: searchParams.get('search') || undefined,
     });
 
-    // Forward request to the Express API
-    const baseUrl = process.env.API_BASE_URL || 'http://localhost:3001';
-    const params = new URLSearchParams({
-      type: query.type,
-      limit: query.limit.toString(),
-      offset: query.offset.toString(),
-    });
+    let conditions = [
+      eq(leaderboardScores.leaderboardType, query.type),
+      // Only include onboarded users (with a username)
+      isNotNull(users.username),
+      ne(users.username, ""),
+      eq(users.onboarded, true),
+    ];
 
-    if (query.techStack) params.set('techStack', query.techStack);
-    if (query.domain) params.set('domain', query.domain);
-    if (query.search) params.set('search', query.search);
-
-    const response = await fetch(`${baseUrl}/api/leaderboard?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
+    if (query.type === "TECH_STACK" && query.techStack) {
+      conditions.push(eq(leaderboardScores.techStack, query.techStack));
+    } else if (query.type === "DOMAIN" && query.domain) {
+      conditions.push(eq(leaderboardScores.domain, query.domain));
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // Add search functionality
+    if (query.search) {
+      const searchTerm = `%${query.search}%`;
+      const searchConditions = [
+        like(users.firstName, searchTerm),
+        like(users.lastName, searchTerm),
+        like(users.username, searchTerm)
+      ].filter(Boolean) as SQL<unknown>[];
+      
+      if (searchConditions.length > 0) {
+        const orCondition = or(...searchConditions);
+        if (orCondition) {
+          conditions.push(orCondition);
+        }
+      }
+    }
+
+    const data = await db
+      .select({
+        rank: leaderboardScores.rank,
+        score: leaderboardScores.score,
+        userId: leaderboardScores.userId, // Include userId to help with uniqueness
+        user: {
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profilePicture: users.profilePicture,
+        },
+      })
+      .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+      .where(and(...conditions))
+      .orderBy(asc(leaderboardScores.rank), desc(leaderboardScores.score))
+      .limit(query.limit)
+      .offset(query.offset);
+
+    // Ensure unique users (remove potential duplicates)
+    // Define interfaces for type safety
+    interface User {
+      id: string;
+      username: string;
+      firstName: string;
+      lastName: string;
+      profilePicture: string | null;
+    }
+
+    interface LeaderboardItem {
+      rank: number;
+      score: number;
+      userId: string;
+      user: User;
+    }
+
+    interface LeaderboardItemWithoutUserId {
+      rank: number;
+      score: number;
+      user: User;
+    }
+
+    const uniqueData = data.reduce((acc: LeaderboardItemWithoutUserId[], current: LeaderboardItem) => {
+      const existingIndex = acc.findIndex(item => item.user.id === current.user.id);
+      if (existingIndex === -1) {
+        // Remove the userId field from the response
+        const { userId, ...rest } = current;
+        acc.push(rest);
+      } else {
+        // Keep the entry with the higher score if duplicate found
+        if (current.score > acc[existingIndex].score) {
+          const { userId, ...rest } = current;
+          acc[existingIndex] = rest;
+        }
+      }
+      return acc;
+    }, [] as LeaderboardItemWithoutUserId[]);
+
+    return NextResponse.json({ success: true, data: uniqueData });
   } catch (error) {
     console.error('Leaderboard API error:', error);
     return NextResponse.json(
