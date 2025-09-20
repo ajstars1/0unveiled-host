@@ -19,26 +19,15 @@ class Settings(BaseSettings):
     port: int = Field(default=8080, alias="PORT")
     
     # CORS
-    cors_origins_str: str = Field(
-        default="http://localhost:3000,http://localhost:3001,http://localhost:8080,https://0unveiled.com,https://www.0unveiled.com",
+    cors_origins: List[str] = Field(
+        default=[
+            "http://localhost:3000",
+            "https://www.0unveiled.com",
+            "https://0unveiled.com"
+        ],
         alias="CORS_ORIGINS"
     )
-    cors_origins: List[str] = []
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v, values) -> List[str]:
-        """Dynamically set CORS origins based on environment."""
-        if isinstance(v, list) and v:
-            return v
-        
-        origins = [origin.strip() for origin in values.data.get("cors_origins_str", "").split(',')]
-        
-        if values.data.get("environment") == "production":
-            return [origin for origin in origins if "localhost" not in origin]
-        
-        return origins
-    
     # GitHub Integration
     github_token: str = Field(default="", alias="GITHUB_TOKEN")
     github_tokens_str: str = Field(default="", alias="GITHUB_TOKENS")
@@ -82,6 +71,12 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        
+        @classmethod
+        def parse_env_var(cls, field_name: str, raw_val: str) -> any:
+            if field_name == 'cors_origins':
+                return [item.strip() for item in raw_val.split(',')]
+            return raw_val
 
 
 # Global settings instance
