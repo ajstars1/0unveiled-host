@@ -19,16 +19,25 @@ class Settings(BaseSettings):
     port: int = Field(default=8080, alias="PORT")
     
     # CORS
-    cors_origins: List[str] = Field(
-        default=[
-            "http://localhost:3000", 
-            "http://localhost:3001", 
-            "http://localhost:8080",
-            "https://0unveiled.com",
-            "https://www.0unveiled.com"
-        ],
+    cors_origins_str: str = Field(
+        default="http://localhost:3000,http://localhost:3001,http://localhost:8080,https://0unveiled.com,https://www.0unveiled.com",
         alias="CORS_ORIGINS"
     )
+    cors_origins: List[str] = []
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v, values) -> List[str]:
+        """Dynamically set CORS origins based on environment."""
+        if isinstance(v, list) and v:
+            return v
+        
+        origins = [origin.strip() for origin in values.data.get("cors_origins_str", "").split(',')]
+        
+        if values.data.get("environment") == "production":
+            return [origin for origin in origins if "localhost" not in origin]
+        
+        return origins
     
     # GitHub Integration
     github_token: str = Field(default="", alias="GITHUB_TOKEN")

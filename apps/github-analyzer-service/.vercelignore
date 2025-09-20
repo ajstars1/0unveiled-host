@@ -1,0 +1,26 @@
+# Ignore virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local development files
+.env
+.env.*
+*.log
+
+# Ignore IDE/editor directories
+.vscode/
+.idea/
+
+# Ignore test files
+tests/
+pytest.ini
+.pytest_cache/
+
+# Ignore Node.js related files if any
+node_modules/
+package-lock.json
+yarn.lock
