@@ -4,7 +4,7 @@ import { eq, isNull, or, lt, and } from "drizzle-orm";
 // logger removed
 import { updateLeaderboards } from "../services/leaderboard-service.js";
 
-const ANALYZER_API_URL = "http://localhost:8000";
+const ANALYZER_API_URL = process.env.ANALYZER_SERVICE_URL || "http://localhost:8000";
 
 interface AnalysisResult {
   ai_insights?: { overall_quality_score: number };
