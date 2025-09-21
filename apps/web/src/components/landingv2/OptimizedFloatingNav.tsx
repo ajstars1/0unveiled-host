@@ -45,14 +45,24 @@ export function OptimizedFloatingNav({
   const pathname = usePathname();
   const queryClient = useQueryClient();
 
-  const isLoggedIn = !!userId && !!initialUser;
+  // Use available user data (prefer initialUser if available, fallback to sessionUser)
+  const userData = initialUser || (sessionUser ? {
+    id: sessionUser.id,
+    firstName: sessionUser.user_metadata?.firstName || sessionUser.email?.split('@')[0] || 'User',
+    lastName: sessionUser.user_metadata?.lastName || '',
+    email: sessionUser.email || '',
+    username: sessionUser.user_metadata?.username || sessionUser.email?.split('@')[0] || '',
+    profilePicture: sessionUser.user_metadata?.profilePicture || null,
+  } : null);
+
+  const isLoggedIn = !!userData;
   
   // Preload notification data for better performance
-  useNotificationPreloader(userId, isLoggedIn);
+  useNotificationPreloader(userData?.id || '', isLoggedIn);
 
   // Optimized notification count query with caching
   const { data: notificationCount } = useQuery({
-    queryKey: ['notificationCount', userId],
+    queryKey: ['notificationCount', userData?.id],
     queryFn: async () => getUnreadNotificationCount(),
     initialData: initialNotificationCount,
     refetchInterval: 30000,
@@ -65,7 +75,7 @@ export function OptimizedFloatingNav({
 
   // Optimized recent notifications query
   const { data: recentNotifications } = useQuery({
-    queryKey: ['recentNotifications', userId],
+    queryKey: ['recentNotifications', userData?.id],
     queryFn: async () => getRecentNotifications(5),
     initialData: initialRecentNotifications,
     refetchInterval: 60000,
@@ -78,9 +88,9 @@ export function OptimizedFloatingNav({
 
   // Memoized user initials calculation
   const userInitials = useMemo(() => {
-    if (!initialUser?.firstName) return 'U';
-    return `${initialUser.firstName.charAt(0).toUpperCase()}${initialUser.lastName?.charAt(0).toUpperCase() || ''}`;
-  }, [initialUser?.firstName, initialUser?.lastName]);
+    if (!userData?.firstName) return 'U';
+    return `${userData.firstName.charAt(0).toUpperCase()}${userData.lastName?.charAt(0).toUpperCase() || ''}`;
+  }, [userData?.firstName, userData?.lastName]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -167,7 +177,7 @@ export function OptimizedFloatingNav({
       return <div className="w-28 h-8 rounded-full bg-white/10 animate-pulse" />;
     }
 
-    if (sessionUser && initialUser) {
+    if (userData) {
       return (
         <div className="flex items-center gap-2">
           {/* Notification Bell - only shows when logged in */}
@@ -187,7 +197,7 @@ export function OptimizedFloatingNav({
             </DropdownMenuTrigger>
             <OptimizedNotificationDropdown 
               notifications={recentNotifications ?? []} 
-              userId={userId}
+              userId={userData.id}
             />
           </DropdownMenu>
 
@@ -197,8 +207,8 @@ export function OptimizedFloatingNav({
               <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full p-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage 
-                    src={initialUser.profilePicture || undefined} 
-                    alt={initialUser.firstName || 'User'} 
+                    src={userData.profilePicture || undefined} 
+                    alt={userData.firstName || 'User'} 
                   />
                   <AvatarFallback className="text-xs">
                     {userInitials}
@@ -210,16 +220,16 @@ export function OptimizedFloatingNav({
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
                   <p className="font-medium text-sm">
-                    {initialUser.firstName} {initialUser.lastName}
+                    {userData.firstName} {userData.lastName}
                   </p>
                   <p className="w-[200px] truncate text-xs text-muted-foreground">
-                    {initialUser.email}
+                    {userData.email}
                   </p>
                 </div>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild inset={false}>
-                <Link href={`/${initialUser.username}`} className="w-full cursor-pointer">
+                <Link href={`/${userData.username}`} className="w-full cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </Link>
@@ -283,7 +293,7 @@ export function OptimizedFloatingNav({
         </Link>
       </div>
     );
-  }, [loading, sessionUser, initialUser, notificationCount, recentNotifications, userId, userInitials, handleLogout]);
+  }, [loading, userData, notificationCount, recentNotifications, userInitials, handleLogout]);
 
   return (
     <AnimatePresence>

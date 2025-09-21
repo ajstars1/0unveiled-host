@@ -77,13 +77,13 @@ export async function fetchLayoutData(userId?: string): Promise<LayoutData> {
     const [fetchedUser, sessionUserResult] = await Promise.allSettled([
       Promise.race([
         getCurrentUser(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('getCurrentUser timeout')), 8000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('getCurrentUser timeout')), 15000))
       ]),
       (async () => {
         try {
           // Add timeout for Supabase client creation
           const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Supabase client creation timeout')), 5000)
+            setTimeout(() => reject(new Error('Supabase client creation timeout')), 10000)
           })
           
           const clientPromise = createSupabaseServerClient()

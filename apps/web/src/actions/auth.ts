@@ -302,7 +302,7 @@ export const getAuthenticatedUser = async () => {
     
     // Add timeout to prevent hanging connections
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Supabase client timeout')), 5000)
+      setTimeout(() => reject(new Error('Supabase client timeout')), 10000)
     })
     
     const authPromise = supabase.auth.getUser()
