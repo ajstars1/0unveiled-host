@@ -16,6 +16,8 @@ import { useGlobalPresenceContext } from '@/context/global-presence-context'
 interface ChatListProps {
   initialChannels: DmChannelListItem[];
   currentUserId: string;
+  onChannelSelect?: (channelId: string) => void;
+  selectedChannelId?: string | null;
 }
 
 const getInitials = (firstName?: string | null, lastName?: string | null): string => {
@@ -24,7 +26,7 @@ const getInitials = (firstName?: string | null, lastName?: string | null): strin
   return `${firstInitial}${lastInitial}` || '??'
 }
 
-export function ChatList({ initialChannels, currentUserId }: ChatListProps) {
+export function ChatList({ initialChannels, currentUserId, onChannelSelect, selectedChannelId }: ChatListProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
@@ -62,19 +64,21 @@ export function ChatList({ initialChannels, currentUserId }: ChatListProps) {
           const user = channel.otherUser;
           const lastMsg = channel.lastMessage;
           const lastMessageIsOwn = lastMsg?.authorId === currentUserId;
-          const isActive = pathname === `/chat/${channel.channelId}`;
+          const isActive = onChannelSelect ? selectedChannelId === channel.channelId : pathname === `/chat/${channel.channelId}`;
           // Check if the other user is online using the presence state
           const isOnline = !isLoadingPresence && !!user?.id && !!globalPresenceState[user.id];
           
-          return (
-            <Link 
-              href={`/chat/${channel.channelId}`}
-              key={channel.channelId}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-md hover:bg-muted/80 transition-colors cursor-pointer",
-                isActive && "bg-muted"
-              )}
-            >
+          const handleClick = () => {
+            if (onChannelSelect) {
+              onChannelSelect(channel.channelId);
+            }
+          };
+
+          const content = (
+            <div className={cn(
+              "flex items-center gap-3 p-3 rounded-md hover:bg-muted/80 transition-colors cursor-pointer",
+              isActive && "bg-muted"
+            )}>
               <div className="relative shrink-0">
                 <Avatar className="h-11 w-11 shrink-0">
                   <AvatarImage className="" src={user.profilePicture || undefined} alt={user.firstName || 'User'} />
@@ -114,6 +118,19 @@ export function ChatList({ initialChannels, currentUserId }: ChatListProps) {
                    )}
                 </div>
               </div>
+            </div>
+          );
+
+          return onChannelSelect ? (
+            <div key={channel.channelId} onClick={handleClick}>
+              {content}
+            </div>
+          ) : (
+            <Link 
+              href={`/chat/${channel.channelId}`}
+              key={channel.channelId}
+            >
+              {content}
             </Link>
           );
         })}
