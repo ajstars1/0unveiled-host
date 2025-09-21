@@ -25,12 +25,12 @@ export function Footer() {
 
           {/* Links */}
           <nav className="flex items-center gap-6 text-sm">
-            <Link 
+            {/* <Link 
               href="/pricing" 
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Pricing
-            </Link>
+            </Link> */}
             <Link 
               href="/docs" 
               className="text-muted-foreground hover:text-foreground transition-colors"

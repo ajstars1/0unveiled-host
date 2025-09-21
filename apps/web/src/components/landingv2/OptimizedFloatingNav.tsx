@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, FileText, DollarSign, LogIn, Sparkles, Bell, User, Settings, LogOut } from "lucide-react";
+import { Home, FileText, DollarSign, LogIn, Sparkles, Bell, User, Settings, LogOut, MessageCircle, Edit } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { User as DatabaseUser, Notification } from "@0unveiled/database";
@@ -150,7 +150,7 @@ export function OptimizedFloatingNav({
 
   const navItems = useMemo(() => [
     { id: "home", icon: Home, label: "Home", href: "/" },
-    { id: "pricing", icon: DollarSign, label: "Pricing", href: "/pricing" },
+    // { id: "pricing", icon: DollarSign, label: "Pricing", href: "/pricing" },
     { id: "explore", icon: FileText, label: "Explore", href: "/profiles" },
     { id: "leaderboard", icon: Sparkles, label: "Leaderboard", href: "/leaderboard" },
   ], []);
@@ -248,15 +248,33 @@ export function OptimizedFloatingNav({
               <DropdownMenuItem asChild inset={false}>
                 <Link href={`/${userData.username}`} className="w-full cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
-                  Profile
+                 My Profile
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild inset={false}>
+                <Link href="/profile/edit" className="w-full cursor-pointer">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild inset={false}>
+                <Link href="/chat" className="w-full cursor-pointer">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Chats
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild inset={false}>
+                <Link href="/notifications" className="w-full cursor-pointer">
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notifications
+                </Link>
+              </DropdownMenuItem>
+              {/* <DropdownMenuItem asChild inset={false}>
                 <Link href="/settings" className="w-full cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </Link>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 cursor-pointer" inset={false}>
                 <LogOut className="mr-2 h-4 w-4" />

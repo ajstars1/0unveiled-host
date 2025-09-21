@@ -3,7 +3,7 @@ import { Github, Twitter, Linkedin } from "lucide-react"
 
 const navigation = [
   { name: "Products", href: "/products" },
-  { name: "Pricing", href: "/pricing" },
+  // { name: "Pricing", href: "/pricing" },
   { name: "Docs", href: "/docs" },
   { name: "Privacy", href: "/privacy" },
   { name: "Terms", href: "/terms" },
