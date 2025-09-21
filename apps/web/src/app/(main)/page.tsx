@@ -122,11 +122,11 @@ export default function HomePage() {
       
       <TrustGalaxy />
       
-      <section className="py-16 lg:py-24 bg-muted/30">
+      {/* <section className="py-16 lg:py-24 bg-muted/30">
         <div className="container mx-auto px-4 max-w-2xl">
           <SignUpCTA />
         </div>
-      </section>
+      </section> */}
       
       <Footer />
     </main>

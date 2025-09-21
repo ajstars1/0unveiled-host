@@ -405,7 +405,7 @@ export default function RecruitmentToolsDemo() {
             </Card>
 
             {/* Post Role CTA */}
-            <Card>
+            {/* <Card>
               <CardContent className="p-6">
                 {!showRoleForm ? (
                   <div>
@@ -493,7 +493,7 @@ export default function RecruitmentToolsDemo() {
                   </motion.div>
                 )}
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Stats */}
             <Card>
