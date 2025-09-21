@@ -25,7 +25,7 @@ import { onboarding as submitOnboardingData } from "@/actions/settings"
 import { SKILLS_Beta } from "@/constants/skills"
 import { toast } from "@/hooks/use-toast"
 
-import logoAbstract from "@/public/abstrack_logo_light.svg"
+// import logoAbstract from "@/public/abstrack_logo_light.svg"
 // Define types based on the schema
 type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
 
@@ -155,154 +155,213 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-neutral-950 to-neutral-900 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <div className="container mx-auto py-12 px-4 md:px-6 flex-1 flex items-center justify-center">
         <div className="max-w-3xl w-full">
           <div className="text-center mb-8">
-            <Image src={logoAbstract} alt="Abstrack Logo" width={80} height={80} className="mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-white">Complete Your Profile</h1>
-            <p className="text-gray-300 mt-2">Fill in your details to get started on Abstrack</p>
+            <Image
+              src={"/abstrack_logo_light.svg"}
+              alt="Abstrack Logo"
+              width={80}
+              height={80}
+              className="mx-auto mb-4"
+            />
+            <h1 className="text-3xl font-bold text-black">
+              Complete Your Profile
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Fill in your details to get started on Abstrack
+            </p>
           </div>
 
           <div className="bg-white text-black rounded-xl shadow-xl p-8">
-             <Form {...form}>
-               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                 <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
-                   <FormField
-                     control={form.control}
-                     name="username"
-                     render={({ field }: { field: ControllerRenderProps<OnboardingFormValues, "username"> }) => (
-                       <FormItem className="space-y-2">
-                         <FormLabel className="text-black">Username</FormLabel>
-                         <FormControl>
-                           <Input
-                             placeholder="@username" 
-                             disabled={isLoading}
-                             type="text"
-                             {...field}
-                             className="bg-white border-gray-300 focus:border-black focus:ring-black"
-                           />
-                         </FormControl>
-                         <FormDescription className="text-gray-600">
-                           Your unique profile handle and URL.
-                         </FormDescription>
-                         <FormMessage className="" />
-                       </FormItem>
-                     )}
-                   />
-                   <FormField
-                     control={form.control}
-                     name="email"
-                     render={({ field }: { field: ControllerRenderProps<OnboardingFormValues, "email"> }) => (
-                       <FormItem className="space-y-2">
-                         <FormLabel className="text-black!">Email</FormLabel>
-                         <FormControl>
-                           <Input
-                             type="email"
-                             disabled // Always disable email field
-                             placeholder="Loading email..."
-                             {...field}
-                             className="bg-gray-100 border-gray-300 text-gray-500" // Indicate disabled state visually
-                           />
-                         </FormControl>
-                         <FormDescription className="text-gray-600">
-                           Your login email address.
-                         </FormDescription>
-                         <FormMessage className="" />
-                       </FormItem>
-                     )}
-                   />
-                   <FormField
-                     control={form.control}
-                           name="headline"
-                           render={({ field }: { field: ControllerRenderProps<OnboardingFormValues, "headline"> }) => (
-                             <FormItem className="md:col-span-2 space-y-2">
-                               <FormLabel className="text-black">Headline</FormLabel>
-                               <FormControl>
-                                 <Input 
-                                  {...field} 
-                                  placeholder="e.g., Aspiring Software Engineer | Design Student" 
-                                  disabled={isLoading} 
-                                  type="text"
-                                  className="bg-white border-gray-300 focus:border-black focus:ring-black"
-                                />
-                              </FormControl>
-                               <FormDescription className="text-gray-600">A short professional headline (max 100 chars).</FormDescription>
-                               <FormMessage className="" />
-                             </FormItem>
-                           )}
-                   />
-                   <FormField
-                     control={form.control}
-                     name="skills"
-                     render={({ field }: { field: ControllerRenderProps<OnboardingFormValues, "skills"> }) => (
-                       <FormItem className="col-span-1 md:col-span-2">
-                         <FormLabel className="text-black">Skills</FormLabel>
-                         <FormControl>
-                           <MultipleSelector
-                             {...field} // Spread field props here after adjustments
-                             // Ensure value mapping is correct
-                             value={field.value?.map((skill: z.infer<typeof onboardingFormSchema>["skills"][number]) => ({ 
-                                label: skill.label || skill.name,
-                                value: skill.value,
-                                group: skill.group
-                             })) || []}
-                             onChange={(options: Option[]) => field.onChange(
-                               options.map(option => ({
-                                 name: option.label,
-                                 label: option.label,
-                                 value: option.value,
-                                 group: option.group,
-                                 // rank is not part of Option, handle default if needed
-                               }))
-                             )}
-                             onSearch={mockSearch}
-                             defaultOptions={SKILLS_Beta}
-                             creatable
-                             groupBy="group"
-                             placeholder="Select or create skills..."
-                             disabled={isLoading}
-                             // Add specific classes if needed to force light theme appearance
-                             className="bg-white border-gray-300 text-black"
-                             loadingIndicator={
-                               <div className="w-full flex flex-col gap-2 p-3">
-                                 <Skeleton className="w-[70%] h-2 animate-pulse bg-gray-200" />
-                                 <Skeleton className="w-[60%] h-2 animate-pulse bg-gray-200" />
-                               </div>
-                             }
-                             emptyIndicator={
-                               <p className="w-full text-center text-sm leading-10 text-gray-500">
-                                 No results found. Type to add a new skill.
-                               </p>
-                             }
-                             badgeClassName="bg-gray-200 text-black hover:bg-gray-300"
-                           />
-                         </FormControl>
-                          <FormDescription className="text-gray-600">
-                            Add skills relevant to your profile and interests.
-                         </FormDescription>
-                         <FormMessage className="sr-only" />
-                       </FormItem>
-                     )}
-                   />
-                 </div>
-                 <div className="flex justify-end">
-                   <Button variant="default" size="default" disabled={isLoading} type="submit" className="bg-black text-white hover:bg-gray-800">
-                     {isLoading ? (
-                       <> 
-                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                         Saving Profile...
-                       </> 
-                     ) : (
-                       "Create Profile"
-                     )}
-                   </Button>
-                 </div>
-               </form>
-             </Form>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({
+                      field,
+                    }: {
+                      field: ControllerRenderProps<
+                        OnboardingFormValues,
+                        "username"
+                      >;
+                    }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-black">Username</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="@username"
+                            disabled={isLoading}
+                            type="text"
+                            {...field}
+                            className="bg-white border-gray-300 focus:border-black focus:ring-black"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-600">
+                          Your unique profile handle and URL.
+                        </FormDescription>
+                        <FormMessage className="" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({
+                      field,
+                    }: {
+                      field: ControllerRenderProps<
+                        OnboardingFormValues,
+                        "email"
+                      >;
+                    }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-black!">Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            disabled // Always disable email field
+                            placeholder="Loading email..."
+                            {...field}
+                            className="bg-gray-100 border-gray-300 text-gray-500" // Indicate disabled state visually
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-600">
+                          Your login email address.
+                        </FormDescription>
+                        <FormMessage className="" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="headline"
+                    render={({
+                      field,
+                    }: {
+                      field: ControllerRenderProps<
+                        OnboardingFormValues,
+                        "headline"
+                      >;
+                    }) => (
+                      <FormItem className="md:col-span-2 space-y-2">
+                        <FormLabel className="text-black">Headline</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="e.g., Aspiring Software Engineer | Design Student"
+                            disabled={isLoading}
+                            type="text"
+                            className="bg-white border-gray-300 focus:border-black focus:ring-black"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-600">
+                          A short professional headline (max 100 chars).
+                        </FormDescription>
+                        <FormMessage className="" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="skills"
+                    render={({
+                      field,
+                    }: {
+                      field: ControllerRenderProps<
+                        OnboardingFormValues,
+                        "skills"
+                      >;
+                    }) => (
+                      <FormItem className="col-span-1 md:col-span-2">
+                        <FormLabel className="text-black">Skills</FormLabel>
+                        <FormControl>
+                          <MultipleSelector
+                            {...field} // Spread field props here after adjustments
+                            // Ensure value mapping is correct
+                            value={
+                              field.value?.map(
+                                (
+                                  skill: z.infer<
+                                    typeof onboardingFormSchema
+                                  >["skills"][number]
+                                ) => ({
+                                  label: skill.label || skill.name,
+                                  value: skill.value,
+                                  group: skill.group,
+                                })
+                              ) || []
+                            }
+                            onChange={(options: Option[]) =>
+                              field.onChange(
+                                options.map((option) => ({
+                                  name: option.label,
+                                  label: option.label,
+                                  value: option.value,
+                                  group: option.group,
+                                  // rank is not part of Option, handle default if needed
+                                }))
+                              )
+                            }
+                            onSearch={mockSearch}
+                            defaultOptions={SKILLS_Beta}
+                            creatable
+                            groupBy="group"
+                            placeholder="Select or create skills..."
+                            disabled={isLoading}
+                            // Add specific classes if needed to force light theme appearance
+                            className="bg-white border-gray-300 text-black"
+                            loadingIndicator={
+                              <div className="w-full flex flex-col gap-2 p-3">
+                                <Skeleton className="w-[70%] h-2 animate-pulse bg-gray-200" />
+                                <Skeleton className="w-[60%] h-2 animate-pulse bg-gray-200" />
+                              </div>
+                            }
+                            emptyIndicator={
+                              <p className="w-full text-center text-sm leading-10 text-gray-500">
+                                No results found. Type to add a new skill.
+                              </p>
+                            }
+                            badgeClassName="bg-gray-200 text-black hover:bg-gray-300"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-600">
+                          Add skills relevant to your profile and interests.
+                        </FormDescription>
+                        <FormMessage className="sr-only" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    variant="default"
+                    size="default"
+                    disabled={isLoading}
+                    type="submit"
+                    className="bg-black text-white hover:bg-gray-800"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving Profile...
+                      </>
+                    ) : (
+                      "Create Profile"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

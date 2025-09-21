@@ -6,7 +6,7 @@ import Image from "next/image"
 import { ArrowLeft, Eye, EyeOff, Github, Loader2, Chrome } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import authSideImage from "@/public/images/features/feature6.png"
+// import authSideImage from "@/public/images/features/feature6.png"
 
 // Import Auth Hooks
 import {
@@ -73,75 +73,96 @@ export default function LoginPage() {
   }, [searchParams, toast]); // Dependencies
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-neutral-950 to-neutral-900 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <div className="container flex-1 flex items-center justify-center py-12 px-4 md:px-6">
         <div className="grid w-full max-w-4xl gap-10 md:grid-cols-2 md:gap-16">
-          {/* Left side - Login form */} 
+          {/* Left side - Login form */}
           <div className="flex flex-col justify-center space-y-6 bg-white text-black p-8 rounded-xl shadow-xl">
             <div className="space-y-2 text-center">
-              <Link href="/" className="inline-block text-neutral-600 hover:text-black">
-              <Image src="/logo/logo.gif" alt="Abstrack Logo" width={80} height={80} className="mx-auto" /> 
+              <Link
+                href="/"
+                className="inline-block text-neutral-600 hover:text-black"
+              >
+                <Image
+                  src="/logo.png"
+                  alt="Abstrack Logo"
+                  width={80}
+                  height={80}
+                  className="mx-auto"
+                />
               </Link>
               <h1 className="text-3xl font-bold">Welcome back</h1>
-              <p className="text-gray-600">Enter your credentials to access your account</p>
+              <p className="text-gray-600">
+                Enter your credentials to access your account
+              </p>
             </div>
-             <div className="flex flex-col gap-2">
-              <Button 
+            <div className="flex flex-col gap-2">
+              <Button
                 size="lg"
-                variant="outline" 
+                variant="outline"
                 className="w-full border-gray-300 text-gray-800 bg-white hover:bg-gray-800"
-                onClick={handleGoogleSignIn} 
+                onClick={handleGoogleSignIn}
                 disabled={isLoading}
               >
-                 {isGoogleLoading ? 
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+                {isGoogleLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
                   <FaGoogle className="mr-2 h-4 w-4" />
-                } 
+                )}
                 Google
               </Button>
-              <Button 
+              <Button
                 size="lg"
-                variant="outline" 
+                variant="outline"
                 className="w-full border-gray-300 text-gray-300 bg-black hover:bg-gray-800"
-                onClick={handleGithubSignIn} 
+                onClick={handleGithubSignIn}
                 disabled={isLoading}
               >
-                {isGithubLoading ? 
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 
+                {isGithubLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
                   <FaGithub className="mr-2 h-4 w-4" />
-                }
+                )}
                 GitHub
               </Button>
             </div>
-<div className="relative">
+            <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <Separator className="bg-gray-300"/>
+                <Separator className="bg-gray-300" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-white px-2 text-gray-500">
+                  Or continue with
+                </span>
               </div>
             </div>
             <form onSubmit={handleSubmit(handleSignIn)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-black">Email</Label>
-                <Input 
-                  id="email" 
-                  placeholder="Type your email here" 
-                  type="email" 
-                  {...register("email")} 
+                <Label htmlFor="email" className="text-black">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  placeholder="Type your email here"
+                  type="email"
+                  {...register("email")}
                   disabled={isLoading}
                   className="bg-white border-gray-300 focus:border-black focus:ring-black"
                 />
-                {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-black">Password</Label>
+                <Label htmlFor="password" className="text-black">
+                  Password
+                </Label>
                 <div className="relative">
-                  <Input 
-                    id="password" 
-                    placeholder="••••••••" 
-                    type={showPassword ? "text" : "password"} 
-                    {...register("password")} 
+                  <Input
+                    id="password"
+                    placeholder="••••••••"
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
                     disabled={isLoading}
                     className="bg-white border-gray-300 focus:border-black focus:ring-black"
                   />
@@ -153,13 +174,29 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Hide password" : "Show password"}
+                    </span>
                   </Button>
                 </div>
-                {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>} 
+                {errors.password && (
+                  <p className="text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
-              <Button size="lg" variant="default" className="w-full bg-black text-white hover:bg-gray-800" type="submit" disabled={isLoading}>
+              <Button
+                size="lg"
+                variant="default"
+                className="w-full bg-black text-white hover:bg-gray-800"
+                type="submit"
+                disabled={isLoading}
+              >
                 {isEmailLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -170,27 +207,32 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
-            
-           
+
             <p className="text-center text-sm text-gray-500">
               Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-blue-600 hover:text-blue-800 underline-offset-4 hover:underline">
+              <Link
+                href="/register"
+                className="text-blue-600 hover:text-blue-800 underline-offset-4 hover:underline"
+              >
                 Sign up
               </Link>
             </p>
           </div>
 
-          {/* Right side - Image and text */} 
+          {/* Right side - Image and text */}
           <div className="hidden md:flex flex-col justify-center space-y-6">
             <div className="space-y-2 text-center">
-              <h2 className="text-3xl font-bold tracking-tighter text-white sm:text-4xl">Showcase Your Skills</h2>
-              <p className="text-gray-300 md:text-xl lg:text-base xl:text-xl max-w-[500px] mx-auto">
-                Join our platform to collaborate on projects and demonstrate your abilities to potential employers.
+              <h2 className="text-3xl font-bold tracking-tighter text-black sm:text-4xl">
+                Showcase Your Skills
+              </h2>
+              <p className="text-gray-600 md:text-xl lg:text-base xl:text-xl max-w-[500px] mx-auto">
+                Join our platform to collaborate on projects and demonstrate
+                your abilities to potential employers.
               </p>
             </div>
             <div className="flex items-center justify-center">
               <Image
-                src={authSideImage}
+                src={"/images/features/feature6.png"}
                 alt="Collaboration Illustration"
                 width={400}
                 height={400}
@@ -201,5 +243,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
