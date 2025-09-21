@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { toast } from "sonner"
+import Link from "next/link"
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -96,15 +97,15 @@ export default function Navbar({ className }: NavbarProps) {
         <div className="flex items-center justify-between h-18 md:h-20 px-4 md:px-6">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <a href="/" className="font-heading font-bold text-xl text-foreground">
+            <Link href="/" className="font-heading font-bold text-xl text-foreground">
               0Unveiled
-            </a>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
                 href={link.href}
                 className="relative text-sm font-medium text-foreground hover:text-primary transition-all duration-200 group py-2"
@@ -113,7 +114,7 @@ export default function Navbar({ className }: NavbarProps) {
                   {link.name}
                 </span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-              </a>
+              </Link>
             ))}
             
             <Dialog open={isSignUpOpen} onOpenChange={setIsSignUpOpen}>
@@ -237,14 +238,14 @@ export default function Navbar({ className }: NavbarProps) {
                 <div className="mt-6 space-y-6">
                   <div className="space-y-1">
                     {navLinks.map((link) => (
-                      <a
+                      <Link
                         key={link.name}
                         href={link.href}
                         className="block px-3 py-2 text-base font-medium text-foreground hover:bg-muted rounded-md transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         {link.name}
-                      </a>
+                      </Link>
                     ))}
                   </div>
                   

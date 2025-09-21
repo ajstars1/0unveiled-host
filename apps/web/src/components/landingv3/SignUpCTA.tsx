@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Github, Mail, Chrome } from "lucide-react"
+import Link from "next/link"
 
 interface SignUpCTAProps {
   className?: string
@@ -189,13 +190,13 @@ export default function SignUpCTA({ className }: SignUpCTAProps) {
         {/* Privacy Note */}
         <p className="text-xs text-muted-foreground">
           By signing up, you agree to our{" "}
-          <a href="#" className="underline underline-offset-4 hover:text-foreground transition-colors">
+          <Link href="#" className="underline underline-offset-4 hover:text-foreground transition-colors">
             Terms of Service
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a href="#" className="underline underline-offset-4 hover:text-foreground transition-colors">
+          <Link href="#" className="underline underline-offset-4 hover:text-foreground transition-colors">
             Privacy Policy
-          </a>
+          </Link>
         </p>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 interface NewsItem {
   source: string;
@@ -115,7 +116,7 @@ export function LabsNews() {
                       transition={{ delay: index * 0.1 }}
                       className="group"
                     >
-                      <a
+                      <Link
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -135,7 +136,7 @@ export function LabsNews() {
                           </div>
                         </div>
                         <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </a>
+                      </Link>
                     </motion.div>
                   ))}
                 </div>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
 import { X, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface NewsItem {
   source: string
@@ -108,14 +109,14 @@ export function LabsNews() {
                             {item.title}
                           </p>
                         </div>
-                        <a
+                        <Link
                           href={item.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                         >
                           <ExternalLink className="h-3 w-3" />
-                        </a>
+                        </Link>
                       </motion.div>
                     ))}
                   </motion.div>

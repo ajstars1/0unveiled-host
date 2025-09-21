@@ -29,6 +29,7 @@ import {
   getGithubAppInstallationUrl,
 } from "@/actions/github";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link"
 
 // Type definitions - Keep GithubRepo as the frontend expects this structure
 interface GithubRepo {
@@ -474,7 +475,7 @@ export default function GithubIntegration({ userId, isGithubAppInstalled }: Gith
                               </Badge>
                             )}
                           </div>
-                          <a
+                          <Link
                             href={repo.html_url}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -482,7 +483,7 @@ export default function GithubIntegration({ userId, isGithubAppInstalled }: Gith
                             onClick={e => e.stopPropagation()}
                           >
                             <ExternalLink className="h-4 w-4" />
-                          </a>
+                          </Link>
                         </div>
                         <p className="text-sm text-gray-500 mt-1">{repo.description || "No description"}</p>
                         <div className="flex flex-wrap gap-2 mt-2">

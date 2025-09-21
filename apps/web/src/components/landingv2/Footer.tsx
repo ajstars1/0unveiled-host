@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const links = {
   Product: ["Features", "Pricing", "Documentation", "API"],
@@ -37,12 +38,12 @@ export function Footer() {
               <ul className="space-y-2">
                 {items.map((item) => (
                   <li key={item}>
-                    <a
+                    <Link
                       href={`#${item.toLowerCase().replace(' ', '-')}`}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {item}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -57,24 +58,24 @@ export function Footer() {
           </p>
           
           <div className="flex space-x-6">
-            <a
+            <Link
               href="#terms"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Terms
-            </a>
-            <a
+            </Link>
+            <Link
               href="#privacy"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Privacy
-            </a>
-            <a
+            </Link>
+            <Link
               href="#cookies"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Cookies
-            </a>
+            </Link>
           </div>
         </div>
       </div>

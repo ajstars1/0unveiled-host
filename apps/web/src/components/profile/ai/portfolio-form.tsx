@@ -45,6 +45,7 @@ import { SKILLS_Beta } from "@/constants/skills"
 import { getPortfolio, createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from "@/actions/settings"
 import { integrationProviderEnum } from "@0unveiled/database/schema"
 import { portfolioItemSchema as basePortfolioItemSchema, optionSchema } from "@/schemas"
+import Link from "next/link"
 
 // --- Schema and Types ---
 const portfolioItemSchema = basePortfolioItemSchema;
@@ -513,19 +514,19 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                   {/* Links */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm my-4">
                     {project.provider === 'GITHUB' && project.githubRepoUrl && (
-                      <a href={project.githubRepoUrl} target="_blank" rel="noopener noreferrer" title="View on GitHub" className="flex items-center text-gray-700 hover:text-black hover:underline">
+                      <Link href={project.githubRepoUrl} target="_blank" rel="noopener noreferrer" title="View on GitHub" className="flex items-center text-gray-700 hover:text-black hover:underline">
                         <Github className="h-4 w-4 mr-1.5" /> GitHub
-                      </a>
+                      </Link>
                     )}
                     {project.provider === 'CUSTOM' && project.projectUrl && (
-                      <a href={project.projectUrl} target="_blank" rel="noopener noreferrer" title="Visit Project" className="flex items-center text-blue-600 hover:underline">
+                      <Link href={project.projectUrl} target="_blank" rel="noopener noreferrer" title="Visit Project" className="flex items-center text-blue-600 hover:underline">
                         <LinkIcon className="h-4 w-4 mr-1.5" /> Project Link
-                      </a>
+                      </Link>
                     )}
                     {project.provider === 'GITHUB' && homepage && (
-                      <a href={homepage} target="_blank" rel="noopener noreferrer" title="Visit Deployment/Homepage" className="flex items-center text-green-700 hover:text-green-800 hover:underline">
+                      <Link href={homepage} target="_blank" rel="noopener noreferrer" title="Visit Deployment/Homepage" className="flex items-center text-green-700 hover:text-green-800 hover:underline">
                         <ExternalLink className="h-4 w-4 mr-1.5" /> Deployment
-                      </a>
+                      </Link>
                     )}
                   </div>
 
