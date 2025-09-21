@@ -34,6 +34,24 @@ import { startTransition } from 'react'
 import { getOrCreateDmChannel } from '@/actions/chat'
 import { createClient } from "@/lib/supabase/client"
 
+// Constants for better maintainability
+const CONNECTION_MESSAGES = {
+  REQUEST_SENT: 'Connection request sent!',
+  REQUEST_ACCEPTED: 'Connection accepted!',
+  REQUEST_DECLINED: 'Request declined.',
+  REQUEST_CANCELLED: 'Request cancelled.',
+  CONNECTION_REMOVED: 'Connection removed.',
+  CHAT_ERROR: 'Could not start chat.',
+  SHARE_SUCCESS: 'Profile link copied to clipboard.',
+  SHARE_ERROR: 'Could not share or copy the profile link.',
+  REPORT_TODO: 'This functionality is not yet implemented.',
+  GENERIC_ERROR: 'An unexpected error occurred.',
+} as const;
+
+const CONNECTION_PATHS = {
+  DASHBOARD: '/connections',
+} as const;
+
 interface ProfileActionsProps {
   profileUserId: string
   initialConnectionStatus: ConnectionStatus
@@ -42,7 +60,7 @@ interface ProfileActionsProps {
   isUserLoggedIn: boolean
 }
 
-export function ProfileActions({ 
+export const ProfileActions = React.memo(function ProfileActions({ 
   profileUserId, 
   initialConnectionStatus,
   initialConnectionRequestId,
@@ -51,14 +69,12 @@ export function ProfileActions({
 }: ProfileActionsProps) {
   const { toast } = useToast()
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = React.useMemo(() => createClient(), [])
   const [connectionStatus, setConnectionStatus] = React.useState(initialConnectionStatus)
   const [connectionRequestId, setConnectionRequestId] = React.useState(initialConnectionRequestId)
   const [isLoading, setIsLoading] = React.useState(false)
   const [loadingAction, setLoadingAction] = React.useState<{ type: 'accept' | 'decline' | 'remove' | 'chat'; id: string } | null>(null);
   const [actionType, setActionType] = React.useState<'connect' | 'accept' | 'decline' | 'cancel' | 'remove' | null>(null);
-
-  const connectionsDashboardPath = '/connections';
 
   const handleConnect = async () => {
     // Check authentication client-side
@@ -78,7 +94,7 @@ export function ProfileActions({
       try {
         const result = await sendConnectionRequest(profileUserId, profileUsername)
         if (result.success && result.status === 'PENDING') {
-          toast({ title: 'Success', description: 'Connection request sent!' })
+          toast({ title: 'Success', description: CONNECTION_MESSAGES.REQUEST_SENT })
           setConnectionRequestId(result.connectionRequestId || null);
         } else if (result.success) {
           toast({ title: 'Success', description: 'Request processed.' });
@@ -88,7 +104,7 @@ export function ProfileActions({
         }
       } catch (err) {
         console.error('Connection request failed:', err)
-        toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' })
+        toast({ title: 'Error', description: CONNECTION_MESSAGES.GENERIC_ERROR, variant: 'destructive' })
         setConnectionStatus(originalStatus);
       } finally {
         setIsLoading(false);
@@ -114,7 +130,7 @@ export function ProfileActions({
       try {
         const result = await acceptConnectionRequest(originalRequestId);
         if (result.success) {
-          toast({ title: 'Success', description: 'Connection accepted!' });
+          toast({ title: 'Success', description: CONNECTION_MESSAGES.REQUEST_ACCEPTED });
         } else {
           toast({ title: 'Error', description: result.error || 'Failed to accept request.', variant: 'destructive' });
           setConnectionStatus(originalStatus);
@@ -122,7 +138,7 @@ export function ProfileActions({
         }
       } catch (err) {
         console.error('Accept request failed:', err);
-        toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' });
+        toast({ title: 'Error', description: CONNECTION_MESSAGES.GENERIC_ERROR, variant: 'destructive' });
         setConnectionStatus(originalStatus);
         setConnectionRequestId(originalRequestId);
       } finally {
@@ -149,7 +165,7 @@ export function ProfileActions({
       try {
         const result = await rejectOrWithdrawConnectionRequest(originalRequestId);
         if (result.success) {
-          toast({ title: 'Success', description: 'Request declined.' });
+          toast({ title: 'Success', description: CONNECTION_MESSAGES.REQUEST_DECLINED });
         } else {
           toast({ title: 'Error', description: result.error || 'Failed to decline request.', variant: 'destructive' });
           setConnectionStatus(originalStatus);
@@ -157,7 +173,7 @@ export function ProfileActions({
         }
       } catch (err) {
         console.error('Decline request failed:', err);
-        toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' });
+        toast({ title: 'Error', description: CONNECTION_MESSAGES.GENERIC_ERROR, variant: 'destructive' });
         setConnectionStatus(originalStatus);
         setConnectionRequestId(originalRequestId);
       } finally {
@@ -184,7 +200,7 @@ export function ProfileActions({
       try {
         const result = await rejectOrWithdrawConnectionRequest(originalRequestId);
         if (result.success) {
-          toast({ title: 'Success', description: 'Request cancelled.' });
+          toast({ title: 'Success', description: CONNECTION_MESSAGES.REQUEST_CANCELLED });
         } else {
           toast({ title: 'Error', description: result.error || 'Failed to cancel request.', variant: 'destructive' });
           setConnectionStatus(originalStatus);
@@ -192,7 +208,7 @@ export function ProfileActions({
         }
       } catch (err) {
         console.error('Cancel request failed:', err);
-        toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' });
+        toast({ title: 'Error', description: CONNECTION_MESSAGES.GENERIC_ERROR, variant: 'destructive' });
         setConnectionStatus(originalStatus);
         setConnectionRequestId(originalRequestId);
       } finally {
@@ -215,16 +231,16 @@ export function ProfileActions({
 
     startTransition(async () => {
       try {
-        const result = await removeConnection(profileUserId, connectionsDashboardPath);
+        const result = await removeConnection(profileUserId, CONNECTION_PATHS.DASHBOARD);
         if (result.success) {
-          toast({ title: 'Success', description: 'Connection removed.' });
+          toast({ title: 'Success', description: CONNECTION_MESSAGES.CONNECTION_REMOVED });
         } else {
           toast({ title: 'Error', description: result.error || 'Failed to remove connection.', variant: 'destructive' });
           setConnectionStatus(originalStatus);
         }
       } catch (err) {
         console.error('Remove connection failed:', err);
-        toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' });
+        toast({ title: 'Error', description: CONNECTION_MESSAGES.GENERIC_ERROR, variant: 'destructive' });
         setConnectionStatus(originalStatus);
       } finally {
         setIsLoading(false);
@@ -245,11 +261,11 @@ export function ProfileActions({
             if (result.channelId) {
                 router.push(`/chat/${result.channelId}`);
             } else {
-                toast({ title: 'Error', description: result.error || 'Could not start chat.', variant: 'destructive' });
+                toast({ title: 'Error', description: result.error || CONNECTION_MESSAGES.CHAT_ERROR, variant: 'destructive' });
             }
         } catch (err) {
             console.error('Start chat failed:', err);
-            toast({ title: 'Error', description: 'An unexpected error occurred while starting chat.', variant: 'destructive' });
+            toast({ title: 'Error', description: CONNECTION_MESSAGES.GENERIC_ERROR + ' while starting chat.', variant: 'destructive' });
         } finally {
             setLoadingAction(null);
         }
@@ -271,7 +287,7 @@ export function ProfileActions({
       } else {
         // Fallback for browsers that don't support Web Share API
         await navigator.clipboard.writeText(profileUrl);
-        toast({ title: 'Link Copied', description: 'Profile link copied to clipboard.' });
+        toast({ title: 'Link Copied', description: CONNECTION_MESSAGES.SHARE_SUCCESS });
       }
     } catch (err) {
       console.error('Error sharing profile:', err);
@@ -281,17 +297,17 @@ export function ProfileActions({
         toast({ title: 'Link Copied', description: 'Sharing failed, link copied to clipboard.' });
       } catch (copyErr) {
         console.error('Error copying profile link:', copyErr);
-        toast({ title: 'Error', description: 'Could not share or copy the profile link.', variant: 'destructive' });
+        toast({ title: 'Error', description: CONNECTION_MESSAGES.SHARE_ERROR, variant: 'destructive' });
       }
     }
   };
 
   const handleReportUser = () => {
     // TODO: Implement actual report user logic (e.g., open a modal, send data to backend)
-    toast({ title: 'Report User (TODO)', description: 'This functionality is not yet implemented.' });
+    toast({ title: 'Report User (TODO)', description: CONNECTION_MESSAGES.REPORT_TODO });
   };
 
-  const renderDropdownContent = () => (
+  const renderDropdownContent = React.useCallback(() => (
     <DropdownMenuContent align="end" className="">
       <DropdownMenuItem inset onClick={handleShareProfile} className="cursor-pointer">
         <Share2 className="mr-2 h-4 w-4" /> Share Profile
@@ -347,24 +363,24 @@ export function ProfileActions({
         <AlertTriangle className="mr-2 h-4 w-4" /> Report User (TODO)
       </DropdownMenuItem>
     </DropdownMenuContent>
-  );
+  ), [connectionStatus, handleCancelRequest, handleRemoveConnection, handleShareProfile, handleReportUser]);
 
   switch (connectionStatus) {
     case 'NOT_CONNECTED':
       return (
         <div className="flex gap-2 items-center">
-          <Button variant="outline" size="sm" className="" onClick={handleConnect} disabled={isLoading}>
+          <Button variant="outline" size="sm" className="" onClick={handleConnect} disabled={isLoading} aria-label="Send connection request">
             {isLoading && actionType === 'connect' ? (
-              <Loader2 className="h-4 w-4 mr-1.5 animate-spin"/>
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" aria-hidden="true"/>
             ) : (
-              <UserPlus className="h-4 w-4 mr-1.5"/>
+              <UserPlus className="h-4 w-4 mr-1.5" aria-hidden="true"/>
             )}
             {isLoading && actionType === 'connect' ? 'Sending...' : 'Connect'}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More options">
+                <MoreVertical className="h-4 w-4" aria-hidden="true"/>
               </Button>
             </DropdownMenuTrigger>
             {renderDropdownContent()}
@@ -374,14 +390,14 @@ export function ProfileActions({
     case 'PENDING_SENT':
       return (
         <div className="flex gap-2 items-center">
-          <Button variant="outline" size="sm" className="" disabled={true} >
-            <Clock className="h-4 w-4 mr-1.5"/>
+          <Button variant="outline" size="sm" className="" disabled={true} aria-label="Connection request pending">
+            <Clock className="h-4 w-4 mr-1.5" aria-hidden="true"/>
             Pending
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isLoading && actionType === 'cancel'}>
-                {isLoading && actionType === 'cancel' ? <Loader2 className="h-4 w-4 animate-spin"/> : <MoreVertical className="h-4 w-4"/>}
+              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isLoading && actionType === 'cancel'} aria-label="More options">
+                {isLoading && actionType === 'cancel' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true"/> : <MoreVertical className="h-4 w-4" aria-hidden="true"/>}
               </Button>
             </DropdownMenuTrigger>
             {renderDropdownContent()}
@@ -391,14 +407,14 @@ export function ProfileActions({
     case 'PENDING_RECEIVED':
       return (
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="" onClick={handleAccept} disabled={isLoading}>
-            {isLoading && actionType === 'accept' ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin"/> : <UserCheck className="h-4 w-4 mr-1.5"/>}
+          <Button variant="outline" size="sm" className="" onClick={handleAccept} disabled={isLoading} aria-label="Accept connection request">
+            {isLoading && actionType === 'accept' ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" aria-hidden="true"/> : <UserCheck className="h-4 w-4 mr-1.5" aria-hidden="true"/>}
             Accept
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="" disabled={isLoading}>
-                {isLoading && actionType === 'decline' ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin"/> : <UserX className="h-4 w-4 mr-1.5"/>}
+              <Button variant="destructive" size="sm" className="" disabled={isLoading} aria-label="Decline connection request">
+                {isLoading && actionType === 'decline' ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" aria-hidden="true"/> : <UserX className="h-4 w-4 mr-1.5" aria-hidden="true"/>}
                 Decline
               </Button>
             </AlertDialogTrigger>
@@ -424,12 +440,12 @@ export function ProfileActions({
                       disabled={loadingAction?.id === profileUserId}
                       aria-label="Send message"
                     >
-                      {loadingAction?.id === profileUserId && loadingAction?.type === 'chat' ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+                      {loadingAction?.id === profileUserId && loadingAction?.type === 'chat' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true"/> : <MessageSquare className="h-4 w-4" aria-hidden="true"/>}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isLoading && actionType === 'remove'}>
-                 {isLoading && actionType === 'remove' ? <Loader2 className="h-4 w-4 animate-spin"/> : <MoreVertical className="h-4 w-4"/>}
+              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isLoading && actionType === 'remove'} aria-label="More options">
+                 {isLoading && actionType === 'remove' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true"/> : <MoreVertical className="h-4 w-4" aria-hidden="true"/>}
               </Button>
             </DropdownMenuTrigger>
             {renderDropdownContent()}
@@ -442,4 +458,4 @@ export function ProfileActions({
       console.warn('Unhandled connection status:', connectionStatus);
       return null;
   }
-} 
+}); 
