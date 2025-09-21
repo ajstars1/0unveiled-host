@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Star, Filter, Search } from 'lucide-react'
+import Link from 'next/link'
 
 // --- INTERFACES AND MOCK DATA (Unchanged) ---
 interface TrustItem {
@@ -204,14 +205,15 @@ export default function TrustGalaxy() {
 
         {/* --- Skill Filter (Unchanged) --- */}
         <div className="flex flex-wrap justify-center gap-2 mb-12">
-          <Button
-            variant={selectedSkill === null ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedSkill(null)}
-          >
-            <Search className="h-4 w-4 mr-2" />
-            Explore Profiles
-          </Button>
+          <Link href="/profiles">
+            <Button
+              variant={selectedSkill === null ? "default" : "outline"}
+              size="sm"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Explore Profiles
+            </Button>
+          </Link>
           {allSkills.map((skill) => (
             <Button
               key={skill}
