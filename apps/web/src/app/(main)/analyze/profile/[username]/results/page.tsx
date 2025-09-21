@@ -782,7 +782,7 @@ const ProfileAnalysisResults = () => {
   const generalRank = leaderboard.rank;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen mb-16 md:mb-12 bg-background">
       {/* Header */}
       <div className="border-b bg-card/50 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
@@ -798,7 +798,9 @@ const ProfileAnalysisResults = () => {
                 Back
               </Button>
               <div>
-                <h1 className="text-xl md:text-2xl font-bold">Profile Analysis</h1>
+                <h1 className="text-xl md:text-2xl font-bold">
+                  Profile Analysis
+                </h1>
                 <p className="text-xs md:text-sm text-muted-foreground">
                   {analysisData.profileSummary.name}'s profile assessment
                 </p>
@@ -810,11 +812,13 @@ const ProfileAnalysisResults = () => {
                   <Skeleton className="h-6 w-20 rounded-full" />
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-card-foreground shadow-sm">
-                    Rank {generalRank != null ? `#${generalRank}` : 'N/A'}
+                    Rank {generalRank != null ? `#${generalRank}` : "N/A"}
                   </span>
                 )}
               </div>
-              <div className="mt-1 text-[11px] text-muted-foreground">General Leaderboard</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                General Leaderboard
+              </div>
               {isBatchSaving && (
                 <div className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                   <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
@@ -831,7 +835,7 @@ const ProfileAnalysisResults = () => {
         </div>
       </div>
 
-  <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
         {/* Main Navigation Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid grid-cols-4 mb-6 w-full md:w-auto bg-muted/40">
@@ -876,13 +880,13 @@ const ProfileAnalysisResults = () => {
                         @{analysisData.profileSummary.username}
                       </p>
                     </div>
-                    
+
                     {analysisData.profileSummary.headline && (
                       <p className="text-primary font-medium">
                         {analysisData.profileSummary.headline}
                       </p>
                     )}
-                    
+
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
                       {analysisData.profileSummary.location && (
                         <div className="flex items-center gap-1">
@@ -899,20 +903,25 @@ const ProfileAnalysisResults = () => {
                       {analysisData.careerAnalysis.stats.currentRole && (
                         <div className="flex items-center gap-1">
                           <Briefcase className="h-4 w-4" />
-                          {analysisData.careerAnalysis.stats.currentRole.jobTitle}
+                          {
+                            analysisData.careerAnalysis.stats.currentRole
+                              .jobTitle
+                          }
                         </div>
                       )}
                     </div>
-                    
+
                     {analysisData.profileSummary.bio && (
                       <div className="bg-muted/30 p-3 rounded-lg text-sm">
                         {analysisData.profileSummary.bio}
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col items-center bg-muted/30 p-3 rounded-lg mt-2 md:mt-0">
-                    <div className={`w-16 h-16 rounded-full ${getScoreColor(generalScore)} flex items-center justify-center text-white font-bold`}>
+                    <div
+                      className={`w-16 h-16 rounded-full ${getScoreColor(generalScore)} flex items-center justify-center text-white font-bold`}
+                    >
                       {generalScore}
                     </div>
                     <span className="text-xs mt-1 flex items-center gap-1">
@@ -920,7 +929,9 @@ const ProfileAnalysisResults = () => {
                       {leaderboardLoading ? (
                         <Skeleton className="h-3 w-10 rounded" />
                       ) : (
-                        <>{generalRank != null ? `· #${generalRank}` : '· N/A'}</>
+                        <>
+                          {generalRank != null ? `· #${generalRank}` : "· N/A"}
+                        </>
                       )}
                     </span>
                   </div>
@@ -933,40 +944,57 @@ const ProfileAnalysisResults = () => {
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
                   <Github className="h-5 w-5 mx-auto mb-1 text-primary" />
-                  <div className="text-xl font-bold">{analysisData.repositoryAnalysis.stats.totalRepos}</div>
-                  <div className="text-xs text-muted-foreground">Repositories</div>
+                  <div className="text-xl font-bold">
+                    {analysisData.repositoryAnalysis.stats.totalRepos}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Repositories
+                  </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
                   <Star className="h-5 w-5 mx-auto mb-1 text-yellow-500" />
-                  <div className="text-xl font-bold">{analysisData.repositoryAnalysis.stats.totalStars}</div>
+                  <div className="text-xl font-bold">
+                    {analysisData.repositoryAnalysis.stats.totalStars}
+                  </div>
                   <div className="text-xs text-muted-foreground">Stars</div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
                   <Layers className="h-5 w-5 mx-auto mb-1 text-purple-500" />
                   <div className="text-xl font-bold">
-                    {analysisData.repositoryAnalysis.stats.totalLinesOfCode 
-                      ? Math.round(analysisData.repositoryAnalysis.stats.totalLinesOfCode / 1000) + "K" 
+                    {analysisData.repositoryAnalysis.stats.totalLinesOfCode
+                      ? Math.round(
+                          analysisData.repositoryAnalysis.stats
+                            .totalLinesOfCode / 1000
+                        ) + "K"
                       : "-"}
                   </div>
-                  <div className="text-xs text-muted-foreground">Lines of Code</div>
+                  <div className="text-xs text-muted-foreground">
+                    Lines of Code
+                  </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
                   <GanttChart className="h-5 w-5 mx-auto mb-1 text-blue-500" />
-                  <div className="text-xl font-bold">{Math.round(analysisData.careerAnalysis.stats.totalYearsExperience)}</div>
-                  <div className="text-xs text-muted-foreground">Years Experience</div>
+                  <div className="text-xl font-bold">
+                    {Math.round(
+                      analysisData.careerAnalysis.stats.totalYearsExperience
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Years Experience
+                  </div>
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Primary Tech & Language Distribution */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
@@ -977,16 +1005,22 @@ const ProfileAnalysisResults = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {analysisData.repositoryAnalysis.languageExpertise.length > 0 ? (
+                  {analysisData.repositoryAnalysis.languageExpertise.length >
+                  0 ? (
                     <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={analysisData.repositoryAnalysis.languageExpertise.slice(0, 5)}
+                            data={analysisData.repositoryAnalysis.languageExpertise.slice(
+                              0,
+                              5
+                            )}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            label={({ language, percentage }) => `${language} ${percentage}%`}
+                            label={({ language, percentage }) =>
+                              `${language} ${percentage}%`
+                            }
                             outerRadius={80}
                             fill="#8884d8"
                             dataKey="repositoryCount"
@@ -1011,7 +1045,7 @@ const ProfileAnalysisResults = () => {
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center gap-2">
@@ -1026,42 +1060,60 @@ const ProfileAnalysisResults = () => {
                       <div className="flex flex-wrap gap-1">
                         {aggregateTech.languages.length ? (
                           aggregateTech.languages.map((l, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
+                            <Badge
+                              key={i}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {l.name}
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-muted-foreground text-xs">None detected</span>
+                          <span className="text-muted-foreground text-xs">
+                            None detected
+                          </span>
                         )}
                       </div>
                     </div>
-                    
+
                     <div>
                       <h4 className="text-sm font-medium mb-1">Frameworks</h4>
                       <div className="flex flex-wrap gap-1">
                         {aggregateTech.frameworks.length ? (
                           aggregateTech.frameworks.map((f, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
+                            <Badge
+                              key={i}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {f.name}
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-muted-foreground text-xs">None detected</span>
+                          <span className="text-muted-foreground text-xs">
+                            None detected
+                          </span>
                         )}
                       </div>
                     </div>
-                    
+
                     <div>
                       <h4 className="text-sm font-medium mb-1">Databases</h4>
                       <div className="flex flex-wrap gap-1">
                         {aggregateTech.databases.length ? (
                           aggregateTech.databases.map((d, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
+                            <Badge
+                              key={i}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {d.name}
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-muted-foreground text-xs">None detected</span>
+                          <span className="text-muted-foreground text-xs">
+                            None detected
+                          </span>
                         )}
                       </div>
                     </div>
@@ -1069,7 +1121,7 @@ const ProfileAnalysisResults = () => {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Key Strengths */}
             <Card>
               <CardHeader className="pb-2">
@@ -1080,15 +1132,17 @@ const ProfileAnalysisResults = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {analysisData.aiInsights.strengths.slice(0, 4).map((strength, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/10 rounded-lg"
-                    >
-                      <Award className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs sm:text-sm">{strength}</p>
-                    </div>
-                  ))}
+                  {analysisData.aiInsights.strengths
+                    .slice(0, 4)
+                    .map((strength, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/10 rounded-lg"
+                      >
+                        <Award className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs sm:text-sm">{strength}</p>
+                      </div>
+                    ))}
                 </div>
               </CardContent>
             </Card>
@@ -1110,34 +1164,40 @@ const ProfileAnalysisResults = () => {
                     {overallProjectsSummary || "No overall summary available."}
                   </ReactMarkdown>
                 </div>
-                
+
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div className="bg-muted/30 p-3 rounded-lg text-center">
                     <div className="text-lg font-bold text-primary">
                       {analysisData.repositoryAnalysis.stats.totalRepos}
                     </div>
-                    <div className="text-xs text-muted-foreground">Repositories</div>
+                    <div className="text-xs text-muted-foreground">
+                      Repositories
+                    </div>
                   </div>
-                  
+
                   <div className="bg-muted/30 p-3 rounded-lg text-center">
                     <div className="text-lg font-bold text-yellow-500 flex items-center justify-center gap-1">
                       <Star className="h-4 w-4" />
                       {analysisData.repositoryAnalysis.stats.totalStars}
                     </div>
-                    <div className="text-xs text-muted-foreground">Total Stars</div>
+                    <div className="text-xs text-muted-foreground">
+                      Total Stars
+                    </div>
                   </div>
-                  
+
                   <div className="bg-muted/30 p-3 rounded-lg text-center">
                     <div className="text-lg font-bold text-blue-500 flex items-center justify-center gap-1">
                       <GitFork className="h-4 w-4" />
                       {analysisData.repositoryAnalysis.stats.totalForks}
                     </div>
-                    <div className="text-xs text-muted-foreground">Total Forks</div>
+                    <div className="text-xs text-muted-foreground">
+                      Total Forks
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             {/* Top Repositories - Accordion Style */}
             <Card>
               <CardHeader className="pb-2">
@@ -1148,46 +1208,54 @@ const ProfileAnalysisResults = () => {
               </CardHeader>
               <CardContent>
                 <Accordion type="single" collapsible className="space-y-2">
-                  {analysisData.repositoryAnalysis.topRepositories.map((repo, index) => (
-                    <AccordionItem key={index} value={`repo-${index}`} className="border rounded-lg px-4">
-                      <AccordionTrigger className="py-3 hover:no-underline">
-                        <div className="flex items-center justify-between w-full pr-4">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-left">{repo.name}</h4>
-                            {repo.language && (
-                              <Badge variant="secondary" className="text-xs">
-                                {repo.language}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Star className="h-3 w-3" />
-                              {repo.stars}
+                  {analysisData.repositoryAnalysis.topRepositories.map(
+                    (repo, index) => (
+                      <AccordionItem
+                        key={index}
+                        value={`repo-${index}`}
+                        className="border rounded-lg px-4"
+                      >
+                        <AccordionTrigger className="py-3 hover:no-underline">
+                          <div className="flex items-center justify-between w-full pr-4">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-left">
+                                {repo.name}
+                              </h4>
+                              {repo.language && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {repo.language}
+                                </Badge>
+                              )}
                             </div>
-                            <div className="flex items-center gap-1">
-                              <GitFork className="h-3 w-3" />
-                              {repo.forks}
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Star className="h-3 w-3" />
+                                {repo.stars}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <GitFork className="h-3 w-3" />
+                                {repo.forks}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-1 pb-3">
-                        <p className="text-sm text-muted-foreground">
-                          {repo.description || "No description available"}
-                        </p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-3"
-                          onClick={() => window.open(repo.url, "_blank")}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Repository
-                        </Button>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-1 pb-3">
+                          <p className="text-sm text-muted-foreground">
+                            {repo.description || "No description available"}
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-3"
+                            onClick={() => window.open(repo.url, "_blank")}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            View Repository
+                          </Button>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )
+                  )}
                 </Accordion>
               </CardContent>
             </Card>
@@ -1195,125 +1263,198 @@ const ProfileAnalysisResults = () => {
             {/* Detailed Repository Analyses - Also in Accordion */}
             {analysisData.repositoryAnalysis.detailedAnalyses &&
               analysisData.repositoryAnalysis.detailedAnalyses.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Code2 className="h-4 w-4" />
-                    Detailed Project Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Accordion type="single" collapsible className="space-y-2">
-                    {analysisData.repositoryAnalysis.detailedAnalyses.map((repoAnalysis, index) => (
-                      <AccordionItem key={index} value={`detailed-${index}`} className="border rounded-lg px-4">
-                        <AccordionTrigger className="py-3 hover:no-underline">
-                          <div className="flex items-center justify-between w-full pr-4">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-left">{repoAnalysis.repository.name}</h4>
-                              {repoAnalysis.repository.language && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {repoAnalysis.repository.language}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3" />
-                                {repoAnalysis.repository.stars}
-                              </div>
-                            </div>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="space-y-3 pt-1 pb-3">
-                          <p className="text-sm text-muted-foreground">
-                            {repoAnalysis.repository.description || "No description available"}
-                          </p>
-                          
-                          {repoAnalysis.analysis && (
-                            <div className="grid grid-cols-3 gap-2 mt-2">
-                              {/* Code Metrics */}
-                              {repoAnalysis.analysis.metrics && (
-                                <div className="bg-muted/30 p-2 rounded-lg">
-                                  <h5 className="font-medium text-xs mb-1">Code Metrics</h5>
-                                  <div className="space-y-1 text-xs">
-                                    {repoAnalysis.analysis.metrics.total_lines && (
-                                      <div>Lines: {repoAnalysis.analysis.metrics.total_lines.toLocaleString()}</div>
-                                    )}
-                                    {repoAnalysis.analysis.metrics.complexity && (
-                                      <div>Complexity: {repoAnalysis.analysis.metrics.complexity}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Quality Metrics */}
-                              {repoAnalysis.analysis.quality && (
-                                <div className="bg-muted/30 p-2 rounded-lg">
-                                  <h5 className="font-medium text-xs mb-1">Quality</h5>
-                                  <div className="space-y-1 text-xs">
-                                    {repoAnalysis.analysis.quality.architecture_score && (
-                                      <div>Architecture: {repoAnalysis.analysis.quality.architecture_score}%</div>
-                                    )}
-                                    {repoAnalysis.analysis.quality.documentation_coverage && (
-                                      <div>Docs: {repoAnalysis.analysis.quality.documentation_coverage}%</div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Security */}
-                              {repoAnalysis.analysis.security && (
-                                <div className="bg-muted/30 p-2 rounded-lg">
-                                  <h5 className="font-medium text-xs mb-1">Security</h5>
-                                  <div className="space-y-1 text-xs">
-                                    {repoAnalysis.analysis.security.security_score && (
-                                      <div>Score: {repoAnalysis.analysis.security.security_score}%</div>
-                                    )}
-                                    {repoAnalysis.analysis.security.critical_issues && (
-                                      <div>Issues: {repoAnalysis.analysis.security.critical_issues.length}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          
-                          {/* AI Insights */}
-                          {repoAnalysis.analysis?.ai_insights && (
-                            <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg mt-2">
-                              <Accordion type="single" collapsible className="w-full">
-                                <AccordionItem value="ai-insight">
-                                  <AccordionTrigger className="text-xs font-medium text-blue-700 dark:text-blue-300 py-1">
-                                    AI Assessment
-                                  </AccordionTrigger>
-                                  <AccordionContent>
-                                    <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300 text-xs">
-                                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {projectAISummaries[index]?.content || "No AI summary available."}
-                                      </ReactMarkdown>
-                                    </div>
-                                  </AccordionContent>
-                                </AccordionItem>
-                              </Accordion>
-                            </div>
-                          )}
-                          
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => window.open(repoAnalysis.repository.url, "_blank")}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Code2 className="h-4 w-4" />
+                      Detailed Project Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Accordion type="single" collapsible className="space-y-2">
+                      {analysisData.repositoryAnalysis.detailedAnalyses.map(
+                        (repoAnalysis, index) => (
+                          <AccordionItem
+                            key={index}
+                            value={`detailed-${index}`}
+                            className="border rounded-lg px-4"
                           >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            View on GitHub
-                          </Button>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </CardContent>
-              </Card>
-            )}
-            
+                            <AccordionTrigger className="py-3 hover:no-underline">
+                              <div className="flex items-center justify-between w-full pr-4">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-left">
+                                    {repoAnalysis.repository.name}
+                                  </h4>
+                                  {repoAnalysis.repository.language && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {repoAnalysis.repository.language}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Star className="h-3 w-3" />
+                                    {repoAnalysis.repository.stars}
+                                  </div>
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="space-y-3 pt-1 pb-3">
+                              <p className="text-sm text-muted-foreground">
+                                {repoAnalysis.repository.description ||
+                                  "No description available"}
+                              </p>
+
+                              {repoAnalysis.analysis && (
+                                <div className="grid grid-cols-3 gap-2 mt-2">
+                                  {/* Code Metrics */}
+                                  {repoAnalysis.analysis.metrics && (
+                                    <div className="bg-muted/30 p-2 rounded-lg">
+                                      <h5 className="font-medium text-xs mb-1">
+                                        Code Metrics
+                                      </h5>
+                                      <div className="space-y-1 text-xs">
+                                        {repoAnalysis.analysis.metrics
+                                          .total_lines && (
+                                          <div>
+                                            Lines:{" "}
+                                            {repoAnalysis.analysis.metrics.total_lines.toLocaleString()}
+                                          </div>
+                                        )}
+                                        {repoAnalysis.analysis.metrics
+                                          .complexity && (
+                                          <div>
+                                            Complexity:{" "}
+                                            {
+                                              repoAnalysis.analysis.metrics
+                                                .complexity
+                                            }
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Quality Metrics */}
+                                  {repoAnalysis.analysis.quality && (
+                                    <div className="bg-muted/30 p-2 rounded-lg">
+                                      <h5 className="font-medium text-xs mb-1">
+                                        Quality
+                                      </h5>
+                                      <div className="space-y-1 text-xs">
+                                        {repoAnalysis.analysis.quality
+                                          .architecture_score && (
+                                          <div>
+                                            Architecture:{" "}
+                                            {
+                                              repoAnalysis.analysis.quality
+                                                .architecture_score
+                                            }
+                                            %
+                                          </div>
+                                        )}
+                                        {repoAnalysis.analysis.quality
+                                          .documentation_coverage && (
+                                          <div>
+                                            Docs:{" "}
+                                            {
+                                              repoAnalysis.analysis.quality
+                                                .documentation_coverage
+                                            }
+                                            %
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Security */}
+                                  {repoAnalysis.analysis.security && (
+                                    <div className="bg-muted/30 p-2 rounded-lg">
+                                      <h5 className="font-medium text-xs mb-1">
+                                        Security
+                                      </h5>
+                                      <div className="space-y-1 text-xs">
+                                        {repoAnalysis.analysis.security
+                                          .security_score && (
+                                          <div>
+                                            Score:{" "}
+                                            {
+                                              repoAnalysis.analysis.security
+                                                .security_score
+                                            }
+                                            %
+                                          </div>
+                                        )}
+                                        {repoAnalysis.analysis.security
+                                          .critical_issues && (
+                                          <div>
+                                            Issues:{" "}
+                                            {
+                                              repoAnalysis.analysis.security
+                                                .critical_issues.length
+                                            }
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* AI Insights */}
+                              {repoAnalysis.analysis?.ai_insights && (
+                                <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg mt-2">
+                                  <Accordion
+                                    type="single"
+                                    collapsible
+                                    className="w-full"
+                                  >
+                                    <AccordionItem value="ai-insight">
+                                      <AccordionTrigger className="text-xs font-medium text-blue-700 dark:text-blue-300 py-1">
+                                        AI Assessment
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300 text-xs">
+                                          <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                          >
+                                            {projectAISummaries[index]
+                                              ?.content ||
+                                              "No AI summary available."}
+                                          </ReactMarkdown>
+                                        </div>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  </Accordion>
+                                </div>
+                              )}
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  window.open(
+                                    repoAnalysis.repository.url,
+                                    "_blank"
+                                  )
+                                }
+                              >
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                View on GitHub
+                              </Button>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )
+                      )}
+                    </Accordion>
+                  </CardContent>
+                </Card>
+              )}
+
             {/* Technology Stack Roadmap */}
             {hasRoadmap && (
               <Card>
@@ -1330,7 +1471,9 @@ const ProfileAnalysisResults = () => {
                       edges={createRoadmapEdges()}
                       fitView
                       fitViewOptions={{ padding: 0.2 }}
-                      defaultEdgeOptions={{ style: { stroke: "#3b82f6", strokeWidth: 2 } }}
+                      defaultEdgeOptions={{
+                        style: { stroke: "#3b82f6", strokeWidth: 2 },
+                      }}
                       attributionPosition="bottom-left"
                       style={{ backgroundColor: "white" }}
                     />
@@ -1355,26 +1498,38 @@ const ProfileAnalysisResults = () => {
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="bg-muted/30 p-3 rounded-lg text-center">
                       <div className="text-xl font-bold text-primary">
-                        {Math.round(analysisData.careerAnalysis.stats.totalYearsExperience)}
+                        {Math.round(
+                          analysisData.careerAnalysis.stats.totalYearsExperience
+                        )}
                       </div>
-                      <div className="text-xs text-muted-foreground">Years Experience</div>
+                      <div className="text-xs text-muted-foreground">
+                        Years Experience
+                      </div>
                     </div>
                     <div className="bg-muted/30 p-3 rounded-lg text-center">
                       <div className="text-xl font-bold text-green-500">
                         {analysisData.careerAnalysis.stats.skillsCount}
                       </div>
-                      <div className="text-xs text-muted-foreground">Skills</div>
+                      <div className="text-xs text-muted-foreground">
+                        Skills
+                      </div>
                     </div>
                   </div>
 
                   {analysisData.careerAnalysis.stats.currentRole && (
                     <div className="bg-primary/10 p-3 rounded-lg">
-                      <div className="text-xs font-medium text-primary">Current Role</div>
+                      <div className="text-xs font-medium text-primary">
+                        Current Role
+                      </div>
                       <div className="font-medium">
                         {analysisData.careerAnalysis.stats.currentRole.jobTitle}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        at {analysisData.careerAnalysis.stats.currentRole.companyName}
+                        at{" "}
+                        {
+                          analysisData.careerAnalysis.stats.currentRole
+                            .companyName
+                        }
                       </div>
                     </div>
                   )}
@@ -1383,11 +1538,17 @@ const ProfileAnalysisResults = () => {
                   <div className="mt-4">
                     <h4 className="text-sm font-medium mb-2">Skills</h4>
                     <div className="flex flex-wrap gap-1">
-                      {analysisData.careerAnalysis.skills.map((skill, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {skill.name}
-                        </Badge>
-                      ))}
+                      {analysisData.careerAnalysis.skills.map(
+                        (skill, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {skill.name}
+                          </Badge>
+                        )
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -1403,9 +1564,13 @@ const ProfileAnalysisResults = () => {
                 <CardContent>
                   <div className="bg-muted/30 p-3 rounded-lg text-center mb-4">
                     <div className="text-xl font-bold text-blue-500">
-                      {Math.round(analysisData.careerAnalysis.stats.totalEducationYears)}
+                      {Math.round(
+                        analysisData.careerAnalysis.stats.totalEducationYears
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground">Years of Education</div>
+                    <div className="text-xs text-muted-foreground">
+                      Years of Education
+                    </div>
                   </div>
 
                   {analysisData.careerAnalysis.stats.currentEducation && (
@@ -1414,11 +1579,17 @@ const ProfileAnalysisResults = () => {
                         Currently Studying
                       </div>
                       <div className="font-medium">
-                        {analysisData.careerAnalysis.stats.currentEducation.degree ||
-                          analysisData.careerAnalysis.stats.currentEducation.fieldOfStudy}
+                        {analysisData.careerAnalysis.stats.currentEducation
+                          .degree ||
+                          analysisData.careerAnalysis.stats.currentEducation
+                            .fieldOfStudy}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        at {analysisData.careerAnalysis.stats.currentEducation.institution}
+                        at{" "}
+                        {
+                          analysisData.careerAnalysis.stats.currentEducation
+                            .institution
+                        }
                       </div>
                     </div>
                   )}
@@ -1427,15 +1598,29 @@ const ProfileAnalysisResults = () => {
                   {analysisData.careerAnalysis.education.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium">Education History</h4>
-                      {analysisData.careerAnalysis.education.map((edu, index) => (
-                        <div key={index} className="border-l-2 border-blue-200 pl-3 py-1">
-                          <div className="font-medium text-sm">{edu.institution}</div>
-                          <div className="text-xs">{edu.degree || edu.fieldOfStudy}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(edu.startDate)} - {edu.current ? "Present" : edu.endDate ? formatDate(edu.endDate) : "N/A"}
+                      {analysisData.careerAnalysis.education.map(
+                        (edu, index) => (
+                          <div
+                            key={index}
+                            className="border-l-2 border-blue-200 pl-3 py-1"
+                          >
+                            <div className="font-medium text-sm">
+                              {edu.institution}
+                            </div>
+                            <div className="text-xs">
+                              {edu.degree || edu.fieldOfStudy}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatDate(edu.startDate)} -{" "}
+                              {edu.current
+                                ? "Present"
+                                : edu.endDate
+                                  ? formatDate(edu.endDate)
+                                  : "N/A"}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -1457,45 +1642,66 @@ const ProfileAnalysisResults = () => {
                   </p>
 
                   <div className="space-y-3">
-                    {analysisData.careerAnalysis.experience.map((exp, index) => (
-                      <div key={index} className="flex gap-3 p-3 border rounded-lg">
-                        <div className="flex-shrink-0 mt-1">
-                          <div className={`w-3 h-3 rounded-full ${exp.current ? "bg-green-500" : "bg-gray-400"}`}></div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">{exp.jobTitle}</div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
-                            <span className="flex items-center gap-1">
-                              <Building className="h-3 w-3" />
-                              {exp.companyName}
-                            </span>
-                            {exp.location && (
+                    {analysisData.careerAnalysis.experience.map(
+                      (exp, index) => (
+                        <div
+                          key={index}
+                          className="flex gap-3 p-3 border rounded-lg"
+                        >
+                          <div className="flex-shrink-0 mt-1">
+                            <div
+                              className={`w-3 h-3 rounded-full ${exp.current ? "bg-green-500" : "bg-gray-400"}`}
+                            ></div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium">{exp.jobTitle}</div>
+                            <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
                               <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {exp.location}
+                                <Building className="h-3 w-3" />
+                                {exp.companyName}
                               </span>
+                              {exp.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {exp.location}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(exp.startDate)} -{" "}
+                              {exp.current
+                                ? "Present"
+                                : exp.endDate
+                                  ? formatDate(exp.endDate)
+                                  : "N/A"}
+                            </div>
+
+                            {exp.description && (
+                              <Accordion
+                                type="single"
+                                collapsible
+                                className="w-full mt-2"
+                              >
+                                <AccordionItem
+                                  value="description"
+                                  className="border-none"
+                                >
+                                  <AccordionTrigger className="py-1 text-xs text-primary">
+                                    View Description
+                                  </AccordionTrigger>
+                                  <AccordionContent>
+                                    <p className="text-xs text-muted-foreground">
+                                      {exp.description}
+                                    </p>
+                                  </AccordionContent>
+                                </AccordionItem>
+                              </Accordion>
                             )}
                           </div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(exp.startDate)} - {exp.current ? "Present" : exp.endDate ? formatDate(exp.endDate) : "N/A"}
-                          </div>
-
-                          {exp.description && (
-                            <Accordion type="single" collapsible className="w-full mt-2">
-                              <AccordionItem value="description" className="border-none">
-                                <AccordionTrigger className="py-1 text-xs text-primary">
-                                  View Description
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                  <p className="text-xs text-muted-foreground">{exp.description}</p>
-                                </AccordionContent>
-                              </AccordionItem>
-                            </Accordion>
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1560,15 +1766,17 @@ const ProfileAnalysisResults = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {analysisData.aiInsights.recommendations.map((recommendation, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg"
-                    >
-                      <Lightbulb className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">{recommendation}</p>
-                    </div>
-                  ))}
+                  {analysisData.aiInsights.recommendations.map(
+                    (recommendation, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg"
+                      >
+                        <Lightbulb className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm">{recommendation}</p>
+                      </div>
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1583,17 +1791,23 @@ const ProfileAnalysisResults = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4 mb-3">
-                  <div className={`w-16 h-16 rounded-full ${getScoreColor(generalScore)} flex items-center justify-center text-white font-bold`}>
+                  <div
+                    className={`w-16 h-16 rounded-full ${getScoreColor(generalScore)} flex items-center justify-center text-white font-bold`}
+                  >
                     {generalScore}
                   </div>
                   <div className="flex-1">
-                    <div className="text-xl font-bold text-primary">{generalScore}</div>
+                    <div className="text-xl font-bold text-primary">
+                      {generalScore}
+                    </div>
                     <div className="text-sm text-muted-foreground flex items-center gap-2 mt-0.5">
                       Rank
                       {leaderboardLoading ? (
                         <Skeleton className="h-3 w-12 rounded" />
                       ) : (
-                        <span className="font-medium">{generalRank != null ? `#${generalRank}` : 'N/A'}</span>
+                        <span className="font-medium">
+                          {generalRank != null ? `#${generalRank}` : "N/A"}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -1611,7 +1825,9 @@ const ProfileAnalysisResults = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4 mb-3">
-                  <div className={`w-16 h-16 rounded-full ${getScoreColor(analysisData.overallScore)} flex items-center justify-center text-white font-bold`}>
+                  <div
+                    className={`w-16 h-16 rounded-full ${getScoreColor(analysisData.overallScore)} flex items-center justify-center text-white font-bold`}
+                  >
                     {analysisData.overallScore}
                   </div>
                   <div className="flex-1">
@@ -1624,7 +1840,10 @@ const ProfileAnalysisResults = () => {
                   </div>
                 </div>
 
-                <Progress value={analysisData.overallScore} className="h-2 mb-4" />
+                <Progress
+                  value={analysisData.overallScore}
+                  className="h-2 mb-4"
+                />
 
                 <p className="text-sm text-muted-foreground">
                   This score is calculated based on repository activity, career
@@ -1635,21 +1854,26 @@ const ProfileAnalysisResults = () => {
                   <div className="bg-muted/30 p-2 rounded-lg text-center">
                     <div className="text-sm font-medium">Code Quality</div>
                     <div className="text-lg font-bold text-primary">
-                      {analysisData.repositoryAnalysis.stats.averageQuality || "N/A"}
+                      {analysisData.repositoryAnalysis.stats.averageQuality ||
+                        "N/A"}
                     </div>
                   </div>
 
                   <div className="bg-muted/30 p-2 rounded-lg text-center">
                     <div className="text-sm font-medium">Tech Breadth</div>
                     <div className="text-lg font-bold text-primary">
-                      {aggregateTech.languages.length + aggregateTech.frameworks.length}
+                      {aggregateTech.languages.length +
+                        aggregateTech.frameworks.length}
                     </div>
                   </div>
 
                   <div className="bg-muted/30 p-2 rounded-lg text-center">
                     <div className="text-sm font-medium">Experience</div>
                     <div className="text-lg font-bold text-primary">
-                      {Math.round(analysisData.careerAnalysis.stats.totalYearsExperience)}yr
+                      {Math.round(
+                        analysisData.careerAnalysis.stats.totalYearsExperience
+                      )}
+                      yr
                     </div>
                   </div>
 
@@ -1664,7 +1888,7 @@ const ProfileAnalysisResults = () => {
             </Card>
           </TabsContent>
         </Tabs>
-        
+
         {/* Footer */}
         <div className="text-center text-xs text-muted-foreground mt-6">
           Analysis completed on{" "}

@@ -266,12 +266,12 @@ export default function AnalyzeProfilePage() {
   }, []);
 
   return (
-    <div className="relative">
-      <LoadingPage 
-        currentRepo={`${params.username}'s complete profile`} 
-        status={status} 
-        progress={progress} 
-        complete={complete} 
+    <div className="relative mb-18 md:mb-10">
+      <LoadingPage
+        currentRepo={`${params.username}'s complete profile`}
+        status={status}
+        progress={progress}
+        complete={complete}
       />
       {error ? (
         <div className="absolute inset-x-0 top-4 mx-auto max-w-xl">

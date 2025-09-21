@@ -254,7 +254,7 @@ export default function AnalyzeRepoPage() {
   }, []);
 
   return (
-    <div className="relative min-h-dvh bg-background text-foreground">
+    <div className="relative min-h-dvh mb-18 md:mb-8 bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-6">
         <AIAnalysisGame
           currentRepo={decodeURIComponent(params.repo)}

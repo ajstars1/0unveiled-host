@@ -742,34 +742,48 @@ const ResultsPage = () => {
   const hasRoadmap = roadmapNodes.length > 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen mb-16 md:mb-12 bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Success notification */}
-        {isSaved && (
+        {/* {isSaved && (
           <Alert className="mb-6 bg-green-50 border-green-200">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Analysis Saved</AlertTitle>
             <AlertDescription className="text-green-700">
-              This project has been added to your profile with all tech stack information.
-              You can view it in your projects list.
+              This project has been added to your profile with all tech stack
+              information. You can view it in your projects list.
             </AlertDescription>
           </Alert>
-        )}
-        
+        )} */}
+
         {/* Header */}
         <div className="text-center border-b border-border pb-6 mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Code Analysis Results</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            Code Analysis Results
+          </h1>
           <p className="text-base md:text-lg text-muted-foreground">
-            {repoFullName || `${analysisData.repository_info?.owner || 'Unknown'}/${analysisData.repository_info?.name || 'Repository'}`}
+            {repoFullName ||
+              `${analysisData.repository_info?.owner || "Unknown"}/${analysisData.repository_info?.name || "Repository"}`}
           </p>
           <div className="flex flex-wrap justify-center items-center mt-4 gap-3 text-sm">
-            <Badge variant="outline">{repoLanguage || 'Unknown'}</Badge>
+            <Badge variant="outline">{repoLanguage || "Unknown"}</Badge>
             <span className="text-muted-foreground">★ {repoStars || 0}</span>
             <span className="text-muted-foreground">🍴 {repoForks || 0}</span>
-            <span className="text-muted-foreground">📁 {filesAnalyzed || 0} files</span>
-            <span className="text-muted-foreground">📝 {totalLines?.toLocaleString?.() || '0'} lines</span>
-            <span className="text-muted-foreground">💾 {initialRepoSize ? `${(initialRepoSize / 1024).toFixed(1)} MB` : 'Unknown'}</span>
-            <span className="text-muted-foreground">⚠️ {openIssues || 0} issues</span>
+            <span className="text-muted-foreground">
+              📁 {filesAnalyzed || 0} files
+            </span>
+            <span className="text-muted-foreground">
+              📝 {totalLines?.toLocaleString?.() || "0"} lines
+            </span>
+            <span className="text-muted-foreground">
+              💾{" "}
+              {initialRepoSize
+                ? `${(initialRepoSize / 1024).toFixed(1)} MB`
+                : "Unknown"}
+            </span>
+            <span className="text-muted-foreground">
+              ⚠️ {openIssues || 0} issues
+            </span>
           </div>
         </div>
 
@@ -793,35 +807,57 @@ const ResultsPage = () => {
           <TabsContent value="overview">
             {/* Data Availability Indicator */}
             <Card className="mb-6">
-              <CardHeader><CardTitle className="text-sm">Data Sources</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-sm">Data Sources</CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                  <div className={`p-2 rounded ${analysisData.metrics ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Metrics: {analysisData.metrics ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.metrics ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Metrics: {analysisData.metrics ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.code_metrics ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Code Metrics: {analysisData.code_metrics ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.code_metrics ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Code Metrics: {analysisData.code_metrics ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.quality_metrics ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Quality Metrics: {analysisData.quality_metrics ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.quality_metrics ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Quality Metrics: {analysisData.quality_metrics ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.repository ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Repository: {analysisData.repository ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.repository ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Repository: {analysisData.repository ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.repository_info ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Repository Info: {analysisData.repository_info ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.repository_info ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Repository Info: {analysisData.repository_info ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.security_metrics ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Security Metrics: {analysisData.security_metrics ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.security_metrics ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Security Metrics:{" "}
+                    {analysisData.security_metrics ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.security ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Security: {analysisData.security ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.security ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Security: {analysisData.security ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.security_analysis ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Security Analysis: {analysisData.security_analysis ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.security_analysis ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Security Analysis:{" "}
+                    {analysisData.security_analysis ? "✓" : "✗"}
                   </div>
-                  <div className={`p-2 rounded ${analysisData.technology_stack ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                    Tech Stack: {analysisData.technology_stack ? '✓' : '✗'}
+                  <div
+                    className={`p-2 rounded ${analysisData.technology_stack ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}
+                  >
+                    Tech Stack: {analysisData.technology_stack ? "✓" : "✗"}
                   </div>
                 </div>
               </CardContent>
@@ -830,31 +866,53 @@ const ResultsPage = () => {
             {/* Key Stats Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Maintainability</CardTitle></CardHeader>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Maintainability</CardTitle>
+                </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-semibold">{Math.round(Number(maintainability) || 0)}%</div>
-                  <div className="text-xs text-muted-foreground mt-1">Index Score</div>
+                  <div className="text-2xl font-semibold">
+                    {Math.round(Number(maintainability) || 0)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Index Score
+                  </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Test Coverage</CardTitle></CardHeader>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Test Coverage</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-semibold">{testCoverage}%</div>
-                  <div className="text-xs text-muted-foreground mt-1">Code Coverage</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Code Coverage
+                  </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Files Analyzed</CardTitle></CardHeader>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Files Analyzed</CardTitle>
+                </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-semibold">{filesAnalyzed?.toLocaleString?.() || '0'}</div>
-                  <div className="text-xs text-muted-foreground mt-1">Total Files</div>
+                  <div className="text-2xl font-semibold">
+                    {filesAnalyzed?.toLocaleString?.() || "0"}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Total Files
+                  </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Code Size</CardTitle></CardHeader>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Code Size</CardTitle>
+                </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-semibold">{totalLines?.toLocaleString?.() || '0'}</div>
-                  <div className="text-xs text-muted-foreground mt-1">Lines of Code</div>
+                  <div className="text-2xl font-semibold">
+                    {totalLines?.toLocaleString?.() || "0"}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Lines of Code
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -862,43 +920,67 @@ const ResultsPage = () => {
             {/* Primary Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><CardTitle>Quality Metrics Distribution</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Quality Metrics Distribution</CardTitle>
+                </CardHeader>
                 <CardContent>
                   {hasQualityData ? (
                     <div className="h-[220px] sm:h-[260px] lg:h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={qualityData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                          {qualityData.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
+                        <PieChart>
+                          <Pie
+                            data={qualityData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            dataKey="value"
+                            label={({ name, value }) => `${name}: ${value}`}
+                          >
+                            {qualityData.map((_, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={COLORS[index % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
                       </ResponsiveContainer>
                     </div>
                   ) : (
-                    <div className="text-center text-muted-foreground py-12">No quality data available</div>
+                    <div className="text-center text-muted-foreground py-12">
+                      No quality data available
+                    </div>
                   )}
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>Language Distribution</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Language Distribution</CardTitle>
+                </CardHeader>
                 <CardContent>
                   {hasLanguageData ? (
                     <div className="h-[220px] sm:h-[260px] lg:h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={languageData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
-                        <Tooltip />
-                        <Bar dataKey="lines" fill="hsl(var(--primary))" />
-                      </BarChart>
+                        <BarChart data={languageData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="hsl(var(--border))"
+                          />
+                          <XAxis
+                            dataKey="name"
+                            stroke="hsl(var(--muted-foreground))"
+                          />
+                          <YAxis stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip />
+                          <Bar dataKey="lines" fill="hsl(var(--primary))" />
+                        </BarChart>
                       </ResponsiveContainer>
                     </div>
                   ) : (
-                    <div className="text-center text-muted-foreground py-12">Language breakdown not available</div>
+                    <div className="text-center text-muted-foreground py-12">
+                      Language breakdown not available
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -909,24 +991,32 @@ const ResultsPage = () => {
           <TabsContent value="insights">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><CardTitle>🤖 AI Code Assessment</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>🤖 AI Code Assessment</CardTitle>
+                </CardHeader>
                 <CardContent className="prose prose-sm max-w-none text-foreground">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {analysisData.ai_insights?.code_assessment || 'No code assessment available'}
+                    {analysisData.ai_insights?.code_assessment ||
+                      "No code assessment available"}
                   </ReactMarkdown>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>🏗️ Architecture Assessment</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>🏗️ Architecture Assessment</CardTitle>
+                </CardHeader>
                 <CardContent className="prose prose-sm max-w-none text-foreground">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {analysisData.ai_insights?.architecture_assessment || 'No architecture assessment available'}
+                    {analysisData.ai_insights?.architecture_assessment ||
+                      "No architecture assessment available"}
                   </ReactMarkdown>
                 </CardContent>
               </Card>
               {analysisData.ai_insights?.maintainability_assessment && (
                 <Card>
-                  <CardHeader><CardTitle>🔧 Maintainability Assessment</CardTitle></CardHeader>
+                  <CardHeader>
+                    <CardTitle>🔧 Maintainability Assessment</CardTitle>
+                  </CardHeader>
                   <CardContent className="prose prose-sm max-w-none text-foreground">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {analysisData.ai_insights?.maintainability_assessment}
@@ -936,7 +1026,9 @@ const ResultsPage = () => {
               )}
               {analysisData.ai_insights?.improvement_areas && (
                 <Card>
-                  <CardHeader><CardTitle>💡 Areas for Improvement</CardTitle></CardHeader>
+                  <CardHeader>
+                    <CardTitle>💡 Areas for Improvement</CardTitle>
+                  </CardHeader>
                   <CardContent className="prose prose-sm max-w-none text-foreground">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {analysisData.ai_insights?.improvement_areas}
@@ -944,24 +1036,32 @@ const ResultsPage = () => {
                   </CardContent>
                 </Card>
               )}
-              {analysisData.ai_insights?.strengths && analysisData.ai_insights.strengths.length > 0 && (
-                <Card className="lg:col-span-2">
-                  <CardHeader><CardTitle>✨ Project Strengths</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {analysisData.ai_insights.strengths.map((strength, index) => (
-                        <div key={index} className="p-3 rounded-lg border border-border">
-                          <div className="prose prose-sm text-foreground">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {strength}
-                            </ReactMarkdown>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {analysisData.ai_insights?.strengths &&
+                analysisData.ai_insights.strengths.length > 0 && (
+                  <Card className="lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle>✨ Project Strengths</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {analysisData.ai_insights.strengths.map(
+                          (strength, index) => (
+                            <div
+                              key={index}
+                              className="p-3 rounded-lg border border-border"
+                            >
+                              <div className="prose prose-sm text-foreground">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {strength}
+                                </ReactMarkdown>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
             </div>
           </TabsContent>
 
@@ -969,54 +1069,146 @@ const ResultsPage = () => {
           <TabsContent value="metrics">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><CardTitle>Complexity Analysis</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Complexity Analysis</CardTitle>
+                </CardHeader>
                 <CardContent>
                   {hasComplexityData ? (
                     <div className="h-[220px] sm:h-[260px] lg:h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={complexityData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="name" stroke="#71717a" />
-                        <YAxis stroke="#71717a" />
-                        <Tooltip />
-                        <Line 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke="#3b82f6" 
-                          strokeWidth={3} 
-                          dot={{ r: 6, strokeWidth: 2, fill: 'white' }}
-                          activeDot={{ r: 8, strokeWidth: 0, fill: '#3b82f6' }}
-                          isAnimationActive={true}
-                        />
-                      </LineChart>
+                        <LineChart data={complexityData}>
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                          />
+                          <XAxis dataKey="name" stroke="#71717a" />
+                          <YAxis stroke="#71717a" />
+                          <Tooltip />
+                          <Line
+                            type="monotone"
+                            dataKey="value"
+                            stroke="#3b82f6"
+                            strokeWidth={3}
+                            dot={{ r: 6, strokeWidth: 2, fill: "white" }}
+                            activeDot={{
+                              r: 8,
+                              strokeWidth: 0,
+                              fill: "#3b82f6",
+                            }}
+                            isAnimationActive={true}
+                          />
+                        </LineChart>
                       </ResponsiveContainer>
                     </div>
                   ) : (
-                    <div className="text-center text-muted-foreground py-12">Complexity metrics not available</div>
+                    <div className="text-center text-muted-foreground py-12">
+                      Complexity metrics not available
+                    </div>
                   )}
                 </CardContent>
               </Card>
               <div className="grid grid-cols-1 gap-6">
                 <Card>
-                  <CardHeader><CardTitle>📊 Code Metrics</CardTitle></CardHeader>
+                  <CardHeader>
+                    <CardTitle>📊 Code Metrics</CardTitle>
+                  </CardHeader>
                   <CardContent className="space-y-3 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Total Files</span><span className="font-medium">{filesAnalyzed?.toLocaleString?.() || '0'}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Total Lines</span><span className="font-medium">{totalLines?.toLocaleString?.() || '0'}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Lines of Code</span><span className="font-medium">{(analysisData.metrics?.lines_of_code ?? analysisData.code_metrics?.lines_of_code ?? 0)?.toLocaleString?.() || '0'}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Complexity Score</span><span className="font-medium">{complexityScore?.toFixed?.(2) || '0'}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Test Coverage</span><span className="font-medium">{testCoverage}%</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Documentation</span><span className="font-medium">{Math.round(Number(documentation) || 0)}%</span></div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Files</span>
+                      <span className="font-medium">
+                        {filesAnalyzed?.toLocaleString?.() || "0"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Lines</span>
+                      <span className="font-medium">
+                        {totalLines?.toLocaleString?.() || "0"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Lines of Code
+                      </span>
+                      <span className="font-medium">
+                        {(
+                          analysisData.metrics?.lines_of_code ??
+                          analysisData.code_metrics?.lines_of_code ??
+                          0
+                        )?.toLocaleString?.() || "0"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Complexity Score
+                      </span>
+                      <span className="font-medium">
+                        {complexityScore?.toFixed?.(2) || "0"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Test Coverage
+                      </span>
+                      <span className="font-medium">{testCoverage}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Documentation
+                      </span>
+                      <span className="font-medium">
+                        {Math.round(Number(documentation) || 0)}%
+                      </span>
+                    </div>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardHeader><CardTitle>📈 Repository Stats</CardTitle></CardHeader>
+                  <CardHeader>
+                    <CardTitle>📈 Repository Stats</CardTitle>
+                  </CardHeader>
                   <CardContent className="space-y-3 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Total Commits</span><span className="font-medium">{analysisData.commit_analysis?.total_commits?.toLocaleString?.() ?? '0'}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Contributors</span><span className="font-medium">{analysisData.commit_analysis?.contributors ?? 0}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Repository Size</span><span className="font-medium">{repoSize ? `${(repoSize / 1024).toFixed(1)} MB` : 'Unknown'}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Open Issues</span><span className="font-medium">{openIssues || 0}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Stars</span><span className="font-medium">{repoStars?.toLocaleString?.() || '0'}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Forks</span><span className="font-medium">{repoForks?.toLocaleString?.() || '0'}</span></div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Total Commits
+                      </span>
+                      <span className="font-medium">
+                        {analysisData.commit_analysis?.total_commits?.toLocaleString?.() ??
+                          "0"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Contributors
+                      </span>
+                      <span className="font-medium">
+                        {analysisData.commit_analysis?.contributors ?? 0}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Repository Size
+                      </span>
+                      <span className="font-medium">
+                        {repoSize
+                          ? `${(repoSize / 1024).toFixed(1)} MB`
+                          : "Unknown"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Open Issues</span>
+                      <span className="font-medium">{openIssues || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Stars</span>
+                      <span className="font-medium">
+                        {repoStars?.toLocaleString?.() || "0"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Forks</span>
+                      <span className="font-medium">
+                        {repoForks?.toLocaleString?.() || "0"}
+                      </span>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -1027,7 +1219,9 @@ const ResultsPage = () => {
           <TabsContent value="tech">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><CardTitle>Technology Stack Roadmap</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Technology Stack Roadmap</CardTitle>
+                </CardHeader>
                 <CardContent>
                   {hasRoadmap ? (
                     <div className="h-[240px] sm:h-[280px] lg:h-[320px] w-full bg-white rounded-md border-2 border-gray-200 overflow-hidden">
@@ -1036,64 +1230,106 @@ const ResultsPage = () => {
                         edges={createRoadmapEdges()}
                         fitView
                         fitViewOptions={{ padding: 0.2 }}
-                        defaultEdgeOptions={{ style: { stroke: '#3b82f6', strokeWidth: 2.5 } }}
+                        defaultEdgeOptions={{
+                          style: { stroke: "#3b82f6", strokeWidth: 2.5 },
+                        }}
                         attributionPosition="bottom-left"
-                        style={{ backgroundColor: 'white' }}
+                        style={{ backgroundColor: "white" }}
                       >
-                        <Background variant={BackgroundVariant.Dots} color="rgba(0, 0, 0, 0.2)" gap={18} size={1.5} />
+                        <Background
+                          variant={BackgroundVariant.Dots}
+                          color="rgba(0, 0, 0, 0.2)"
+                          gap={18}
+                          size={1.5}
+                        />
                         <Controls />
                       </ReactFlow>
                     </div>
                   ) : (
-                    <div className="text-center text-muted-foreground py-12">Technology stack data not available</div>
+                    <div className="text-center text-muted-foreground py-12">
+                      Technology stack data not available
+                    </div>
                   )}
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader><CardTitle>🛠️ Technology Stack</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>🛠️ Technology Stack</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h4 className="font-medium mb-2">Frameworks</h4>
                       <div className="flex flex-wrap gap-2">
-                        {(analysisData.technology_stack?.frameworks ?? []).map((framework: string, index: number) => (
-                          <Badge key={index} variant="outline">{framework}</Badge>
-                        ))}
-                        {(!analysisData.technology_stack?.frameworks || analysisData.technology_stack.frameworks.length === 0) && (
-                          <span className="text-muted-foreground text-sm">No frameworks detected</span>
+                        {(analysisData.technology_stack?.frameworks ?? []).map(
+                          (framework: string, index: number) => (
+                            <Badge key={index} variant="outline">
+                              {framework}
+                            </Badge>
+                          )
+                        )}
+                        {(!analysisData.technology_stack?.frameworks ||
+                          analysisData.technology_stack.frameworks.length ===
+                            0) && (
+                          <span className="text-muted-foreground text-sm">
+                            No frameworks detected
+                          </span>
                         )}
                       </div>
                     </div>
                     <div>
                       <h4 className="font-medium mb-2">Databases</h4>
                       <div className="flex flex-wrap gap-2">
-                        {(analysisData.technology_stack?.databases ?? []).map((db: string, index: number) => (
-                          <Badge key={index} variant="outline">{db}</Badge>
-                        ))}
-                        {(!analysisData.technology_stack?.databases || analysisData.technology_stack.databases.length === 0) && (
-                          <span className="text-muted-foreground text-sm">No databases detected</span>
+                        {(analysisData.technology_stack?.databases ?? []).map(
+                          (db: string, index: number) => (
+                            <Badge key={index} variant="outline">
+                              {db}
+                            </Badge>
+                          )
+                        )}
+                        {(!analysisData.technology_stack?.databases ||
+                          analysisData.technology_stack.databases.length ===
+                            0) && (
+                          <span className="text-muted-foreground text-sm">
+                            No databases detected
+                          </span>
                         )}
                       </div>
                     </div>
                     <div>
                       <h4 className="font-medium mb-2">Tools</h4>
                       <div className="flex flex-wrap gap-2">
-                        {(analysisData.technology_stack?.tools ?? []).map((tool: string, index: number) => (
-                          <Badge key={index} variant="outline">{tool}</Badge>
-                        ))}
-                        {(!analysisData.technology_stack?.tools || analysisData.technology_stack.tools.length === 0) && (
-                          <span className="text-muted-foreground text-sm">No tools detected</span>
+                        {(analysisData.technology_stack?.tools ?? []).map(
+                          (tool: string, index: number) => (
+                            <Badge key={index} variant="outline">
+                              {tool}
+                            </Badge>
+                          )
+                        )}
+                        {(!analysisData.technology_stack?.tools ||
+                          analysisData.technology_stack.tools.length === 0) && (
+                          <span className="text-muted-foreground text-sm">
+                            No tools detected
+                          </span>
                         )}
                       </div>
                     </div>
                     <div>
                       <h4 className="font-medium mb-2">Languages</h4>
                       <div className="flex flex-wrap gap-2">
-                        {(analysisData.technology_stack?.languages ?? []).map((lang: string, index: number) => (
-                          <Badge key={index} variant="outline">{lang}</Badge>
-                        ))}
-                        {(!analysisData.technology_stack?.languages || analysisData.technology_stack.languages.length === 0) && (
-                          <span className="text-muted-foreground text-sm">No languages detected</span>
+                        {(analysisData.technology_stack?.languages ?? []).map(
+                          (lang: string, index: number) => (
+                            <Badge key={index} variant="outline">
+                              {lang}
+                            </Badge>
+                          )
+                        )}
+                        {(!analysisData.technology_stack?.languages ||
+                          analysisData.technology_stack.languages.length ===
+                            0) && (
+                          <span className="text-muted-foreground text-sm">
+                            No languages detected
+                          </span>
                         )}
                       </div>
                     </div>
@@ -1107,51 +1343,73 @@ const ResultsPage = () => {
           <TabsContent value="security">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
-                <CardHeader><CardTitle>🔒 Security Analysis</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>🔒 Security Analysis</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Security Score</span><span className="font-medium">{Math.round(Number(securityScore) || 0)}/100</span></div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Critical Issues</span>
+                    <span className="text-muted-foreground">
+                      Security Score
+                    </span>
+                    <span className="font-medium">
+                      {Math.round(Number(securityScore) || 0)}/100
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Critical Issues
+                    </span>
                     <span className="font-medium text-destructive">
                       {(() => {
                         // Try to access security metrics critical issues
-                        const criticalIssues = analysisData.security_metrics?.critical_issues as number | string[] | undefined;
-                        
+                        const criticalIssues = analysisData.security_metrics
+                          ?.critical_issues as number | string[] | undefined;
+
                         // If it's a direct number, use it
-                        if (typeof criticalIssues === 'number') {
+                        if (typeof criticalIssues === "number") {
                           return criticalIssues;
                         }
-                        
+
                         // If it's an array, use the length
                         if (Array.isArray(criticalIssues)) {
                           return criticalIssues.length;
                         }
-                        
+
                         // Try security.critical_issues if it exists
                         if (analysisData.security?.critical_issues) {
                           // Handle both number and array cases
-                          if (typeof analysisData.security.critical_issues === 'number') {
+                          if (
+                            typeof analysisData.security.critical_issues ===
+                            "number"
+                          ) {
                             return analysisData.security.critical_issues;
                           }
-                          if (Array.isArray(analysisData.security.critical_issues)) {
-                            return (analysisData.security.critical_issues as string[]).length;
+                          if (
+                            Array.isArray(analysisData.security.critical_issues)
+                          ) {
+                            return (
+                              analysisData.security.critical_issues as string[]
+                            ).length;
                           }
                         }
-                        
+
                         // Final fallback
                         return 0;
                       })()}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Security Hotspots</span>
+                    <span className="text-muted-foreground">
+                      Security Hotspots
+                    </span>
                     <span className="font-medium text-orange-600">
                       {(() => {
                         // Try to access security metrics security hotspots
-                        const securityHotspots = analysisData.security_metrics?.security_hotspots;
+                        const securityHotspots =
+                          analysisData.security_metrics?.security_hotspots;
 
                         // If it's a direct number, use it
-                        if (typeof securityHotspots === 'number') {
+                        if (typeof securityHotspots === "number") {
                           return securityHotspots;
                         }
 
@@ -1163,11 +1421,21 @@ const ResultsPage = () => {
                         // Try security.security_hotspots if it exists
                         if (analysisData.security?.security_hotspots) {
                           // Handle both number and array cases
-                          if (typeof analysisData.security.security_hotspots === 'number') {
+                          if (
+                            typeof analysisData.security.security_hotspots ===
+                            "number"
+                          ) {
                             return analysisData.security.security_hotspots;
                           }
-                          if (Array.isArray(analysisData.security.security_hotspots)) {
-                            return (analysisData.security.security_hotspots as string[]).length;
+                          if (
+                            Array.isArray(
+                              analysisData.security.security_hotspots
+                            )
+                          ) {
+                            return (
+                              analysisData.security
+                                .security_hotspots as string[]
+                            ).length;
                           }
                         }
 
@@ -1176,25 +1444,46 @@ const ResultsPage = () => {
                       })()}
                     </span>
                   </div>
-                  <Progress value={Math.round(Number(securityScore) || 0)} className="w-full" />
+                  <Progress
+                    value={Math.round(Number(securityScore) || 0)}
+                    className="w-full"
+                  />
                 </CardContent>
               </Card>
               {(() => {
-                const securityFindings: string[] = (analysisData.security_analysis?.recommendations as string[] | undefined)
-                  ?? (analysisData.security_metrics?.security_hotspots as string[] | undefined)
-                  ?? (analysisData.security?.security_hotspots as string[] | undefined)
-                  ?? (analysisData.security_metrics?.critical_issues as string[] | undefined)
-                  ?? (analysisData.security?.critical_issues as string[] | undefined)
-                  ?? [];
+                const securityFindings: string[] =
+                  (analysisData.security_analysis?.recommendations as
+                    | string[]
+                    | undefined) ??
+                  (analysisData.security_metrics?.security_hotspots as
+                    | string[]
+                    | undefined) ??
+                  (analysisData.security?.security_hotspots as
+                    | string[]
+                    | undefined) ??
+                  (analysisData.security_metrics?.critical_issues as
+                    | string[]
+                    | undefined) ??
+                  (analysisData.security?.critical_issues as
+                    | string[]
+                    | undefined) ??
+                  [];
                 return securityFindings.length > 0 ? (
                   <Card>
-                    <CardHeader><CardTitle>🛡️ Security Recommendations</CardTitle></CardHeader>
+                    <CardHeader>
+                      <CardTitle>🛡️ Security Recommendations</CardTitle>
+                    </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         {securityFindings.map((rec: string, index: number) => (
-                          <div key={index} className="p-3 border-l-4 border-border bg-muted/30 rounded-r">
+                          <div
+                            key={index}
+                            className="p-3 border-l-4 border-border bg-muted/30 rounded-r"
+                          >
                             <div className="prose prose-sm text-foreground">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{rec}</ReactMarkdown>
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {rec}
+                              </ReactMarkdown>
                             </div>
                           </div>
                         ))}
@@ -1202,7 +1491,11 @@ const ResultsPage = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <Card><CardContent className="text-muted-foreground py-8">No security recommendations available</CardContent></Card>
+                  <Card>
+                    <CardContent className="text-muted-foreground py-8">
+                      No security recommendations available
+                    </CardContent>
+                  </Card>
                 );
               })()}
             </div>
