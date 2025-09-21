@@ -309,7 +309,7 @@ export default function Hero() {
                   <Trophy className="w-6 h-6 text-accent-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold">Keshav Sharma</h3>
+                  <h3 className="font-heading font-semibold text-accent-foreground">Keshav Sharma</h3>
                   <p className="text-primary-foreground/70 text-sm">Ranked #47 globally</p>
                 </div>
               </div>

@@ -337,7 +337,7 @@ export default function LeaderboardTeaser() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-accent" />
-            <h2 className="text-lg font-heading font-semibold">Live Leaderboard</h2>
+            <h2 className="text-lg font-heading font-semibold text-accent-foreground">Live Leaderboard</h2>
           </div>
           <div className="flex items-center gap-1">
             <div className={`w-2 h-2 rounded-full ${

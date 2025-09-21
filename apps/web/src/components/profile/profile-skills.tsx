@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Code2 } from "lucide-react";
 import { memo } from "react";
 import { type AIVerifiedSkill } from "@0unveiled/database";
+import { cn } from "@/lib/utils";
 
 // Define the structure of the verified skills data from the API
 interface AIVerifiedSkillsData {
@@ -160,31 +161,37 @@ export const ProfileSkills = memo(function ProfileSkills({
           <div className="flex flex-wrap gap-2">
             {aiSkillsForDisplay.map((skill) => {
               let badgeClass = "bg-primary/5 text-primary";
+              // TODO: Categorize badges based on skill type by color
               
-              if (skill.type === 'framework') {
-                badgeClass = "bg-secondary/5 text-secondary";
-              } else if (skill.type === 'technology') {
-                badgeClass = "bg-accent/5 text-accent";
-              }
+              // if (skill.type === 'framework') {
+              //   badgeClass = "bg-accent text-secondary font-semibold";
+              // } else if (skill.type === 'database') {
+              //   badgeClass = "bg-green-800 text-secondary";
+              // }
               
               return (
-                <Badge
+                <div
                   key={`${skill.type}-${skill.name}`}
-                  variant="outline"
-                  className={badgeClass}
+                  className="relative inline-flex group"
                 >
-                  {skill.name}
-                  {skill.confidence && skill.confidence > 0.7 && (
-                    <span className="ml-1 text-xs opacity-70">
-                      (High)
-                    </span>
-                  )}
-                  {skill.confidence && skill.confidence > 0.4 && skill.confidence <= 0.7 && (
-                    <span className="ml-1 text-xs opacity-70">
-                      (Medium)
-                    </span>
-                  )}
-                </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn("capitalize", badgeClass)}
+                  >
+                    {skill.name}
+                    {skill.confidence && skill.confidence > 0.7 && (
+                      <span className="ml-1 text-xs opacity-70">(High)</span>
+                    )}
+                    {skill.confidence &&
+                      skill.confidence > 0.4 &&
+                      skill.confidence <= 0.7 && (
+                        <span className="ml-1 text-xs opacity-70">(Medium)</span>
+                      )}
+                  </Badge>
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity pointer-events-none whitespace-nowrap">
+                    {skill.type.charAt(0).toUpperCase() + skill.type.slice(1)}
+                  </div>
+                </div>
               );
             })}
           </div>
