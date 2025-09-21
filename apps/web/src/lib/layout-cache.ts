@@ -12,6 +12,10 @@ interface LayoutData {
 const layoutCache = new Map<string, { data: any; timestamp: number }>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
+// Cache statistics
+let cacheHits = 0
+let cacheMisses = 0
+
 /**
  * Cache utilities for layout data
  */
@@ -25,14 +29,19 @@ export const cacheUtils = {
 
   get: (key: string) => {
     const cached = layoutCache.get(key)
-    if (!cached) return null
+    if (!cached) {
+      cacheMisses++
+      return null
+    }
 
     const isExpired = Date.now() - cached.timestamp > CACHE_TTL
     if (isExpired) {
       layoutCache.delete(key)
+      cacheMisses++
       return null
     }
 
+    cacheHits++
     return cached.data
   },
 
@@ -48,37 +57,53 @@ export const cacheUtils = {
     }
   },
 
-  getStats: () => ({
-    size: layoutCache.size,
-    keys: Array.from(layoutCache.keys()),
-    hitRate: 0 // TODO: Implement hit rate tracking
-  })
+  getStats: () => {
+    const total = cacheHits + cacheMisses
+    const hitRate = total > 0 ? (cacheHits / total) * 100 : 0
+    return {
+      size: layoutCache.size,
+      keys: Array.from(layoutCache.keys()),
+      hitRate: Math.round(hitRate * 100) / 100, // Round to 2 decimal places
+      totalRequests: total,
+      hits: cacheHits,
+      misses: cacheMisses
+    }
+  },
+
+  resetStats: () => {
+    cacheHits = 0
+    cacheMisses = 0
+  }
 }
 
 /**
  * Layout data fetching with caching
  */
-export async function fetchLayoutData(userId?: string): Promise<LayoutData> {
-  const cacheKey = `layout-${userId || 'anonymous'}`
-  
-  // Try to get from cache first
-  const cached = cacheUtils.get(cacheKey)
-  if (cached) {
-    return cached
-  }
-
-  // Fresh fetch if not in cache
+export async function fetchLayoutData(): Promise<LayoutData> {
+  // Fetch user data first to determine the correct cache key
   const { getCurrentUser } = await import("@/data/user")
-  const { createSupabaseServerClient } = await import("@/lib/supabase/server")
-  const { getUnreadNotificationCount, getRecentNotifications } = await import("@/actions/optimized-notifications")
-
+  
   try {
     // Fetch user data with timeout protection
-    const [fetchedUser, sessionUserResult] = await Promise.allSettled([
-      Promise.race([
-        getCurrentUser(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('getCurrentUser timeout')), 15000))
-      ]),
+    const fetchedUser = await Promise.race([
+      getCurrentUser(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('getCurrentUser timeout')), 15000))
+    ])
+    
+    // Determine cache key based on actual user ID
+    const cacheKey = fetchedUser ? `layout-${fetchedUser.id}` : 'layout-anonymous'
+    
+    // Try to get from cache first
+    const cached = cacheUtils.get(cacheKey)
+    if (cached) {
+      return cached
+    }
+
+    const { createSupabaseServerClient } = await import("@/lib/supabase/server")
+    const { getUnreadNotificationCount, getRecentNotifications } = await import("@/actions/optimized-notifications")
+
+    // Fetch session user and notifications
+    const [sessionUserResult] = await Promise.allSettled([
       (async () => {
         try {
           // Add timeout for Supabase client creation
@@ -98,34 +123,24 @@ export async function fetchLayoutData(userId?: string): Promise<LayoutData> {
       })()
     ])
 
-    const user = fetchedUser.status === 'fulfilled' ? fetchedUser.value : null
+    const user = fetchedUser
     const sessionUser = sessionUserResult.status === 'fulfilled' ? sessionUserResult.value : null
 
     // Fetch notifications only if user is logged in
-    let notificationData: {
-      count: number
-      notifications: Notification[]
-    } = {
-      count: 0,
-      notifications: []
-    }
+    let notifications: Notification[] = []
 
     if (user) {
-      const [countResult, notificationsResult] = await Promise.allSettled([
-        getUnreadNotificationCount(),
+      const notificationsResult = await Promise.allSettled([
         getRecentNotifications(5)
       ])
 
-      notificationData = {
-        count: countResult.status === 'fulfilled' ? countResult.value : 0,
-        notifications: notificationsResult.status === 'fulfilled' ? notificationsResult.value as Notification[] : []
-      }
+      notifications = notificationsResult[0].status === 'fulfilled' ? notificationsResult[0].value as Notification[] : []
     }
 
     const result: LayoutData = {
       user,
       sessionUser,
-      notifications: notificationData.notifications,
+      notifications,
       isAuthenticated: !!user
     }
 
