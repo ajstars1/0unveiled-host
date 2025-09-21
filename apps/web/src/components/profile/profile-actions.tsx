@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { startTransition } from 'react'
 import { getOrCreateDmChannel } from '@/actions/chat'
+import { createClient } from "@/lib/supabase/client"
 
 interface ProfileActionsProps {
   profileUserId: string
@@ -50,6 +51,7 @@ export function ProfileActions({
 }: ProfileActionsProps) {
   const { toast } = useToast()
   const router = useRouter()
+  const supabase = createClient()
   const [connectionStatus, setConnectionStatus] = React.useState(initialConnectionStatus)
   const [connectionRequestId, setConnectionRequestId] = React.useState(initialConnectionRequestId)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -58,9 +60,12 @@ export function ProfileActions({
 
   const connectionsDashboardPath = '/connections';
 
-  const handleConnect = () => {
-    if (!isUserLoggedIn) {
-      router.push('/login');
+  const handleConnect = async () => {
+    // Check authentication client-side
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const callbackUrl = window.location.pathname;
+      router.push(`/login?callback=${encodeURIComponent(callbackUrl)}`);
       return;
     }
     setIsLoading(true);
