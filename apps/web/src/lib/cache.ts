@@ -173,5 +173,5 @@ export const getCachedUserProfileDataFallback = async (username: string) => {
 export const invalidateUserCache = (username: string) => {
   // This would be called when user data is updated
   // In a real implementation, you'd use revalidateTag from next/cache
-  console.log(`Invalidating cache for user: ${username}`);
+  // console.log(`Invalidating cache for user: ${username}`);
 };

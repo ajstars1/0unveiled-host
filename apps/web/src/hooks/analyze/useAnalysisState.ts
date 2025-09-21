@@ -46,7 +46,6 @@ export function useBulkAnalysis() {
     cancelScanRef.current = true;
     setScanningAll(false);
     setCurrentScanRepo("");
-    console.log("📢 Scan cancelled by user");
   };
 
   const resetScan = () => {

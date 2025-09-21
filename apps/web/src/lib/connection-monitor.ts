@@ -28,14 +28,14 @@ class ConnectionMonitor {
 
   private setupNetworkListeners() {
     window.addEventListener('online', () => {
-      console.log('ConnectionMonitor: Network back online');
+      // console.log('ConnectionMonitor: Network back online');
       this.healthData.isOnline = true;
       this.checkSupabaseHealth();
       this.notifyListeners();
     });
 
     window.addEventListener('offline', () => {
-      console.log('ConnectionMonitor: Network went offline');
+      // console.log('ConnectionMonitor: Network went offline');
       this.healthData.isOnline = false;
       this.healthData.supabaseReachable = false;
       this.notifyListeners();
@@ -71,7 +71,7 @@ class ConnectionMonitor {
         lastChecked: new Date()
       };
 
-      console.log(`ConnectionMonitor: Supabase health check - ${isHealthy ? 'OK' : 'FAILED'} (${latency}ms)`);
+      // console.log(`ConnectionMonitor: Supabase health check - ${isHealthy ? 'OK' : 'FAILED'} (${latency}ms)`);
       return isHealthy;
     } catch (error) {
       console.error('ConnectionMonitor: Health check failed:', error);

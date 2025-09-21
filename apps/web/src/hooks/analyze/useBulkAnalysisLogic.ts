@@ -23,7 +23,6 @@ export function useBulkAnalysisLogic() {
     let successCount = 0;
     let failureCount = 0;
 
-    console.log(`🚀 Starting scan of ${scanType}`);
 
     for (let i = 0; i < reposToScan.length; i++) {
       // Check if user cancelled the scan
@@ -49,20 +48,13 @@ export function useBulkAnalysisLogic() {
 
         const [owner, repoName] = repo.full_name.split("/");
 
-        console.log(`🔍 Starting analysis for ${repo.full_name}...`);
 
         const data = await analyzeRepositoryAction(userId, owner, repoName, 50);
 
-        console.log(`📊 Analysis data for ${repo.full_name}:`, {
-          success: data.success,
-          hasData: !!data.data,
-          error: data.error,
-        });
 
         if (data.success && data.data) {
           analyses[repo.full_name] = data as AnalysisResult;
           successCount++;
-          console.log(`✅ Successfully analyzed ${repo.full_name}`);
         } else {
           failureCount++;
           console.error(
@@ -95,7 +87,6 @@ export function useBulkAnalysisLogic() {
           `${message}. ${failureCount} repositories failed to analyze (check console for details).`,
         );
       } else {
-        console.log(`🎉 ${message}`);
       }
     }
   };

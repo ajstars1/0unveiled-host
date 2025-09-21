@@ -42,16 +42,16 @@ export const performanceMonitor = {
   /**
    * Log performance metrics
    */
-  logMetrics: () => {
-    const stats = performanceMonitor.getCacheStats()
-    const dbStats = performanceMonitor.trackDatabaseCalls
+  // logMetrics: () => {
+  //   const stats = performanceMonitor.getCacheStats()
+  //   const dbStats = performanceMonitor.trackDatabaseCalls
     
-    console.log('🚀 Layout Performance Metrics:', {
-      cacheStats: stats,
-      databaseOptimization: dbStats,
-      cacheEnabled: performanceMonitor.isCacheEnabled()
-    })
-  },
+  //   console.log('🚀 Layout Performance Metrics:', {
+  //     cacheStats: stats,
+  //     databaseOptimization: dbStats,
+  //     cacheEnabled: performanceMonitor.isCacheEnabled()
+  //   })
+  // },
 
   /**
    * Validate optimization goals
@@ -72,29 +72,29 @@ export const performanceMonitor = {
 /**
  * Development helper to monitor cache performance
  */
-export const devCacheMonitor = {
-  /**
-   * Start monitoring cache performance
-   */
-  start: () => {
-    if (process.env.NODE_ENV === 'development') {
-      // Log metrics every 30 seconds
-      setInterval(() => {
-        performanceMonitor.logMetrics()
-      }, 30000)
+// export const devCacheMonitor = {
+//   /**
+//    * Start monitoring cache performance
+//    */
+//   start: () => {
+//     if (process.env.NODE_ENV === 'development') {
+//       // Log metrics every 30 seconds
+//       setInterval(() => {
+//         performanceMonitor.logMetrics()
+//       }, 30000)
       
-      console.log('📊 Cache monitoring started - metrics logged every 30s')
-    }
-  },
+//       console.log('📊 Cache monitoring started - metrics logged every 30s')
+//     }
+//   },
 
-  /**
-   * Get real-time performance snapshot
-   */
-  snapshot: () => {
-    return {
-      timestamp: new Date().toISOString(),
-      ...performanceMonitor.getCacheStats(),
-      optimization: performanceMonitor.validateOptimization()
-    }
-  }
-}
+//   /**
+//    * Get real-time performance snapshot
+//    */
+//   snapshot: () => {
+//     return {
+//       timestamp: new Date().toISOString(),
+//       ...performanceMonitor.getCacheStats(),
+//       optimization: performanceMonitor.validateOptimization()
+//     }
+//   }
+// }

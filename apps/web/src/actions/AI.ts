@@ -143,10 +143,6 @@ async function evaluateMultipleProjectsWithAI(
     const result = await generativeModel.generateContent(prompt);
     const responseText = result.response.text();
     
-    console.log("--- RAW AI CODE ANALYSIS RESPONSE ---");
-    console.log(responseText);
-    console.log("-----------------------------------");
-    
     if (!responseText) throw new Error("AI returned an empty response.");
 
     const evaluation = JSON.parse(responseText) as AIBatchEvaluationResponse;

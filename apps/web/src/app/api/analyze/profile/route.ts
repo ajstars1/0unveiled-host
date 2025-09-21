@@ -65,7 +65,7 @@ function createEventStreamResponse(encoder: TextEncoder, controller: ReadableStr
         controller.enqueue(chunk);
       } catch (error: any) {
         if (error?.code === 'ERR_INVALID_STATE') {
-          console.log('Controller already closed, skipping event:', data);
+          // console.log('Controller already closed, skipping event:', data);
           return;
         }
         // Re-throw other errors
@@ -129,12 +129,10 @@ async function saveAIVerifiedSkills(
         await db.insert(aiVerifiedSkills).values(batch);
       }
       
-      console.log(`Saved ${skillsToInsert.length} AI-verified skills for user ${userId}`);
       return { success: true, count: skillsToInsert.length };
     }
 
     // No new skills detected; don't delete existing entries
-    console.log(`No AI-verified skills detected for user ${userId}; skipping delete/insert.`);
     return { success: true, count: 0 };
   } catch (error) {
     console.error('Error saving AI-verified skills:', error);
@@ -221,15 +219,12 @@ export async function POST(request: NextRequest) {
           
           try {
             const reposResult = await getPortfolioGithubRepos(user.id);
-            console.log("Portfolio repos result:", reposResult);
             
             if (reposResult.success && reposResult.repositories) {
               repositories = reposResult.repositories;
               githubConnected = true;
-              console.log("Found portfolio repositories:", repositories.length);
             } else {
               // No GitHub repositories in portfolio - continue with profile-only analysis
-              console.log("No GitHub repositories in portfolio, continuing with profile-only analysis");
               githubConnected = false;
             }
 
@@ -327,7 +322,6 @@ export async function POST(request: NextRequest) {
                       analysis: analysisResult.data
                     });
                   } else {
-                    console.log(`Failed to analyze portfolio repository ${repo.name}:`, analysisResult.error);
                     // Continue with other repositories even if one fails
                   }
                 } catch (repoAnalysisError) {
@@ -372,7 +366,6 @@ export async function POST(request: NextRequest) {
                 );
                 
                 if (saveResult.success) {
-                  console.log(`Successfully saved ${saveResult.count} AI-verified skills for user ${user.id}`);
                   aiVerificationStatus = {
                     skillsVerified: saveResult.count || 0,
                     verifiedAt: new Date().toISOString(),
@@ -422,7 +415,6 @@ export async function POST(request: NextRequest) {
               error: error instanceof Error ? error.message : "Analysis failed" 
             });
           } catch (sendError) {
-            console.log("Failed to send error event, controller likely closed:", sendError);
           }
           controller.close();
         }

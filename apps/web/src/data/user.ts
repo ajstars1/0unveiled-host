@@ -238,7 +238,6 @@ export const getUserByUsername = async (
     ]) as any;
 
     if (!profileUser) {
-      console.log('getUserByUsername: User not found:', username);
       return null;
     }
 
@@ -584,19 +583,19 @@ export const getAIVerifiedSkillsByUsername = async (
 
     const verifiedSkills = await getAIVerifiedSkillsByUserId(user.id);
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[AI Skills Debug] Username:', username, 'UserId:', user.id);
-      console.log('[AI Skills Debug] Raw verified skills count:', verifiedSkills?.length || 0);
-      if (verifiedSkills && verifiedSkills.length > 0) {
-        console.log('[AI Skills Debug] First 3 skills sample:', verifiedSkills.slice(0,3).map(s => ({
-          skillName: s.skillName,
-          skillType: s.skillType,
-          confidenceScore: s.confidenceScore,
-          isVisible: s.isVisible,
-          verifiedAt: s.verifiedAt
-        })));
-      }
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    //   console.log('[AI Skills Debug] Username:', username, 'UserId:', user.id);
+    //   console.log('[AI Skills Debug] Raw verified skills count:', verifiedSkills?.length || 0);
+    //   if (verifiedSkills && verifiedSkills.length > 0) {
+    //     console.log('[AI Skills Debug] First 3 skills sample:', verifiedSkills.slice(0,3).map(s => ({
+    //       skillName: s.skillName,
+    //       skillType: s.skillType,
+    //       confidenceScore: s.confidenceScore,
+    //       isVisible: s.isVisible,
+    //       verifiedAt: s.verifiedAt
+    //     })));
+    //   }
+    // }
 
     if (!verifiedSkills) {
       return {
@@ -624,17 +623,17 @@ export const getAIVerifiedSkillsByUsername = async (
         : null
     };
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[AI Skills Debug] Grouped counts:', {
-        languages: groupedSkills.languages.length,
-        frameworks: groupedSkills.frameworks.length,
-        libraries: groupedSkills.libraries.length,
-        tools: groupedSkills.tools.length,
-        databases: groupedSkills.databases.length,
-        cloud: groupedSkills.cloud.length,
-        total: groupedSkills.totalSkills
-      });
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    //   console.log('[AI Skills Debug] Grouped counts:', {
+    //     languages: groupedSkills.languages.length,
+    //     frameworks: groupedSkills.frameworks.length,
+    //     libraries: groupedSkills.libraries.length,
+    //     tools: groupedSkills.tools.length,
+    //     databases: groupedSkills.databases.length,
+    //     cloud: groupedSkills.cloud.length,
+    //     total: groupedSkills.totalSkills
+    //   });
+    // }
 
     return groupedSkills;
 

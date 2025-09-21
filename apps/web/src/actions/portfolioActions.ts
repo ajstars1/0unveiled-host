@@ -37,7 +37,6 @@ interface GitHubFile {
 }
 
 export async function fetchRepoCode(repo: any, username?: string): Promise<{ code: string } | { error: string }> {
-  console.log(`Starting code fetch for: ${repo}`);
   const repoFullName = repo;
   let userId: string | undefined;
   try {
@@ -399,7 +398,6 @@ export async function getCurrentAuthenticatedUserUsername(): Promise<{ username:
   try {
     const supabase = await createSupabaseServerClient();
     const { data: { user:currentUser } } = await supabase.auth.getUser();
-    console.log("Current user:", currentUser);
     if (!currentUser?.id) {
       return { username: null, error: "User not authenticated." };
     }

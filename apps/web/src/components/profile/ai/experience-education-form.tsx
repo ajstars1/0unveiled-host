@@ -117,7 +117,7 @@ export default function ExperienceEducationForm({ userId }: ExperienceEducationF
     // mode: "onChange", // Optional: consider adding for better UX
   });
 
-  console.log("form", form.formState.errors)
+  // console.log("form", form.formState.errors)
 
   // --- Effect to Populate Form with Fetched Data --- 
   useEffect(() => {

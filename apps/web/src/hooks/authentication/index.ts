@@ -176,7 +176,6 @@ export const useAuthSignUp = () => {
       if (signUpData.user) {
           // Check if user is already confirmed
           if (signUpData.user.email_confirmed_at) {
-              console.log("User already confirmed via Supabase. Ensuring Prisma profile exists.");
               // Still call onSignUpUser to ensure Prisma record is linked
               await onSignUpUser({
                 email: signUpData.user.email!, 

@@ -57,7 +57,6 @@ export default function AnalyzeProfilePage() {
             throw new Error(errorData.error || "Failed to start profile analysis");
           }
 
-          console.log("Profile analysis stream started successfully");
 
           const reader = response.body?.getReader();
           if (!reader) {
@@ -74,7 +73,6 @@ export default function AnalyzeProfilePage() {
           while (!streamComplete) {
             const { done, value } = await reader.read();
             if (done) {
-              console.log("Stream ended naturally");
               break;
             }
 
@@ -99,20 +97,16 @@ export default function AnalyzeProfilePage() {
                 try {
                   if (eventData) {
                     const data = JSON.parse(eventData);
-                    console.log("Stream event received:", data.step || data.error || "Event");
                     
                     if (data.step) {
                       setStatus(data.step);
-                      console.log("Status updated:", data.step);
                     }
                     
                     if (typeof data.progress === 'number') {
                       setProgress(data.progress);
-                      console.log("Progress updated:", data.progress);
                     }
                     
                     if (data.result) {
-                      console.log("Analysis result received");
                       analysisResult = data.result;
                       setStatus("Analysis complete");
                       setProgress(100);
@@ -126,7 +120,6 @@ export default function AnalyzeProfilePage() {
 
                     // Check for completion indicators
                     if (data.progress === 100 || (data.step && data.step.toLowerCase().includes('complete'))) {
-                      console.log("Completion detected based on progress/step");
                       setStatus("Analysis complete");
                       setProgress(100);
                     }
@@ -169,7 +162,6 @@ export default function AnalyzeProfilePage() {
                 if (eventData) {
                   const data = JSON.parse(eventData);
                   if (data.result) {
-                    console.log("Analysis result received from final buffer");
                     analysisResult = data.result;
                     setStatus("Analysis complete");
                     setProgress(100);
@@ -181,7 +173,6 @@ export default function AnalyzeProfilePage() {
             }
           }
 
-          console.log("Stream processing completed. Result available:", !!analysisResult);
 
           if (analysisResult) {
             // Store the result in sessionStorage for the results page
@@ -192,8 +183,6 @@ export default function AnalyzeProfilePage() {
                   timestamp: Date.now()
                 }));
 
-                console.log("Profile analysis result stored in sessionStorage, size:", 
-                  JSON.stringify(analysisResult).length);
                 
                 // Clear the timeout
                 if (timeoutRef.current) {
@@ -244,7 +233,6 @@ export default function AnalyzeProfilePage() {
   // Failsafe: if complete flips true for any reason, navigate to results
   useEffect(() => {
     if (complete && !error) {
-      console.log("Analysis complete, redirecting to results page");
       redirectToResults();
     }
   }, [complete, error]);
@@ -253,12 +241,10 @@ export default function AnalyzeProfilePage() {
   useEffect(() => {
     return () => {
       if (sseRef.current) {
-        console.log("Closing SSE connection on unmount");
         sseRef.current.close();
         sseRef.current = null;
       }
       if (timeoutRef.current) {
-        console.log("Clearing timeout on unmount");
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }

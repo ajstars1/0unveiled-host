@@ -27,7 +27,6 @@ const MainLayout = async ({ children }: Props) => {
 
       {/* FloatingNav handles authenticated vs public state internally */}
       <OptimizedFloatingNav 
-        userId={layoutData.user?.id || ""}
         initialUser={layoutData.user}
         initialNotificationCount={layoutData.notifications?.length || 0}
         initialRecentNotifications={layoutData.notifications || []}

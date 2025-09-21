@@ -38,16 +38,12 @@ export function AddProjectModal({ isOpen, onClose, onAdd }: AddProjectModalProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submit button clicked."); 
 
     // 2. Check the validation condition
     const isFormValid = title && role && skills.length > 0 && description;
-    console.log("Is form valid?", isFormValid);
-    console.log({ title, role, skills, description });
 
     if (isFormValid) {
       setIsSubmitting(true);
-      console.log("Form is valid, submitting..."); 
 
       try {
         const formData = new FormData();
@@ -57,11 +53,9 @@ export function AddProjectModal({ isOpen, onClose, onAdd }: AddProjectModalProps
         formData.append("url", link || "");
         formData.append("skills", JSON.stringify(skills));
         
-        console.log("FormData created, calling onAdd..."); 
 
         await onAdd(formData);
 
-        console.log("onAdd completed successfully."); 
 
         // reset form state after successful submission
         setTitle("");
@@ -77,10 +71,8 @@ export function AddProjectModal({ isOpen, onClose, onAdd }: AddProjectModalProps
         console.error("Error inside handleSubmit:", error); // 6. Catches any errors
       } finally {
         setIsSubmitting(false);
-        console.log("Submission process finished."); // 7. Confirms the process ends
       }
     } else {
-      console.log("Submit blocked by validation."); // Lets you know if validation fails
     }
   };
 

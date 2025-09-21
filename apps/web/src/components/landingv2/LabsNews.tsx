@@ -47,7 +47,7 @@ export function LabsNews() {
         ];
         setNews(fallbackData);
       } catch (error) {
-        console.log('News feed unavailable:', error);
+        // console.log('News feed unavailable:', error);
         setNews([]);
       }
     };

@@ -239,7 +239,6 @@ export async function analyzeRepositoryAction(
       max_files: maxFiles
     };
 
-    console.log(`Calling analyzer service at ${analyzerServiceUrl}/api/auth/analyze-repository`);
     
     // Report progress through callback
     progressCallback?.("Connecting to analyzer service", 30);

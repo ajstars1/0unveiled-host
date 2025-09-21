@@ -250,12 +250,10 @@ const ProfileAnalysisResults = () => {
       }).filter((project): project is NonNullable<typeof project> => project !== null); // Filter out null values and assert type
 
       if (projectsToSave.length > 0) {
-        console.log(`Saving ${projectsToSave.length} projects to database...`);
         const saveResult = await saveMultipleGitHubAnalysesAsProjects(projectsToSave);
 
         if (saveResult.success) {
           setBatchSaveCount(saveResult.projects?.length || 0);
-          console.log(`Successfully saved ${saveResult.projects?.length || 0} projects`);
           toast({
             title: "Projects Saved Successfully",
             description: `Saved ${saveResult.projects?.length || 0} projects with their tech stacks and AI descriptions.`,
@@ -312,7 +310,6 @@ const ProfileAnalysisResults = () => {
         );
 
         if (result.success) {
-          console.log("Profile analysis saved to database", result);
           setIsSaved(true);
 
           // Now save all individual projects

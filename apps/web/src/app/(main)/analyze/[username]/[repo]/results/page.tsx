@@ -274,7 +274,6 @@ const ResultsPage = () => {
         );
         
         if (result.success) {
-          console.log('Analysis saved to project database', result.project);
           setIsSaved(true);
         } else {
           console.error('Failed to save analysis to database:', result.error);
@@ -452,55 +451,7 @@ const ResultsPage = () => {
     ?? analysisData.repository?.open_issues_count
     ?? 0;
 
-  // Deep debug of security metrics
-  React.useEffect(() => {
-    if (analysisData) {
-      console.log('Security Data Deep Debug:', {
-        security: analysisData.security,
-        security_metrics: analysisData.security_metrics,
-        security_analysis: analysisData.security_analysis,
-        // Log more detailed type information
-        securityMetricsType: analysisData.security_metrics ? typeof analysisData.security_metrics : 'undefined',
-        criticalIssuesType: analysisData.security_metrics?.critical_issues 
-          ? typeof analysisData.security_metrics.critical_issues + (Array.isArray(analysisData.security_metrics.critical_issues) ? ' (array)' : '')
-          : 'undefined',
-        securityHotspotsType: analysisData.security_metrics?.security_hotspots
-          ? typeof analysisData.security_metrics.security_hotspots + (Array.isArray(analysisData.security_metrics.security_hotspots) ? ' (array)' : '')
-          : 'undefined',
-        // If it's a number that looks suspiciously like a memory address, note it
-        criticalIssuesValue: analysisData.security_metrics?.critical_issues,
-        securityHotspotsValue: analysisData.security_metrics?.security_hotspots,
-        securityScore: getSecurityScore(),
-        // Check if calculated value is a valid number
-        calculatedSecurityScore: getSecurityScore(),
-        isScoreValidNumber: !isNaN(getSecurityScore()),
-        // Check if direct security score exists and is valid
-        directSecurityScore: analysisData.security_metrics?.security_score,
-        isDirectScoreValidNumber: !isNaN(analysisData.security_metrics?.security_score || 0),
-        // Log a sample of the raw structure for reference
-        rawSample: JSON.stringify(analysisData).slice(0, 500) + '...'
-      });
-    }
-  }, [analysisData]);
 
-  // Original debug logging
-  console.log('Analysis Data Debug:', {
-    hasMetrics: !!analysisData.metrics,
-    hasCodeMetrics: !!analysisData.code_metrics,
-    hasQualityMetrics: !!analysisData.quality_metrics,
-    hasRepository: !!analysisData.repository,
-    hasRepositoryInfo: !!analysisData.repository_info,
-    hasSecurityMetrics: !!analysisData.security_metrics,
-    hasSecurity: !!analysisData.security,
-    hasSecurityAnalysis: !!analysisData.security_analysis,
-    securityScore,
-    filesAnalyzed,
-    totalLines,
-    repoSize,
-    complexityScore,
-    testCoverage,
-    openIssues
-  });
 
   // Helper functions for data visualization
   const getQualityData = () => [

@@ -153,7 +153,6 @@ export function PortfolioCard({ item, isOwnProfile, isPinned, username }: Portfo
   const homepage = metadataObject.homepage as string | undefined;
   const primaryLang = metadataObject.language as string | undefined;
   const commitCount = metadataObject.commitCount as number | undefined;
-  console.log("PortfolioCard metadata:", metadataObject);
   const isPrivate = metadataObject.private as boolean | undefined;
   const displayLanguages = formatLanguages(languages);
 
@@ -182,7 +181,6 @@ export function PortfolioCard({ item, isOwnProfile, isPinned, username }: Portfo
 
   // Implement code analysis logic
   const handleCodeAnalysis = async (repo: GitHubRepoForAnalysis) => {
-    console.log("Starting code analysis for repo:", repo);
     if (!repo || !repo.full_name) {
       setError("Repository data is missing.");
       console.error("Repository data is missing:", repo);

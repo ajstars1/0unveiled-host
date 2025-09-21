@@ -74,7 +74,6 @@ export default function RegisterPage() {
     
     const email = getValues("email");
     // Log the email being used
-    console.log("[handleResendVerification] Attempting to resend for email:", email);
 
     if (!email) {
       toast({
@@ -107,7 +106,6 @@ export default function RegisterPage() {
           description: description,
         });
       } else {
-        console.log("[handleResendVerification] Resend successful for:", email);
         toast({
           title: "Verification Email Resent",
           description: `A new verification link has been sent to ${email}. Please check your inbox (and spam folder).`,

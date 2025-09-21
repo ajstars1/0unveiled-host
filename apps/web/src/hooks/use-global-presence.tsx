@@ -63,12 +63,12 @@ export function useGlobalPresence({ userId }: UseGlobalPresenceProps = {}): Glob
   }, [])
 
   const handleJoin = useCallback(({ key }: { key: string, newPresences: any[] }) => {
-    if (DEBUG) console.log(`useGlobalPresence: User ${key} joined`)
+    // if (DEBUG) console.log(`useGlobalPresence: User ${key} joined`)
     handleSync()
   }, [handleSync])
 
   const handleLeave = useCallback(({ key }: { key: string, leftPresences: any[] }) => {
-    if (DEBUG) console.log(`useGlobalPresence: User ${key} left`)
+    // if (DEBUG) console.log(`useGlobalPresence: User ${key} left`)
     handleSync()
   }, [handleSync])
 
@@ -153,7 +153,7 @@ export function useGlobalPresence({ userId }: UseGlobalPresenceProps = {}): Glob
     currentChannel.subscribe((status, err) => {
       if (!isMountedRef.current || channelRef.current !== currentChannel) return
 
-      if (DEBUG) console.log(`useGlobalPresence: Channel status changed to ${status}`, err)
+      // if (DEBUG) console.log(`useGlobalPresence: Channel status changed to ${status}`, err)
 
       if (status === 'SUBSCRIBED') {
         setConnectionStatus('CONNECTED')
@@ -166,7 +166,7 @@ export function useGlobalPresence({ userId }: UseGlobalPresenceProps = {}): Glob
           channelRef.current
             .track({ online_at: new Date().toISOString() })
             .then(() => {
-              if (DEBUG) console.log(`useGlobalPresence: Tracking user ${userId}`)
+              // if (DEBUG) console.log(`useGlobalPresence: Tracking user ${userId}`)
               startHeartbeat()
             })
             .catch((e) => {
@@ -218,7 +218,7 @@ export function useGlobalPresence({ userId }: UseGlobalPresenceProps = {}): Glob
       channelRef.current = null
 
       if (chanToClean) {
-        if (DEBUG) console.log(`useGlobalPresence CLEANUP: Removing channel ${chanToClean.topic}`)
+        // if (DEBUG) console.log(`useGlobalPresence CLEANUP: Removing channel ${chanToClean.topic}`)
         supabase.removeChannel(chanToClean)
           .catch(err => logger.error('useGlobalPresence CLEANUP: Error during removeChannel:', err))
       }
@@ -235,10 +235,10 @@ export function useGlobalPresence({ userId }: UseGlobalPresenceProps = {}): Glob
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && (connectionStatus === 'DISCONNECTED' || connectionStatus === 'ERROR') && userId) {
-        if (DEBUG) console.log('useGlobalPresence: Page visible, nudging reconnect...')
+        // if (DEBUG) console.log('useGlobalPresence: Page visible, nudging reconnect...')
         connectToChannel()
       } else if (document.visibilityState === 'hidden') {
-        if (DEBUG) console.log('useGlobalPresence: Page hidden, stopping heartbeat')
+        // if (DEBUG) console.log('useGlobalPresence: Page hidden, stopping heartbeat')
         clearHeartbeat()
       }
     }
