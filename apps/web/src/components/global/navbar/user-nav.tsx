@@ -16,6 +16,8 @@ import {
 import { useRouter } from 'next/navigation'
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
+import { getUserBySupabaseId } from "@/data/user";
 interface UserNavProps {
   user: {
     id: string
@@ -31,6 +33,24 @@ export function UserNav({ user }: UserNavProps) {
   const router = useRouter()
   // const supabase = createClientComponentClient()
   const supabase = createClient()
+  const [dbUser, setDbUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = await getUserBySupabaseId(user.id)
+        setDbUser(userData)
+      } catch (error) {
+        console.error("Error fetching user data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [user.id])
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.refresh()
@@ -57,7 +77,7 @@ export function UserNav({ user }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="" />
         <DropdownMenuGroup>
-          <Link href="/profile">
+          <Link href={dbUser?.username ? `/${dbUser.username}` : "/profile"}>
             <DropdownMenuItem className="" inset>
               My Profile
               <DropdownMenuShortcut className="">⌘P</DropdownMenuShortcut>
