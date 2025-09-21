@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { OptimizedNotificationDropdown } from "@/components/dashboard/optimized-notification-dropdown";
+import { useDeviceDetection } from '@/hooks/use-device-detection';
 
 interface OptimizedFloatingNavProps {
   userId: string;
@@ -44,6 +45,7 @@ export function OptimizedFloatingNav({
   
   const pathname = usePathname();
   const queryClient = useQueryClient();
+  const { isMobile } = useDeviceDetection();
 
   // Use available user data (prefer initialUser if available, fallback to sessionUser)
   const userData = initialUser || (sessionUser ? {
@@ -135,7 +137,7 @@ export function OptimizedFloatingNav({
       if (!ticking) {
         requestAnimationFrame(() => {
           const scrolled = window.scrollY > 200;
-          setIsExpanded(scrolled);
+          setIsExpanded(isMobile || scrolled);
           ticking = false;
         });
         ticking = true;
@@ -144,7 +146,7 @@ export function OptimizedFloatingNav({
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isMobile]);
 
   const navItems = useMemo(() => [
     { id: "home", icon: Home, label: "Home", href: "/" },
@@ -174,21 +176,30 @@ export function OptimizedFloatingNav({
 
   const renderAuthContent = useCallback(() => {
     if (loading) {
-      return <div className="w-28 h-8 rounded-full bg-white/10 animate-pulse" />;
+      return <div className={cn(
+        "rounded-full bg-white/10 animate-pulse",
+        isMobile ? "w-16 h-6" : "w-28 h-8"
+      )} />;
     }
 
     if (userData) {
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {/* Notification Bell - only shows when logged in */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full p-0">
-                <Bell className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className={cn(
+                "relative rounded-full p-0",
+                isMobile ? "h-6 w-6" : "h-8 w-8"
+              )}>
+                <Bell className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
                 {(notificationCount ?? 0) > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] rounded-full"
+                    className={cn(
+                      "absolute flex items-center justify-center text-[10px] rounded-full",
+                      isMobile ? "-top-1 -right-1 h-3 w-3 p-0 text-[8px]" : "-top-1 -right-1 h-4 w-4 p-0"
+                    )}
                   >
                     {notificationCount > 9 ? '9+' : notificationCount}
                   </Badge>
@@ -204,13 +215,19 @@ export function OptimizedFloatingNav({
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="relative h-8 w-8 rounded-full p-0">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" size="sm" className={cn(
+                "relative rounded-full p-0",
+                isMobile ? "h-6 w-6" : "h-8 w-8"
+              )}>
+                <Avatar className={isMobile ? "h-6 w-6" : "h-8 w-8"}>
                   <AvatarImage 
                     src={userData.profilePicture || undefined} 
                     alt={userData.firstName || 'User'} 
                   />
-                  <AvatarFallback className="text-xs">
+                  <AvatarFallback className={cn(
+                    "text-xs",
+                    isMobile ? "text-[10px]" : "text-xs"
+                  )}>
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -263,12 +280,13 @@ export function OptimizedFloatingNav({
               variant="ghost" 
               size="sm" 
               className={cn(
-                "text-xs h-7 px-3 rounded-full backdrop-blur-sm",
-                "hover:bg-white/10 text-muted-foreground hover:text-foreground"
+                "rounded-full backdrop-blur-sm",
+                "hover:bg-white/10 text-muted-foreground hover:text-foreground",
+                isMobile ? "text-[10px] h-6 px-2" : "text-xs h-7 px-3"
               )}
             >
-              <LogIn className="w-3 h-3 sm:mr-1" />
-              <span className="hidden sm:inline">Sign in</span>
+              <LogIn className={isMobile ? "w-2 h-2 mr-1" : "w-3 h-3 sm:mr-1"} />
+              <span className={isMobile ? "inline" : "hidden sm:inline"}>Sign in</span>
             </Button>
           </motion.div>
         </Link>
@@ -282,18 +300,19 @@ export function OptimizedFloatingNav({
               variant="default" 
               size="sm" 
               className={cn(
-                "text-xs h-7 px-3 rounded-full backdrop-blur-sm",
-                "bg-white/20 hover:bg-white/30 text-foreground shadow-lg"
+                "rounded-full backdrop-blur-sm",
+                "bg-white/20 hover:bg-white/30 text-foreground shadow-lg",
+                isMobile ? "text-[10px] h-6 px-2" : "text-xs h-7 px-3"
               )}
             >
-              <Sparkles className="w-3 h-3 sm:mr-1" />
-              <span className="hidden sm:inline">Get started</span>
+              <Sparkles className={isMobile ? "w-2 h-2 mr-1" : "w-3 h-3 sm:mr-1"} />
+              <span className={isMobile ? "inline" : "hidden sm:inline"}>Get started</span>
             </Button>
           </motion.div>
         </Link>
       </div>
     );
-  }, [loading, userData, notificationCount, recentNotifications, userInitials, handleLogout]);
+  }, [loading, userData, notificationCount, recentNotifications, userInitials, handleLogout, isMobile]);
 
   return (
     <AnimatePresence>
@@ -308,7 +327,12 @@ export function OptimizedFloatingNav({
             stiffness: 200,
             duration: 0.6 
           }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+          className={cn(
+            "fixed z-50",
+            isMobile 
+              ? "bottom-0 left-0 right-0" 
+              : "bottom-6 left-1/2 -translate-x-1/2"
+          )}
         >
           <motion.div 
             layout
@@ -322,13 +346,15 @@ export function OptimizedFloatingNav({
               "after:absolute after:inset-0 after:rounded-full",
               "after:bg-gradient-to-t after:from-black/20 after:via-transparent after:to-white/10",
               "after:-z-10",
-              isExpanded ? "px-3" : "px-2"
+              isMobile 
+                ? "rounded-none border-x-0 border-b-0 px-4 py-3" 
+                : (isExpanded ? "px-3" : "px-2")
             )}
             transition={{ duration: 0.4, ease: "easeInOut" }}
           >
-            {/* Logo - only when expanded */}
+            {/* Logo - only when expanded and not mobile */}
             <AnimatePresence mode="wait">
-              {isExpanded && (
+              {isExpanded && !isMobile && (
                 <motion.div
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: "auto", opacity: 1 }}
@@ -347,7 +373,10 @@ export function OptimizedFloatingNav({
             </AnimatePresence>
 
             {/* Navigation Items */}
-            <div className="flex items-center gap-1">
+            <div className={cn(
+              "flex items-center",
+              isMobile ? "flex-1 justify-around gap-0" : "gap-1"
+            )}>
               {navItems.map((item) => (
                 <Link key={item.id} href={item.href}>
                   <motion.button
@@ -355,6 +384,7 @@ export function OptimizedFloatingNav({
                       "flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium",
                       "transition-all duration-300 hover:bg-white/10",
                       "backdrop-blur-sm",
+                      isMobile ? "flex-col gap-1 px-2 py-1 text-[10px]" : "",
                       isRouteActive(item.href)
                         ? "bg-white/20 text-foreground shadow-lg shadow-black/20" 
                         : "text-muted-foreground hover:text-foreground"
@@ -362,16 +392,16 @@ export function OptimizedFloatingNav({
                     whileHover={{ scale: 1.05, y: -1 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <item.icon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{item.label}</span>
+                    <item.icon className={cn(isMobile ? "w-5 h-5" : "w-4 h-4")} />
+                    <span className={cn(isMobile ? "block" : "hidden sm:inline")}>{item.label}</span>
                   </motion.button>
                 </Link>
               ))}
             </div>
 
-            {/* Auth Actions - only when expanded */}
+            {/* Auth Actions - only when expanded on desktop, always on mobile */}
             <AnimatePresence mode="wait">
-              {isExpanded && (
+              {(isExpanded || isMobile) && (
                 <motion.div
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: "auto", opacity: 1 }}
@@ -379,7 +409,7 @@ export function OptimizedFloatingNav({
                   transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
                   className="flex items-center gap-1 overflow-hidden"
                 >
-                  <div className="w-px h-5 bg-white/20 mx-1" />
+                  {!isMobile && <div className="w-px h-5 bg-white/20 mx-1" />}
                   <div className="flex items-center gap-1">
                     {renderAuthContent()}
                   </div>
@@ -389,7 +419,10 @@ export function OptimizedFloatingNav({
           </motion.div>
 
           {/* Glow effect */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background/20 to-background/10 blur-xl -z-20" />
+          <div className={cn(
+            "absolute inset-0 rounded-2xl bg-gradient-to-r from-background/20 to-background/10 blur-xl -z-20",
+            isMobile ? "rounded-none" : ""
+          )} />
         </motion.div>
       )}
     </AnimatePresence>
