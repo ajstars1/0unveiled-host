@@ -111,53 +111,53 @@ const ProfileHeader = memo(function ProfileHeader({
   );
 
   return (
-    <Card className="mb-6 shadow-lg border border-border/10 overflow-visible">
+    <Card className="mb-6 shadow-lg border border-border/10 overflow-visible bg-gradient-to-br from-card to-card/95">
       <CardContent className="p-4 md:p-6 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 relative">
-        <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-md mt-[-48px] md:mt-[-60px] shrink-0">
+        <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-md mt-[-48px] md:mt-[-60px] shrink-0 ring-2 ring-primary/10">
           <AvatarImage
-            className={""}
+            className="object-cover"
             src={user.profilePicture ?? undefined}
             alt={`${fullName}'s profile picture`}
-            loading="eager" // Prioritize avatar loading
+            loading="eager"
           />
-          <AvatarFallback className="text-4xl">
+          <AvatarFallback className="text-4xl font-semibold bg-gradient-to-br from-primary/20 to-secondary/20">
             {user.firstName?.charAt(0) || ""}
             {user.lastName?.charAt(0) || ""}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 text-center md:text-left w-full md:w-auto">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
             {fullName}
           </h1>
           {user.username && (
-            <p className="text-sm text-muted-foreground -mt-1">
+            <p className="text-sm text-muted-foreground -mt-1 font-medium">
               @{user.username}
             </p>
           )}
 
           {user.headline && (
-            <p className="text-lg text-primary mt-1 font-medium">
+            <p className="text-lg text-primary mt-1 font-medium leading-relaxed">
               {user.headline}
             </p>
           )}
           {!user.headline && user.experience?.[0]?.current && (
-            <p className="text-lg text-primary mt-1 font-medium">
+            <p className="text-lg text-primary mt-1 font-medium leading-relaxed">
               {user.experience[0].jobTitle} at{" "}
               {user.experience[0].companyName}
             </p>
           )}
 
-          <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
             {user.college && (
-              <div className="flex items-center gap-1.5 font-medium">
+              <div className="flex items-center gap-1.5 font-medium hover:text-primary transition-colors duration-200">
                 <GraduationCap className="h-4 w-4 shrink-0 text-primary/80" />
                 <span>{user.college}</span>
               </div>
             )}
             {user.location && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 shrink-0" />
+              <div className="flex items-center gap-1.5 hover:text-primary transition-colors duration-200">
+                <MapPin className="h-4 w-4 shrink-0 text-primary/80" />
                 <span>{user.location}</span>
               </div>
             )}
@@ -174,7 +174,7 @@ const ProfileHeader = memo(function ProfileHeader({
                 isOwnProfile={isOwnProfile}
               />
               <Link href="/profile/edit" passHref>
-                <Button size="sm" variant="default" className="">
+                <Button size="sm" variant="default" className="shadow-sm hover:shadow-md transition-shadow duration-200">
                   <Edit className="h-4 w-4 mr-1.5" /> Edit Profile
                 </Button>
               </Link>
