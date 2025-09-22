@@ -80,7 +80,7 @@ export const Header = async ({
                 <Button
                   size="default"
                   variant={"default"}
-                  className="inline-flex h-full animate-shimmer items-center justify-center rounded-md border md:bg-white border-slate-800 md:bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] font-medium text-gray-800 md:text-slate-300 hover:text-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-xs px-2 md:px-6 md:text-sm ml-0 md:ml-2"
+                  className="inline-flex h-full animate-shimmer items-center justify-center rounded-md border md:bg-white border-slate-800 md:bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-size-[200%_100%] font-medium text-slate-300 hover:text-slate-100 transition-colors focus:outline-hidden focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 text-xs px-2 md:px-6 md:text-sm ml-0 md:ml-2"
                 >
                   Sign Up
                 </Button>
