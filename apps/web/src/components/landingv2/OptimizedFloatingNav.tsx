@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Home, FileText, DollarSign, LogIn, Sparkles, Bell, User, LogOut, MessageCircle, Edit } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -22,31 +22,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { OptimizedNotificationDropdown } from "@/components/dashboard/optimized-notification-dropdown";
 import { useDeviceDetection } from '@/hooks/use-device-detection';
 import { lazy, Suspense } from 'react';
 
 // Lazy load notification dropdown for better performance
-const LazyNotificationDropdown = lazy(() => 
+const LazyNotificationDropdown = lazy(() =>
   import("@/components/dashboard/optimized-notification-dropdown").then(module => ({
     default: module.OptimizedNotificationDropdown
   }))
 );
 
-// Loading skeleton component
-const AuthSkeleton = ({ isMobile }: { isMobile: boolean }) => (
-  <div className={cn(
-    "rounded-full bg-muted animate-pulse",
-    isMobile ? "w-16 h-6" : "w-28 h-8"
-  )} />
-);
+// Optimized loading skeleton with better performance
+const AuthSkeleton = memo(({ isMobile }: { isMobile: boolean }) => (
+  <div
+    className={cn(
+      "rounded-full bg-muted animate-pulse will-change-transform",
+      isMobile ? "w-16 h-6" : "w-28 h-8"
+    )}
+    style={{ contain: 'layout style' }}
+  />
+));
+
+AuthSkeleton.displayName = 'AuthSkeleton';
 
 // Error boundary wrapper for better error handling
-const ErrorFallback = ({ error }: { error: Error }) => (
-  <div className="text-red-500 text-xs p-2">
+const ErrorFallback = memo(({ error }: { error: Error }) => (
+  <div className="text-red-500 text-xs p-2" role="alert">
     Navigation error: {error.message}
   </div>
-);
+));
+
+ErrorFallback.displayName = 'ErrorFallback';
 
 // Types for user data
 interface NavUserData {
@@ -90,36 +96,43 @@ const NAV_ITEMS = [
   { id: "leaderboard", icon: Sparkles, label: "Leaderboard", href: "/leaderboard" },
 ] as const;
 
-// Extracted navigation item component for better organization
-const NavigationItem = ({ 
-  item, 
-  isMobile, 
-  isRouteActive 
-}: { 
-  item: { id: string; icon: any; label: string; href: string }; 
-  isMobile: boolean; 
-  isRouteActive: (href: string) => boolean; 
-}) => (
-  <Link key={item.id} href={item.href}>
-    <motion.button
-      className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium",
-        "transition-all duration-300 hover:bg-accent/50",
-        "backdrop-blur-sm border border-border/50",
-        isMobile ? "flex-col gap-1 px-2 py-1 text-[10px]" : "",
-        isRouteActive(item.href)
-          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 border-primary/20" 
-          : "text-muted-foreground hover:text-foreground hover:border-border"
-      )}
-      whileHover={{ scale: 1.05, y: -1 }}
-      whileTap={{ scale: 0.95 }}
-      aria-label={`Navigate to ${item.label}`}
-    >
-      <item.icon className={cn(isMobile ? "w-5 h-5" : "w-4 h-4")} />
-      <span className={cn(isMobile ? "block" : "hidden sm:inline")}>{item.label}</span>
-    </motion.button>
-  </Link>
-);
+// Extracted navigation item component for better organization and performance
+const NavigationItem = memo(({
+  item,
+  isMobile,
+  isRouteActive
+}: {
+  item: { id: string; icon: any; label: string; href: string };
+  isMobile: boolean;
+  isRouteActive: (href: string) => boolean;
+}) => {
+  const isActive = useMemo(() => isRouteActive(item.href), [isRouteActive, item.href]);
+
+  return (
+    <Link key={item.id} href={item.href} prefetch={false}>
+      <motion.button
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium",
+          "transition-all duration-300 hover:bg-accent/50",
+          "backdrop-blur-sm border border-border/50",
+          isMobile ? "flex-col gap-1 px-2 py-1 text-[10px]" : "",
+          isActive
+            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 border-primary/20"
+            : "text-muted-foreground hover:text-foreground hover:border-border"
+        )}
+        whileHover={{ scale: 1.05, y: -1 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label={`Navigate to ${item.label}`}
+        style={{ willChange: 'transform' }}
+      >
+        <item.icon className={cn(isMobile ? "w-5 h-5" : "w-4 h-4")} />
+        <span className={cn(isMobile ? "block" : "hidden sm:inline")}>{item.label}</span>
+      </motion.button>
+    </Link>
+  );
+});
+
+NavigationItem.displayName = 'NavigationItem';
 
 interface OptimizedFloatingNavProps {
   initialUser: DatabaseUser | null;
@@ -127,19 +140,20 @@ interface OptimizedFloatingNavProps {
   initialRecentNotifications: Notification[];
 }
 
-export function OptimizedFloatingNav({ 
-  initialUser, 
-  initialNotificationCount, 
-  initialRecentNotifications 
+export const OptimizedFloatingNav = memo(function OptimizedFloatingNav({
+  initialUser,
+  initialNotificationCount,
+  initialRecentNotifications
 }: OptimizedFloatingNavProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [sessionUser, setSessionUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const { isMobile } = useDeviceDetection();
+  const shouldReduceMotion = useReducedMotion();
 
   // Memoized user data construction with proper typing
   const userData: NavUserData | null = useMemo(() => {
@@ -171,7 +185,7 @@ export function OptimizedFloatingNav({
   // Preload notification data for better performance
   useNotificationPreloader(userData?.id || '', isLoggedIn);
 
-  // Combined notification query for better performance
+  // Combined notification query for better performance with optimized settings
   const { data: notificationData } = useQuery({
     queryKey: ['notifications', userData?.id],
     queryFn: async () => {
@@ -191,47 +205,57 @@ export function OptimizedFloatingNav({
     gcTime: 300000,
     placeholderData: keepPreviousData,
     enabled: isLoggedIn,
+    // Add network mode for better offline handling
+    networkMode: 'online',
   });
 
   const notificationCount = notificationData?.count ?? 0;
   const recentNotifications = notificationData?.notifications ?? [];
 
-  // Memoized user initials calculation
+  // Memoized user initials calculation with better performance
   const userInitials = useMemo(() => {
     if (!userData?.firstName) return 'U';
-    return `${userData.firstName.charAt(0).toUpperCase()}${userData.lastName?.charAt(0).toUpperCase() || ''}`;
+    const first = userData.firstName.charAt(0).toUpperCase();
+    const last = userData.lastName?.charAt(0).toUpperCase() || '';
+    return first + last;
   }, [userData?.firstName, userData?.lastName]);
 
   useEffect(() => {
     const supabase = createClient();
     let visibilityTimer: NodeJS.Timeout | null = null;
-    
-    visibilityTimer = setTimeout(() => setIsVisible(true), 500);
-    
+    let mounted = true;
+
+    visibilityTimer = setTimeout(() => {
+      if (mounted) setIsVisible(true);
+    }, 500);
+
     const checkUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        setSessionUser(user);
+        if (mounted) setSessionUser(user);
       } catch (error) {
         console.error("Error fetching user:", error);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     checkUser();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSessionUser(session?.user ?? null);
-      setLoading(false);
-      
-      // Invalidate combined notification query when auth state changes
-      if (!session?.user) {
-        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (mounted) {
+        setSessionUser(session?.user ?? null);
+        setLoading(false);
+
+        // Invalidate combined notification query when auth state changes
+        if (!session?.user) {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        }
       }
     });
 
     return () => {
+      mounted = false;
       if (visibilityTimer) clearTimeout(visibilityTimer);
       authListener?.subscription.unsubscribe();
     };
@@ -239,9 +263,10 @@ export function OptimizedFloatingNav({
 
   useEffect(() => {
     let ticking = false;
-    
+    let mounted = true;
+
     const handleScroll = () => {
-      if (!ticking) {
+      if (!ticking && mounted) {
         requestAnimationFrame(() => {
           const scrolled = window.scrollY > 200;
           setIsExpanded(isMobile || scrolled);
@@ -252,7 +277,10 @@ export function OptimizedFloatingNav({
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      mounted = false;
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [isMobile]);
 
   const isRouteActive = useCallback((href: string): boolean => {
@@ -440,36 +468,42 @@ export function OptimizedFloatingNav({
   }, [loading, userData, notificationCount, recentNotifications, userInitials, renderUserMenu, isMobile]);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isVisible && (
         <motion.div
-          initial={{ y: 100, opacity: 0, scale: 0.8 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 100, opacity: 0, scale: 0.8 }}
-          transition={{ 
-            type: "spring", 
-            damping: 25, 
+          initial={shouldReduceMotion ? { opacity: 0 } : { y: 100, opacity: 0, scale: 0.8 }}
+          animate={shouldReduceMotion ? { opacity: 1 } : { y: 0, opacity: 1, scale: 1 }}
+          exit={shouldReduceMotion ? { opacity: 0 } : { y: 100, opacity: 0, scale: 0.8 }}
+          transition={{
+            type: "spring",
+            damping: 25,
             stiffness: 200,
-            duration: 0.6 
+            duration: shouldReduceMotion ? 0.2 : 0.6
           }}
           className={cn(
             "fixed z-50",
-            isMobile 
-              ? "bottom-0 left-0 right-0" 
+            isMobile
+              ? "bottom-0 left-0 right-0"
               : "bottom-6 left-1/2 -translate-x-1/2"
           )}
+          style={{ willChange: shouldReduceMotion ? 'opacity' : 'transform' }}
         >
-          <motion.div 
+          <motion.div
             layout
             className={cn(
               "relative flex items-center gap-1 p-2 rounded-2xl",
               "glass border border-border/50",
               "shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]",
-              isMobile 
-                ? "rounded-none border-x-0 border-b-0 px-4 py-3 bg-background/95" 
+              isMobile
+                ? "rounded-none border-x-0 border-b-0 px-4 py-3 bg-background/95"
                 : (isExpanded ? "px-3" : "px-2")
             )}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.4,
+              ease: "easeInOut",
+              layout: { duration: shouldReduceMotion ? 0 : 0.3 }
+            }}
+            style={{ contain: 'layout style paint' }}
           >
             {/* Logo - only when expanded and not mobile */}
             <AnimatePresence mode="wait">
@@ -492,19 +526,23 @@ export function OptimizedFloatingNav({
             </AnimatePresence>
 
             {/* Navigation Items */}
-            <div className={cn(
-              "flex items-center",
-              isMobile ? "flex-1 justify-around gap-0" : "gap-1"
-            )}>
+            <nav
+              className={cn(
+                "flex items-center",
+                isMobile ? "flex-1 justify-around gap-0" : "gap-1"
+              )}
+              role="navigation"
+              aria-label="Main navigation"
+            >
               {NAV_ITEMS.map((item) => (
-                <NavigationItem 
-                  key={item.id} 
-                  item={item} 
-                  isMobile={isMobile} 
-                  isRouteActive={isRouteActive} 
+                <NavigationItem
+                  key={item.id}
+                  item={item}
+                  isMobile={isMobile}
+                  isRouteActive={isRouteActive}
                 />
               ))}
-            </div>
+            </nav>
 
             {/* Auth Actions - only when expanded on desktop, always on mobile */}
             <AnimatePresence mode="wait">
@@ -534,4 +572,6 @@ export function OptimizedFloatingNav({
       )}
     </AnimatePresence>
   );
-}
+});
+
+OptimizedFloatingNav.displayName = 'OptimizedFloatingNav';
