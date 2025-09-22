@@ -1,24 +1,46 @@
-# Allow all crawlers
+# 0Unveiled - AI-Powered Developer Portfolio Platform
+# Allow all major search engine crawlers
 User-agent: *
+User-agent: OAI-SearchBot
+User-agent: Googlebot
+User-agent: Bingbot
+User-agent: Slurp
+User-agent: DuckDuckBot
+User-agent: Baiduspider
+User-agent: YandexBot
 
 # Sitemap location
 Sitemap: https://0unveiled.com/sitemap.xml
 
-# Prevent crawling of private/auth/API/dashboard pages
+# Disallow private/authenticated areas
 Disallow: /auth/
 Disallow: /api/
-Disallow: /dashboard/chat/
-Disallow: /dashboard/ # Disallow dashboard routes
+Disallow: /chat/
+Disallow: /connections/
+Disallow: /notifications/
+Disallow: /profile/edit/
+Disallow: /recruitment/
+Disallow: /test-analyze/
+Disallow: /analyze/
 
-# Allow crawling of public pages defined in sitemap
-Allow: /$             # Allow the root homepage specifically
-Allow: /features$     # Allow features page specifically
-Allow: /projects$     # Allow projects listing page specifically
-Allow: /profiles$     # Allow profiles listing page specifically
-Allow: /project/      # Allow individual project pages
-Allow: /*             # Allow user profile pages (e.g., /username) - This acts as a fallback for profiles
+# Allow public content
+Allow: /$
+# Allow: /features$
+Allow: /leaderboard$
+Allow: /pricing$
+Allow: /profiles$
+Allow: /*
 
-# Note: The '$' signifies the end of the path for exact matches on static pages.
-# Note: '/project/' allows anything starting with /project/
-# Note: '/*' is broad but necessary for user profiles (`/<username>`). It comes after specific disallows.
+# Crawl delay for respectful crawling
+Crawl-delay: 1
+
+# Block unwanted bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
 
