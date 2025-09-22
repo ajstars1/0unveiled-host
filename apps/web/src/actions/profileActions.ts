@@ -366,51 +366,139 @@ export const rejectOrWithdrawConnectionRequest = async (
 
 /**
  * Removes an existing connection between the current user and another user.
- * @param connectedUserId - The ID of the user to disconnect from.
- * @param connectionsPath - The path to revalidate (e.g., '/connections').
+ * Requires the logged-in user to be one of the connected users.
+ * @param otherUserId - The ID of the other user in the connection.
+ * @param profileUsername - The username of the profile being viewed (for revalidation).
  * @returns Object indicating success or error.
  */
 export const removeConnection = async (
-  connectedUserId: string,
-  connectionsPath: string
+  otherUserId: string,
+  profileUsername: string
 ): Promise<{ success: boolean; error?: string }> => {
-   const currentUser = await getCurrentUser();
-   if (!currentUser) {
-     return { success: false, error: "Not authenticated." };
-   }
+  if (!otherUserId || !profileUsername) {
+    return { success: false, error: 'Invalid input provided.' };
+  }
 
-   if (!connectedUserId) {
-     return { success: false, error: "Connected user ID is required." };
-   }
+  const currentUser = await getCurrentUser();
 
-   const userOneId = currentUser.id < connectedUserId ? currentUser.id : connectedUserId;
-   const userTwoId = currentUser.id < connectedUserId ? connectedUserId : currentUser.id;
+  if (!currentUser) {
+    return { success: false, error: 'Not authenticated.' };
+  }
 
-   try {
-     const deletedConnection = await db
-       .delete(connections)
-       .where(
-         and(
-           eq(connections.userOneId, userOneId),
-           eq(connections.userTwoId, userTwoId)
-         )
-       )
-       .returning()
+  const currentUserId = currentUser.id;
 
-     if (!deletedConnection.length) {
-       // This case might not be reachable if the query throws on not found,
-       // but handle defensively.
-       return { success: false, error: "Connection not found." };
-     }
+  if (currentUserId === otherUserId) {
+    return { success: false, error: 'Cannot remove connection with yourself.' };
+  }
 
-     revalidatePath(connectionsPath);
-     revalidatePath(''); // Revalidate dashboard metrics
-     // Potentially revalidate profiles
+  try {
+    // Ensure IDs are ordered consistently for checking Connection table
+    const [userOneId, userTwoId] = [currentUserId, otherUserId].sort();
 
-     return { success: true }; 
+    // Check if connection exists
+    const existingConnection = await db
+      .select()
+      .from(connections)
+      .where(
+        and(
+          eq(connections.userOneId, userOneId),
+          eq(connections.userTwoId, userTwoId)
+        )
+      )
+      .limit(1);
 
-   } catch (error: any) {
-  logger.error("Error removing connection:", error);
-     return { success: false, error: error.message || "Failed to remove connection." };
-   }
- }; 
+    if (!existingConnection.length) {
+      return { success: false, error: 'Connection not found.' };
+    }
+
+    // Delete the connection
+    await db
+      .delete(connections)
+      .where(
+        and(
+          eq(connections.userOneId, userOneId),
+          eq(connections.userTwoId, userTwoId)
+        )
+      );
+
+    // Revalidate relevant paths
+    revalidatePath(`/${profileUsername}`);
+    revalidatePath('');
+    revalidatePath('/connections');
+
+    return { success: true };
+  } catch (error: any) {
+    logger.error('Error removing connection:', error);
+    return { success: false, error: error.message || 'Failed to remove connection.' };
+  }
+};
+
+/**
+ * Updates the order of pinned showcased items for a user.
+ * Only the owner of the profile can perform this action.
+ * @param itemOrder - Array of item IDs in the desired order.
+ * @param username - The username of the profile being updated (needed for revalidation).
+ * @returns Object indicating success or error.
+ */
+export const updateShowcasedItemsOrder = async (
+  itemOrder: string[],
+  username: string
+): Promise<{ success: boolean; error?: string }> => {
+  if (!itemOrder || !Array.isArray(itemOrder) || !username) {
+    return { success: false, error: 'Invalid input provided.' }
+  }
+
+  const currentUser = await getCurrentUser()
+
+  if (!currentUser) {
+    return { success: false, error: 'Not authenticated.' }
+  }
+
+  try {
+    // Verify that all items belong to the current user and are pinned
+    const itemsToUpdate = await db
+      .select({ id: showcasedItems.id, userId: showcasedItems.userId })
+      .from(showcasedItems)
+      .where(
+        and(
+          eq(showcasedItems.userId, currentUser.id),
+          eq(showcasedItems.isPinned, true)
+        )
+      )
+
+    interface ShowcasedItemSummary {
+      id: string;
+      userId: string;
+    }
+
+    const itemIds: string[] = itemsToUpdate.map((item: ShowcasedItemSummary) => item.id)
+
+    // Verify all items in the order exist and belong to the user
+    if (itemOrder.length !== itemIds.length || !itemOrder.every(id => itemIds.includes(id))) {
+      return { success: false, error: 'Invalid item order provided.' }
+    }
+
+    // Update the order for each item
+    const updatePromises = itemOrder.map((itemId, index) =>
+      db
+        .update(showcasedItems)
+        .set({ order: index })
+        .where(
+          and(
+            eq(showcasedItems.id, itemId),
+            eq(showcasedItems.userId, currentUser.id)
+          )
+        )
+    )
+
+    await Promise.all(updatePromises)
+
+    // Revalidate the profile path to refresh data
+    revalidatePath(`/${username}`)
+
+    return { success: true }
+  } catch (error) {
+    logger.error('Error updating showcased items order:', error)
+    return { success: false, error: 'Failed to update item order.' }
+  }
+} 
