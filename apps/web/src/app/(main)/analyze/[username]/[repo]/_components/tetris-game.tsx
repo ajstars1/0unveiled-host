@@ -516,6 +516,68 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
     drawNext()
   }, [drawNext])
 
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const touchEndRef = useRef<{ x: number; y: number } | null>(null)
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+  }, [])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return
+
+    const touch = e.changedTouches[0]
+    touchEndRef.current = { x: touch.clientX, y: touch.clientY }
+
+    const deltaX = touchEndRef.current.x - touchStartRef.current.x
+    const deltaY = touchEndRef.current.y - touchStartRef.current.y
+    const minSwipeDistance = 30 // Reduced for better responsiveness
+
+    // Determine swipe direction
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal swipe
+      if (Math.abs(deltaX) > minSwipeDistance) {
+        if (deltaX > 0) {
+          // Swipe right - move right
+          tryMove(1, 0)
+        } else {
+          // Swipe left - move left
+          tryMove(-1, 0)
+        }
+        // Haptic feedback if available
+        if ('vibrate' in navigator) {
+          navigator.vibrate(10)
+        }
+      }
+    } else {
+      // Vertical swipe
+      if (Math.abs(deltaY) > minSwipeDistance) {
+        if (deltaY > 0) {
+          // Swipe down - soft drop
+          if (running && active) {
+            if (!collides(board, active, 0, 1)) {
+              setActive((p) => (p ? { ...p, y: p.y + 1 } : p))
+              setScore((s) => s + 1)
+              lastDropRef.current = 0
+            }
+          }
+        } else {
+          // Swipe up - rotate
+          tryRotate()
+        }
+        // Haptic feedback if available
+        if ('vibrate' in navigator) {
+          navigator.vibrate(15)
+        }
+      }
+    }
+
+    // Reset touch refs
+    touchStartRef.current = null
+    touchEndRef.current = null
+  }, [tryMove, tryRotate, running, active, board])
+
   const onCanvasClick = useCallback(() => {
     if (!running) {
       // Mirror keyboard start behavior
@@ -553,7 +615,8 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
             </p>
             <p className={`text-base font-semibold ${isDark ? "text-white/90" : "text-gray-700"}`}>Press Space or Tap to Start</p>
             <div className={`text-xs font-mono ${isDark ? "text-white/60" : "text-gray-500"} space-y-1`}>
-              <p>↔️ Move • ↕️ Rotate • Space: Drop</p>
+              <p>↔️ Swipe • ↕️ Rotate • Tap: Drop</p>
+              <p className="text-xs">Left/Right: Move • Up: Rotate • Down: Soft Drop</p>
             </div>
           </div>
         </div>
@@ -604,12 +667,23 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
         {/* Mobile Game Canvas - Takes most of the space */}
         <div className="flex-1 relative select-none overflow-hidden flex items-center justify-center">
           {overlay}
+          {/* Swipe instruction overlay for running game */}
+          {running && !gameOver && (
+            <div className="absolute top-2 left-2 right-2 z-20 pointer-events-none">
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm border ${isDark ? "bg-black/50 border-white/20 text-white/80" : "bg-white/50 border-black/20 text-black/80"}`}>
+                <span>👆</span>
+                <span>Swipe to move & rotate</span>
+              </div>
+            </div>
+          )}
           <canvas
             ref={canvasRef}
             width={BOARD_W}
             height={BOARD_H}
             className={`block border rounded-lg shadow-md max-w-full max-h-full ${isDark ? "border-white/20 shadow-black/20" : "border-gray-200 shadow-gray-200/50"}`}
             onClick={onCanvasClick}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             style={{ 
               maxWidth: '100%', 
               maxHeight: '100%',
@@ -712,12 +786,23 @@ export default function TetrisGame({ className, variant = "light" }: TetrisGameP
         {/* Tablet Game Canvas */}
         <div className="flex-1 relative select-none overflow-hidden flex items-center justify-center">
           {overlay}
+          {/* Swipe instruction overlay for running game */}
+          {running && !gameOver && (
+            <div className="absolute top-2 left-2 right-2 z-20 pointer-events-none">
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm border ${isDark ? "bg-black/50 border-white/20 text-white/80" : "bg-white/50 border-black/20 text-black/80"}`}>
+                <span>👆</span>
+                <span>Swipe to move & rotate</span>
+              </div>
+            </div>
+          )}
           <canvas
             ref={canvasRef}
             width={BOARD_W}
             height={BOARD_H}
             className={`block border rounded-lg shadow-md max-w-full max-h-full ${isDark ? "border-white/20 shadow-black/20" : "border-gray-200 shadow-gray-200/50"}`}
             onClick={onCanvasClick}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             style={{ 
               maxWidth: '100%', 
               maxHeight: '100%',
