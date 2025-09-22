@@ -79,25 +79,51 @@ const ProfilesClient = memo(function ProfilesClient({ initialUsers }: ProfilesCl
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
 
+  // Helper function to calculate profile completeness
+  const calculateProfileCompleteness = useCallback((profile: any): number => {
+    let score = 0
+
+    // Basic info (40 points) - check existence and non-empty strings
+    if (profile.firstName?.trim()) score += 10
+    if (profile.lastName?.trim()) score += 10
+    if (profile.headline?.trim()) score += 10
+    if (profile.bio?.trim()) score += 10
+
+    // Contact/Social info (20 points)
+    if (profile.location?.trim()) score += 5
+    if (profile.college?.trim()) score += 5
+    if (profile.socialLinks?.length > 0) score += 5
+    if (profile.profileImage) score += 5
+
+    // Professional info (25 points)
+    if (profile.skills?.length > 0) score += 10
+    if (profile.experience?.length > 0) score += 5
+    if (profile.education?.length > 0) score += 5
+    if (profile.projects?.length > 0) score += 5
+
+    // Additional content (15 points)
+    if (profile.coverImage) score += 5
+    if (profile.experience?.length > 2) score += 5
+    if (profile.projects?.length > 2) score += 5
+
+    return Math.min(score, 100)
+  }, [])
+
   const filterCategories = useMemo(() => {
+    if (!allUsers) return ["All"]
+
     const categories = new Set<string>(["All"])
 
-    interface SkillItem {
-        skill: {
-            name: string
-            category?: string
+    // Single pass through all users and their skills
+    for (const user of allUsers) {
+      if (user.skills) {
+        for (const skillItem of user.skills) {
+          if (skillItem.skill.category) {
+            categories.add(skillItem.skill.category)
+          }
         }
+      }
     }
-
-    interface User {
-        skills?: SkillItem[]
-    }
-
-    allUsers?.forEach((user: User) => {
-        user.skills?.forEach((s: SkillItem) => {
-            if (s.skill.category) categories.add(s.skill.category)
-        })
-    })
 
     return Array.from(categories).slice(0, 6) // Limit categories shown
   }, [allUsers])
@@ -122,16 +148,25 @@ const ProfilesClient = memo(function ProfilesClient({ initialUsers }: ProfilesCl
       role: string
       onboarded: boolean
       skills: Skill[]
+      bio?: string
+      experience?: any[]
+      education?: any[]
+      projects?: any[]
+      socialLinks?: any[]
+      profileImage?: string
+      coverImage?: string
     }
 
-    return allUsers
-      ?.filter((profile: Profile) => {
+    const searchLower = searchQuery.toLowerCase()
+
+    // Single pass: filter, calculate completeness, and sort
+    const processedProfiles = allUsers
+      .filter((profile: Profile) => {
         if (profile.role === "ADMIN" || !profile.onboarded) {
           return false
         }
 
-        const searchLower = searchQuery.toLowerCase()
-        const matchesSearch = searchQuery === "" ||
+        const matchesSearch = !searchQuery ||
           (profile.firstName && profile.firstName.toLowerCase().includes(searchLower)) ||
           (profile.lastName && profile.lastName.toLowerCase().includes(searchLower)) ||
           (profile.headline && profile.headline.toLowerCase().includes(searchLower)) ||
@@ -146,7 +181,28 @@ const ProfilesClient = memo(function ProfilesClient({ initialUsers }: ProfilesCl
 
         return matchesSearch && matchesCategory
       })
-  }, [searchQuery, selectedCategory, allUsers])
+      .map((profile: Profile) => ({
+        ...profile,
+        completenessScore: calculateProfileCompleteness(profile),
+        activityScore: profile.skills?.length || 0
+      }))
+
+    // Sort by completeness and activity
+    interface ProcessedProfile extends Profile {
+        completenessScore: number
+        activityScore: number
+    }
+
+            return processedProfiles.sort((a: ProcessedProfile, b: ProcessedProfile) => {
+                // Sort by completeness first (higher completeness = higher priority)
+                if (b.completenessScore !== a.completenessScore) {
+                    return b.completenessScore - a.completenessScore
+                }
+
+                // If completeness is equal, sort by activity (more skills = more active)
+                return b.activityScore - a.activityScore
+            })
+  }, [searchQuery, selectedCategory, allUsers, calculateProfileCompleteness])
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
@@ -155,6 +211,10 @@ const ProfilesClient = memo(function ProfilesClient({ initialUsers }: ProfilesCl
   const handleCategoryChange = useCallback((category: string) => {
     setSelectedCategory(category)
   }, [])
+
+  // Memoize expensive computations
+  const searchPlaceholder = "Search by name, skills, college, location..."
+  const hasMultipleCategories = filterCategories.length > 1
 
   return (
     <>
@@ -165,14 +225,14 @@ const ProfilesClient = memo(function ProfilesClient({ initialUsers }: ProfilesCl
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search by name, skills, college, location..."
+            placeholder={searchPlaceholder}
             className="pl-10 h-11 rounded-full bg-muted/50 border-transparent focus:border-primary focus:bg-background focus:ring-1 focus:ring-primary/20 transition-all duration-200"
             value={searchQuery}
             onChange={handleSearchChange}
           />
         </div>
 
-        {filterCategories.length > 1 && (
+        {hasMultipleCategories && (
           <div className="flex justify-center w-full">
             {/* Tabs for larger screens */}
             <Tabs

@@ -41,40 +41,57 @@ const ProfileCard = ({ profile }: ProfileCardProps) => {
     <Card className="flex flex-col gap-3 items-center p-6 overflow-hidden h-full hover:shadow-lg transition-shadow duration-200 bg-card text-center">
       <Avatar className="h-20 w-20 border mb-4">
         <AvatarImage src={profile.profilePicture || undefined} alt={fullName} />
-        <AvatarFallback>{getInitials(profile.firstName, profile.lastName)}</AvatarFallback>
+        <AvatarFallback>
+          {getInitials(profile.firstName, profile.lastName)}
+        </AvatarFallback>
       </Avatar>
       <h2 className="text-xl font-semibold mb-1 truncate w-full">
-        <Link href={`/${profileUsername}`} className="hover:underline">
+        <Link
+          href={`/${profileUsername}`}
+          className="hover:underline text-primary/80 hover:text-accent   font-bold"
+          itemProp="url"
+        >
           {fullName || "Unnamed User"}
         </Link>
       </h2>
       <p className="text-sm text-muted-foreground mb-4 px-2 line-clamp-2">
-        {profile.headline || profile.bio || "No headline provided."} 
+        {profile.headline || profile.bio || "No headline provided."}
       </p>
       {profile.skills && profile.skills.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2 mb-4">
           {profile.skills.slice(0, 4).map(({ skill }) => (
-            <Badge key={skill.id} variant="default" className="text-xs font-medium">{skill.name}</Badge>
+            <Badge
+              key={skill.id}
+              variant="default"
+              className="text-xs font-medium"
+            >
+              {skill.name}
+            </Badge>
           ))}
         </div>
       )}
       {profile.college && (
-        <p className={cn(
-          "text-sm font-medium mb-1",
-          profile.college.toLowerCase().includes("iit") ? "text-amber-700" : "text-foreground"
-        )}>
+        <p
+          className={cn(
+            "text-sm font-medium mb-1",
+            profile.college.toLowerCase().includes("iit")
+              ? "text-amber-700"
+              : "text-foreground"
+          )}
+        >
           {profile.college}
         </p>
       )}
       {profile.location && (
-        <p className="text-xs text-muted-foreground mb-6">
-          {profile.location}
-        </p>
+        <p className="text-xs text-muted-foreground mb-6">{profile.location}</p>
       )}
-      <Button variant="default" size="lg" className="mt-auto w-full max-w-xs" asChild>
-        <Link href={`/${profileUsername}`}>
-          View Profile
-        </Link>
+      <Button
+        variant="default"
+        size="lg"
+        className="mt-auto w-full max-w-xs"
+        asChild
+      >
+        <Link href={`/${profileUsername}`}>View Profile</Link>
       </Button>
     </Card>
   );
