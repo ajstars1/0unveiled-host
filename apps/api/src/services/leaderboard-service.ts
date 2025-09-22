@@ -2,6 +2,10 @@ import { db } from "@0unveiled/database";
 import { users, showcasedItems, projects, leaderboardScores, NewLeaderboardScore, leaderboardTypeEnum } from "@0unveiled/database";
 import { eq, and, desc, isNotNull, ne } from "drizzle-orm";
 
+// Import notification function from web app
+// Note: This creates a dependency on the web app, but since this is a monorepo, it should work
+import { sendLeaderboardRankNotification } from "../../../web/src/actions/notifications";
+
 interface RepositoryMetadata {
   repository?: {
     languages?: Record<string, number>;
@@ -357,11 +361,106 @@ export const updateLeaderboards = async () => {
     }
   }
 
-  // Update ranks (only for users with username)
+  // Capture current ranks before updating them (for notifications)
+  const [previousGeneralRanks, previousTechStackRanks, previousDomainRanks] = await Promise.all([
+    db
+      .select({
+        userId: leaderboardScores.userId,
+        rank: leaderboardScores.rank,
+      })
+      .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+      .where(
+        and(
+          eq(leaderboardScores.leaderboardType, 'GENERAL'),
+          isNotNull(users.username),
+          ne(users.username, '')
+        )
+      ),
+    db
+      .select({
+        userId: leaderboardScores.userId,
+        techStack: leaderboardScores.techStack,
+        rank: leaderboardScores.rank,
+      })
+      .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+      .where(
+        and(
+          eq(leaderboardScores.leaderboardType, 'TECH_STACK'),
+          isNotNull(leaderboardScores.techStack),
+          isNotNull(users.username),
+          ne(users.username, '')
+        )
+      ),
+    db
+      .select({
+        userId: leaderboardScores.userId,
+        domain: leaderboardScores.domain,
+        rank: leaderboardScores.rank,
+      })
+      .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+      .where(
+        and(
+          eq(leaderboardScores.leaderboardType, 'DOMAIN'),
+          isNotNull(leaderboardScores.domain),
+          isNotNull(users.username),
+          ne(users.username, '')
+        )
+      ),
+  ]);
+
+  // Helper function to update ranks and send notifications
+  const updateRanksAndNotify = async (
+    leaderboardData: any[],
+    leaderboardType: 'GENERAL' | 'TECH_STACK' | 'DOMAIN',
+    getPreviousRank: (item: any) => number | undefined,
+    getDisplayName: (item: any) => string
+  ) => {
+    const rankChanges: Array<{ userId: string; newRank: number; previousRank?: number; displayName: string }> = [];
+
+    // Sort by score descending and assign ranks
+    const sortedData = leaderboardData.sort((a, b) => b.score - a.score);
+
+    for (let i = 0; i < sortedData.length; i++) {
+      const newRank = i + 1;
+      const previousRank = getPreviousRank(sortedData[i]);
+
+      // Only track if rank actually changed
+      if (previousRank !== newRank) {
+        rankChanges.push({
+          userId: sortedData[i].userId,
+          newRank,
+          previousRank,
+          displayName: getDisplayName(sortedData[i])
+        });
+      }
+
+      // Update rank in database
+      await db.update(leaderboardScores)
+        .set({ rank: newRank })
+        .where(eq(leaderboardScores.id, sortedData[i].id));
+    }
+
+    // Send notifications for rank changes
+    const notificationPromises = rankChanges.map(({ userId, newRank, previousRank, displayName }) =>
+      sendLeaderboardRankNotification(userId, newRank, displayName, previousRank)
+        .catch(error => {
+          console.error(`Failed to send ${leaderboardType} leaderboard notification for user ${userId}:`, error);
+          return null; // Don't fail the entire operation
+        })
+    );
+
+    await Promise.allSettled(notificationPromises);
+  };
+
+  // Update GENERAL leaderboard ranks
   const generalLeaderboard = await db
     .select({
       id: leaderboardScores.id,
       score: leaderboardScores.score,
+      userId: leaderboardScores.userId,
     })
     .from(leaderboardScores)
     .innerJoin(users, eq(leaderboardScores.userId, users.id))
@@ -371,19 +470,22 @@ export const updateLeaderboards = async () => {
         isNotNull(users.username),
         ne(users.username, '')
       )
-    )
-    .orderBy(desc(leaderboardScores.score));
+    );
 
-  for (let i = 0; i < generalLeaderboard.length; i++) {
-    await db.update(leaderboardScores).set({ rank: i + 1 }).where(eq(leaderboardScores.id, generalLeaderboard[i].id));
-  }
+  await updateRanksAndNotify(
+    generalLeaderboard,
+    'GENERAL',
+    (item) => previousGeneralRanks.find((p: { userId: string; rank: number }) => p.userId === item.userId)?.rank,
+    () => 'GENERAL'
+  );
 
-  // Update ranks for tech stack leaderboards
-  const techStackLeaderboards = await db
+  // Update TECH_STACK leaderboard ranks
+  const techStackLeaderboard = await db
     .select({
       id: leaderboardScores.id,
       score: leaderboardScores.score,
       techStack: leaderboardScores.techStack,
+      userId: leaderboardScores.userId,
     })
     .from(leaderboardScores)
     .innerJoin(users, eq(leaderboardScores.userId, users.id))
@@ -394,31 +496,36 @@ export const updateLeaderboards = async () => {
         isNotNull(users.username),
         ne(users.username, '')
       )
-    )
-    .orderBy(desc(leaderboardScores.score));
+    );
 
-  // Group by tech stack and update ranks
+  // Group by tech stack
   const techStackGroups: { [key: string]: any[] } = {};
-  for (const item of techStackLeaderboards) {
+  for (const item of techStackLeaderboard) {
     if (!techStackGroups[item.techStack!]) {
       techStackGroups[item.techStack!] = [];
     }
     techStackGroups[item.techStack!].push(item);
   }
 
+  // Update ranks for each tech stack
   for (const techStack in techStackGroups) {
-    const group = techStackGroups[techStack].sort((a, b) => b.score - a.score);
-    for (let i = 0; i < group.length; i++) {
-      await db.update(leaderboardScores).set({ rank: i + 1 }).where(eq(leaderboardScores.id, group[i].id));
-    }
+    await updateRanksAndNotify(
+      techStackGroups[techStack],
+      'TECH_STACK',
+      (item) => previousTechStackRanks.find((p: { userId: string; techStack: string | null; rank: number }) =>
+        p.userId === item.userId && p.techStack === techStack
+      )?.rank,
+      () => `${techStack} Tech Stack`
+    );
   }
 
-  // Update ranks for domain leaderboards
-  const domainLeaderboards = await db
+  // Update DOMAIN leaderboard ranks
+  const domainLeaderboard = await db
     .select({
       id: leaderboardScores.id,
       score: leaderboardScores.score,
       domain: leaderboardScores.domain,
+      userId: leaderboardScores.userId,
     })
     .from(leaderboardScores)
     .innerJoin(users, eq(leaderboardScores.userId, users.id))
@@ -429,22 +536,26 @@ export const updateLeaderboards = async () => {
         isNotNull(users.username),
         ne(users.username, '')
       )
-    )
-    .orderBy(desc(leaderboardScores.score));
+    );
 
-  // Group by domain and update ranks
+  // Group by domain
   const domainGroups: { [key: string]: any[] } = {};
-  for (const item of domainLeaderboards) {
+  for (const item of domainLeaderboard) {
     if (!domainGroups[item.domain!]) {
       domainGroups[item.domain!] = [];
     }
     domainGroups[item.domain!].push(item);
   }
 
+  // Update ranks for each domain
   for (const domain in domainGroups) {
-    const group = domainGroups[domain].sort((a, b) => b.score - a.score);
-    for (let i = 0; i < group.length; i++) {
-      await db.update(leaderboardScores).set({ rank: i + 1 }).where(eq(leaderboardScores.id, group[i].id));
-    }
+    await updateRanksAndNotify(
+      domainGroups[domain],
+      'DOMAIN',
+      (item) => previousDomainRanks.find((p: { userId: string; domain: string | null; rank: number }) =>
+        p.userId === item.userId && p.domain === domain
+      )?.rank,
+      () => `${domain} Domain`
+    );
   }
 };

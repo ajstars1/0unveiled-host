@@ -2,17 +2,25 @@ import { pgTable, index, uniqueIndex, text, timestamp, integer, boolean, unique,
 import { sql } from "drizzle-orm"
 
 export const application_status = pgEnum("application_status", ['PENDING', 'ACCEPTED', 'REJECTED'])
+export const badge_category = pgEnum("badge_category", ['TECHNICAL', 'QUALITY', 'SECURITY', 'LEADERSHIP', 'COMMUNITY', 'ACHIEVEMENT'])
+export const badge_rarity = pgEnum("badge_rarity", ['COMMON', 'RARE', 'EPIC', 'LEGENDARY'])
+export const candidate_match_status = pgEnum("candidate_match_status", ['SUGGESTED', 'CONTACTED', 'RESPONDED', 'INTERVIEWED', 'HIRED', 'REJECTED', 'WITHDRAWN'])
 export const channel_type = pgEnum("channel_type", ['PUBLIC_PROJECT', 'PRIVATE_PROJECT', 'PUBLIC_CLUB', 'PRIVATE_CLUB', 'DIRECT_MESSAGE'])
 export const connection_status = pgEnum("connection_status", ['PENDING', 'ACCEPTED', 'REJECTED', 'BLOCKED'])
 export const email_frequency = pgEnum("email_frequency", ['IMMEDIATE', 'DAILY', 'WEEKLY', 'NEVER'])
+export const employment_type = pgEnum("employment_type", ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'FREELANCE', 'INTERNSHIP'])
 export const integration_provider = pgEnum("integration_provider", ['GITHUB', 'DRIBBBLE', 'BEHANCE', 'MEDIUM', 'FIGMA', 'YOUTUBE', 'NOTION', 'SUBSTACK', 'CUSTOM'])
+export const job_status = pgEnum("job_status", ['DRAFT', 'ACTIVE', 'PAUSED', 'CLOSED', 'EXPIRED'])
 export const leaderboard_type = pgEnum("leaderboard_type", ['GENERAL', 'TECH_STACK', 'DOMAIN'])
 export const member_role = pgEnum("member_role", ['LEADER', 'MEMBER', 'ADMIN'])
-export const notification_type = pgEnum("notification_type", ['PROJECT_INVITE', 'PROJECT_UPDATE', 'APPLICATION_RECEIVED', 'APPLICATION_STATUS_UPDATE', 'NEW_MESSAGE', 'NEW_FOLLOWER', 'SYSTEM_ALERT', 'INTEGRATION_UPDATE', 'CONNECTION_REQUEST_RECEIVED', 'CONNECTION_REQUEST_ACCEPTED', 'TASK_ASSIGNED', 'TASK_UPDATED'])
+export const notification_type = pgEnum("notification_type", ['PROJECT_INVITE', 'PROJECT_UPDATE', 'APPLICATION_RECEIVED', 'APPLICATION_STATUS_UPDATE', 'NEW_MESSAGE', 'NEW_FOLLOWER', 'SYSTEM_ALERT', 'INTEGRATION_UPDATE', 'CONNECTION_REQUEST_RECEIVED', 'CONNECTION_REQUEST_ACCEPTED', 'TASK_ASSIGNED', 'TASK_UPDATED', 'LEADERBOARD_RANK_UPDATE'])
+export const outreach_status = pgEnum("outreach_status", ['PENDING', 'SENT', 'DELIVERED', 'OPENED', 'CLICKED', 'REPLIED', 'BOUNCED', 'FAILED'])
 export const project_status = pgEnum("project_status", ['PLANNING', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'ARCHIVED'])
 export const project_visibility = pgEnum("project_visibility", ['PUBLIC', 'PRIVATE'])
 export const role = pgEnum("role", ['USER', 'ADMIN'])
 export const task_status = pgEnum("task_status", ['BACKLOG', 'TODO', 'IN_PROGRESS', 'DONE', 'CANCELED'])
+export const verification_status = pgEnum("verification_status", ['PENDING', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'EXPIRED'])
+export const verification_type = pgEnum("verification_type", ['CODE_QUALITY', 'SECURITY_EXPERT', 'AI_SPECIALIST', 'HIGH_PERFORMER', 'COMMUNITY_LEADER', 'OPEN_SOURCE_CONTRIBUTOR', 'TECHNICAL_WRITER', 'MENTOR'])
 
 
 export const ConnectionRequest = pgTable("ConnectionRequest", {
@@ -97,7 +105,13 @@ export const Badge = pgTable("Badge", {
 	name: text().notNull(),
 	description: text().notNull(),
 	iconUrl: text(),
-	criteria: text(),
+	criteria: json(),
+	category: badge_category().default('TECHNICAL').notNull(),
+	rarity: badge_rarity().default('COMMON').notNull(),
+	pointsValue: integer().default(0).notNull(),
+	isActive: boolean().default(true).notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	unique("Badge_name_unique").on(table.name),
 ]);
@@ -282,6 +296,22 @@ export const User = pgTable("User", {
 	unique("User_username_unique").on(table.username),
 ]);
 
+export const UserBadge = pgTable("UserBadge", {
+	userId: text().notNull(),
+	badgeId: text().notNull(),
+	awardedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	id: text().primaryKey().notNull(),
+	verificationRequestId: text(),
+	expiresAt: timestamp({ mode: 'string' }),
+	isFeatured: boolean().default(false).notNull(),
+	evidenceUrl: text(),
+}, (table) => [
+	index("UserBadge_badgeId_idx").using("btree", table.badgeId.asc().nullsLast().op("text_ops")),
+	uniqueIndex("UserBadge_userId_badgeId_key").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.badgeId.asc().nullsLast().op("text_ops")),
+	index("UserBadge_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+	index("UserBadge_verificationRequestId_idx").using("btree", table.verificationRequestId.asc().nullsLast().op("text_ops")),
+]);
+
 export const Skill = pgTable("Skill", {
 	id: text().primaryKey().notNull(),
 	name: text().notNull(),
@@ -345,6 +375,129 @@ export const ShowcasedItem = pgTable("ShowcasedItem", {
 	uniqueIndex("ShowcasedItem_userId_provider_externalId_key").using("btree", table.userId.asc().nullsLast().op("enum_ops"), table.provider.asc().nullsLast().op("text_ops"), table.externalId.asc().nullsLast().op("text_ops")),
 ]);
 
+export const Achievement = pgTable("Achievement", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	achievementType: text().notNull(),
+	achievementData: json(),
+	pointsAwarded: integer().default(0).notNull(),
+	earnedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("Achievement_achievementType_idx").using("btree", table.achievementType.asc().nullsLast().op("text_ops")),
+	index("Achievement_earnedAt_idx").using("btree", table.earnedAt.asc().nullsLast().op("timestamp_ops")),
+	index("Achievement_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+]);
+
+export const Company = pgTable("Company", {
+	id: text().primaryKey().notNull(),
+	name: text().notNull(),
+	description: text(),
+	website: text(),
+	industry: text(),
+	sizeRange: text(),
+	logoUrl: text(),
+	verified: boolean().default(false).notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("Company_industry_idx").using("btree", table.industry.asc().nullsLast().op("text_ops")),
+	index("Company_name_idx").using("btree", table.name.asc().nullsLast().op("text_ops")),
+]);
+
+export const CandidateMatch = pgTable("CandidateMatch", {
+	id: text().primaryKey().notNull(),
+	jobPostingId: text().notNull(),
+	candidateId: text().notNull(),
+	aiMatchScore: integer().notNull(),
+	matchReasoning: json(),
+	recruiterRating: integer(),
+	status: candidate_match_status().default('SUGGESTED').notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("CandidateMatch_aiMatchScore_idx").using("btree", table.aiMatchScore.asc().nullsLast().op("int4_ops")),
+	index("CandidateMatch_candidateId_idx").using("btree", table.candidateId.asc().nullsLast().op("text_ops")),
+	uniqueIndex("CandidateMatch_jobPostingId_candidateId_key").using("btree", table.jobPostingId.asc().nullsLast().op("text_ops"), table.candidateId.asc().nullsLast().op("text_ops")),
+	index("CandidateMatch_jobPostingId_idx").using("btree", table.jobPostingId.asc().nullsLast().op("text_ops")),
+	index("CandidateMatch_status_idx").using("btree", table.status.asc().nullsLast().op("enum_ops")),
+]);
+
+export const CompanyMember = pgTable("CompanyMember", {
+	id: text().primaryKey().notNull(),
+	companyId: text().notNull(),
+	userId: text().notNull(),
+	role: text().default('RECRUITER').notNull(),
+	isActive: boolean().default(true).notNull(),
+	joinedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("CompanyMember_companyId_idx").using("btree", table.companyId.asc().nullsLast().op("text_ops")),
+	uniqueIndex("CompanyMember_companyId_userId_key").using("btree", table.companyId.asc().nullsLast().op("text_ops"), table.userId.asc().nullsLast().op("text_ops")),
+	index("CompanyMember_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+]);
+
+export const JobPosting = pgTable("JobPosting", {
+	id: text().primaryKey().notNull(),
+	companyId: text().notNull(),
+	recruiterId: text().notNull(),
+	title: text().notNull(),
+	description: text().notNull(),
+	requirements: json(),
+	location: text(),
+	salaryRange: json(),
+	employmentType: employment_type().notNull(),
+	aiMatchingCriteria: json(),
+	status: job_status().default('DRAFT').notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	expiresAt: timestamp({ mode: 'string' }),
+}, (table) => [
+	index("JobPosting_companyId_idx").using("btree", table.companyId.asc().nullsLast().op("text_ops")),
+	index("JobPosting_employmentType_idx").using("btree", table.employmentType.asc().nullsLast().op("enum_ops")),
+	index("JobPosting_recruiterId_idx").using("btree", table.recruiterId.asc().nullsLast().op("text_ops")),
+	index("JobPosting_status_idx").using("btree", table.status.asc().nullsLast().op("enum_ops")),
+]);
+
+export const MessageTemplate = pgTable("MessageTemplate", {
+	id: text().primaryKey().notNull(),
+	recruiterId: text().notNull(),
+	companyId: text().notNull(),
+	name: text().notNull(),
+	subject: text(),
+	content: text().notNull(),
+	variables: json(),
+	type: text().default('INITIAL').notNull(),
+	isActive: boolean().default(true).notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("MessageTemplate_companyId_idx").using("btree", table.companyId.asc().nullsLast().op("text_ops")),
+	index("MessageTemplate_recruiterId_idx").using("btree", table.recruiterId.asc().nullsLast().op("text_ops")),
+	index("MessageTemplate_type_idx").using("btree", table.type.asc().nullsLast().op("text_ops")),
+]);
+
+export const OutreachActivity = pgTable("OutreachActivity", {
+	id: text().primaryKey().notNull(),
+	campaignId: text().notNull(),
+	candidateId: text().notNull(),
+	messageTemplateId: text().notNull(),
+	subject: text(),
+	content: text().notNull(),
+	sentAt: timestamp({ mode: 'string' }),
+	deliveredAt: timestamp({ mode: 'string' }),
+	openedAt: timestamp({ mode: 'string' }),
+	clickedAt: timestamp({ mode: 'string' }),
+	repliedAt: timestamp({ mode: 'string' }),
+	status: outreach_status().default('PENDING').notNull(),
+	responseText: text(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("OutreachActivity_campaignId_idx").using("btree", table.campaignId.asc().nullsLast().op("text_ops")),
+	index("OutreachActivity_candidateId_idx").using("btree", table.candidateId.asc().nullsLast().op("text_ops")),
+	index("OutreachActivity_sentAt_idx").using("btree", table.sentAt.asc().nullsLast().op("timestamp_ops")),
+	index("OutreachActivity_status_idx").using("btree", table.status.asc().nullsLast().op("enum_ops")),
+]);
+
 export const LeaderboardScore = pgTable("LeaderboardScore", {
 	id: text().primaryKey().notNull(),
 	userId: text().notNull(),
@@ -358,9 +511,61 @@ export const LeaderboardScore = pgTable("LeaderboardScore", {
 	index("LeaderboardScore_leaderboardType_idx").using("btree", table.leaderboardType.asc().nullsLast().op("enum_ops")),
 	index("LeaderboardScore_rank_idx").using("btree", table.rank.asc().nullsLast().op("int4_ops")),
 	index("LeaderboardScore_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
-	uniqueIndex("LeaderboardScore_userId_type_domain_idx").using("btree", table.userId.asc().nullsLast().op("enum_ops"), table.leaderboardType.asc().nullsLast().op("text_ops"), table.domain.asc().nullsLast().op("enum_ops")).where(sql`(domain IS NOT NULL)`),
-	uniqueIndex("LeaderboardScore_userId_type_general_idx").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.leaderboardType.asc().nullsLast().op("enum_ops")).where(sql`(("techStack" IS NULL) AND (domain IS NULL))`),
-	uniqueIndex("LeaderboardScore_userId_type_techStack_idx").using("btree", table.userId.asc().nullsLast().op("enum_ops"), table.leaderboardType.asc().nullsLast().op("enum_ops"), table.techStack.asc().nullsLast().op("enum_ops")).where(sql`("techStack" IS NOT NULL)`),
+]);
+
+export const AIVerifiedSkill = pgTable("AIVerifiedSkill", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	skillName: text().notNull(),
+	skillType: text().notNull(),
+	confidenceScore: integer().notNull(),
+	verifiedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	lastUpdatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	sourceAnalysis: json(),
+	repositoryCount: integer().default(0).notNull(),
+	linesOfCodeCount: integer().default(0).notNull(),
+	isVisible: boolean().default(true).notNull(),
+}, (table) => [
+	index("AIVerifiedSkill_confidenceScore_idx").using("btree", table.confidenceScore.asc().nullsLast().op("int4_ops")),
+	index("AIVerifiedSkill_skillType_idx").using("btree", table.skillType.asc().nullsLast().op("text_ops")),
+	index("AIVerifiedSkill_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+	uniqueIndex("AIVerifiedSkill_userId_skillName_key").using("btree", table.userId.asc().nullsLast().op("text_ops"), table.skillName.asc().nullsLast().op("text_ops")),
+]);
+
+export const OutreachCampaign = pgTable("OutreachCampaign", {
+	id: text().primaryKey().notNull(),
+	recruiterId: text().notNull(),
+	jobPostingId: text().notNull(),
+	name: text().notNull(),
+	templateId: text(),
+	status: text().default('DRAFT').notNull(),
+	totalCandidates: integer().default(0).notNull(),
+	messagesSent: integer().default(0).notNull(),
+	responsesReceived: integer().default(0).notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("OutreachCampaign_jobPostingId_idx").using("btree", table.jobPostingId.asc().nullsLast().op("text_ops")),
+	index("OutreachCampaign_recruiterId_idx").using("btree", table.recruiterId.asc().nullsLast().op("text_ops")),
+	index("OutreachCampaign_status_idx").using("btree", table.status.asc().nullsLast().op("text_ops")),
+]);
+
+export const VerificationRequest = pgTable("VerificationRequest", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	verificationType: verification_type().notNull(),
+	status: verification_status().default('PENDING').notNull(),
+	evidence: json(),
+	reviewerId: text(),
+	reviewNotes: text(),
+	submittedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	reviewedAt: timestamp({ mode: 'string' }),
+	expiresAt: timestamp({ mode: 'string' }),
+}, (table) => [
+	index("VerificationRequest_reviewerId_idx").using("btree", table.reviewerId.asc().nullsLast().op("text_ops")),
+	index("VerificationRequest_status_idx").using("btree", table.status.asc().nullsLast().op("enum_ops")),
+	index("VerificationRequest_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+	index("VerificationRequest_verificationType_idx").using("btree", table.verificationType.asc().nullsLast().op("enum_ops")),
 ]);
 
 export const ProjectRoleSkill = pgTable("ProjectRoleSkill", {
@@ -399,16 +604,6 @@ export const HuddleAttendee = pgTable("HuddleAttendee", {
 	index("HuddleAttendee_huddleId_idx").using("btree", table.huddleId.asc().nullsLast().op("text_ops")),
 	index("HuddleAttendee_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
 	primaryKey({ columns: [table.userId, table.huddleId], name: "HuddleAttendee_userId_huddleId_pk"}),
-]);
-
-export const UserBadge = pgTable("UserBadge", {
-	userId: text().notNull(),
-	badgeId: text().notNull(),
-	awardedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
-	index("UserBadge_badgeId_idx").using("btree", table.badgeId.asc().nullsLast().op("text_ops")),
-	index("UserBadge_userId_idx").using("btree", table.userId.asc().nullsLast().op("text_ops")),
-	primaryKey({ columns: [table.userId, table.badgeId], name: "UserBadge_userId_badgeId_pk"}),
 ]);
 
 export const UserSkill = pgTable("UserSkill", {

@@ -55,6 +55,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "CONNECTION_REQUEST_ACCEPTED",
   "TASK_ASSIGNED",
   "TASK_UPDATED",
+  "LEADERBOARD_RANK_UPDATE",
 ]);
 export const integrationProviderEnum = pgEnum("integration_provider", [
   "GITHUB",
@@ -609,7 +610,7 @@ export const badges = pgTable("Badge", {
   name: text("name").notNull().unique(),
   description: text("description").notNull(),
   iconUrl: text("iconUrl"),
-  criteria: json("criteria"),
+  criteria: text("criteria"),
   category: badgeCategoryEnum("category").notNull().default("TECHNICAL"),
   rarity: badgeRarityEnum("rarity").notNull().default("COMMON"),
   pointsValue: integer("pointsValue").notNull().default(0),

@@ -197,6 +197,7 @@ export const createNotification = async (
       case 'SYSTEM_ALERT':
       case 'NEW_FOLLOWER':
       case 'INTEGRATION_UPDATE':
+      case 'LEADERBOARD_RANK_UPDATE':
       default:
         shouldCreateNotification = true;
     }
@@ -311,5 +312,79 @@ export const getNotificationSummaryForClient = async (
   } catch (error) {
   logger.error("Error fetching notification summary for client:", error);
     return null;
+  }
+};
+
+/**
+ * Sends a leaderboard rank update notification to a user.
+ * @param userId - The ID of the user whose rank changed.
+ * @param newRank - The user's new rank on the leaderboard.
+ * @param leaderboardType - The type of leaderboard (GENERAL, TECH_STACK, DOMAIN).
+ * @param previousRank - The user's previous rank (optional, for rank improvements).
+ * @returns Object indicating success or error.
+ */
+export const sendLeaderboardRankNotification = async (
+  userId: string,
+  newRank: number,
+  leaderboardType: string,
+  previousRank?: number
+): Promise<{ success: boolean; error?: string }> => {
+  if (!userId || !newRank || !leaderboardType) {
+    return { success: false, error: 'Missing required leaderboard notification data.' };
+  }
+
+  try {
+    // Skip notifications for ranks below top 100 to avoid spam
+    if (newRank > 100 && (!previousRank || previousRank > 100)) {
+      logger.info(`Skipping leaderboard notification for user ${userId} - rank ${newRank} is below top 100`);
+      return { success: true }; // Not an error, just not sending
+    }
+
+    let content: string;
+    let linkUrl = '/leaderboard'; // Link to leaderboard page
+
+    if (!previousRank) {
+      // New to leaderboard
+      content = `🎉 Welcome to the ${leaderboardType.toLowerCase()} leaderboard! Your current rank is #${newRank}.`;
+    } else if (previousRank > newRank) {
+      // Rank improved
+      const improvement = previousRank - newRank;
+      if (improvement === 1) {
+        content = `🚀 Congratulations! You moved up 1 position on the ${leaderboardType.toLowerCase()} leaderboard. Your new rank is #${newRank}!`;
+      } else {
+        content = `🚀 Congratulations! You moved up ${improvement} positions on the ${leaderboardType.toLowerCase()} leaderboard. Your new rank is #${newRank}!`;
+      }
+    } else if (previousRank < newRank) {
+      // Rank dropped
+      const drop = newRank - previousRank;
+      if (drop === 1) {
+        content = `📉 Your rank on the ${leaderboardType.toLowerCase()} leaderboard has dropped to #${newRank} (down 1 position).`;
+      } else {
+        content = `📉 Your rank on the ${leaderboardType.toLowerCase()} leaderboard has dropped to #${newRank} (down ${drop} positions).`;
+      }
+    } else {
+      // This shouldn't happen since we check for changes, but just in case
+      logger.warn(`Unexpected: sendLeaderboardRankNotification called with same rank ${newRank} for user ${userId}`);
+      return { success: true };
+    }
+
+    // Create the notification using the existing createNotification function
+    const result = await createNotification(
+      userId,
+      'LEADERBOARD_RANK_UPDATE',
+      content,
+      linkUrl
+    );
+
+    if (!result.success) {
+      return { success: false, error: result.error || 'Failed to create leaderboard notification.' };
+    }
+
+    logger.info(`Leaderboard rank notification sent to user ${userId} for ${leaderboardType} leaderboard (rank: ${newRank}, previous: ${previousRank || 'N/A'})`);
+    return { success: true };
+
+  } catch (error) {
+    logger.error('Error sending leaderboard rank notification:', error);
+    return { success: false, error: 'Failed to send leaderboard rank notification.' };
   }
 }; 
