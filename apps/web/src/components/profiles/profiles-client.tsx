@@ -358,7 +358,7 @@ const ProfilesClient = memo(function ProfilesClient({
                 </div>
                 <NotFoundComp
                   icon="avatar"
-                  title="No Profiles Found"
+                  title="Profiles"
                   description="No users match your current search and filter criteria. Try adjusting your search terms or filters."
                 />
               </div>

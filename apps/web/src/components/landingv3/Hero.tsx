@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Star, Trophy, Target, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDeviceDetection } from '@/hooks/use-device-detection'
+import { useRouter } from 'next/navigation'
 
 // Structured data for SEO
 const HERO_SCHEMA = {
@@ -65,6 +66,7 @@ export default memo(function Hero() {
   const shouldReduceMotion = useReducedMotion()
   const timersRef = useRef<number[]>([])
   const { isMobile, isTablet } = useDeviceDetection()
+  const router = useRouter()
 
   // Precompute deterministic tile positions/rotations to avoid hydration mismatches
   type TileLayout = { initialX: number; initialY: number; initialRotate: number; targetX: number; targetY: number }
@@ -129,12 +131,12 @@ export default memo(function Hero() {
   }, [shouldReduceMotion])
 
   const handleGetStarted = useCallback(() => {
-    toast.success('Welcome! Let\'s build your portfolio.')
-  }, [])
+    router.push('/profile/edit')
+  }, [router])
 
   const handleExploreLeaderboards = useCallback(() => {
-    toast.info('Leaderboards coming soon!')
-  }, [])
+    router.push('/leaderboard')
+  }, [router])
 
   const handleScoreClick = useCallback(() => {
     setShowScorePanel(!showScorePanel)
