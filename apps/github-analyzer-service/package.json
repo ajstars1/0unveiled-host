@@ -27,6 +27,6 @@
   "keywords": ["fastapi", "python", "github", "analyzer", "ai"],
   "engines": {
     "python": ">=3.8",
-    "node": ">=16.0.0"
+    "node": ">=22.0.0"
   }
 }

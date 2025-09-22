@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Install dependencies needed for native modules
 RUN apk add --no-cache libc6-compat
@@ -20,7 +20,7 @@ RUN bun install --frozen-lockfile
 RUN bun run build --filter=@0unveiled/web
 
 # Production stage
-FROM node:18-alpine AS runner
+FROM node:22-alpine AS runner
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
