@@ -36,7 +36,7 @@ const LazyNotificationDropdown = lazy(() =>
 // Loading skeleton component
 const AuthSkeleton = ({ isMobile }: { isMobile: boolean }) => (
   <div className={cn(
-    "rounded-full bg-white/10 animate-pulse",
+    "rounded-full bg-muted animate-pulse",
     isMobile ? "w-16 h-6" : "w-28 h-8"
   )} />
 );
@@ -103,13 +103,13 @@ const NavigationItem = ({
   <Link key={item.id} href={item.href}>
     <motion.button
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium",
-        "transition-all duration-300 hover:bg-white/10",
-        "backdrop-blur-sm",
+        "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium",
+        "transition-all duration-300 hover:bg-accent/50",
+        "backdrop-blur-sm border border-border/50",
         isMobile ? "flex-col gap-1 px-2 py-1 text-[10px]" : "",
         isRouteActive(item.href)
-          ? "bg-white/20 text-foreground shadow-lg shadow-black/20" 
-          : "text-muted-foreground hover:text-foreground"
+          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 border-primary/20" 
+          : "text-muted-foreground hover:text-foreground hover:border-border"
       )}
       whileHover={{ scale: 1.05, y: -1 }}
       whileTap={{ scale: 0.95 }}
@@ -403,8 +403,8 @@ export function OptimizedFloatingNav({
               variant="ghost" 
               size="sm" 
               className={cn(
-                "rounded-full backdrop-blur-sm",
-                "hover:bg-white/10 text-muted-foreground hover:text-foreground",
+                "rounded-xl backdrop-blur-sm border border-border/50",
+                "hover:bg-accent/50 text-muted-foreground hover:text-foreground",
                 isMobile ? "text-[10px] h-6 px-2" : "text-xs h-7 px-3"
               )}
               aria-label="Sign in to your account"
@@ -425,7 +425,7 @@ export function OptimizedFloatingNav({
               size="sm" 
               className={cn(
                 "rounded-full backdrop-blur-sm",
-                "bg-white/20 hover:bg-white/30 text-foreground shadow-lg",
+                "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20",
                 isMobile ? "text-[10px] h-6 px-2" : "text-xs h-7 px-3"
               )}
               aria-label="Create a new account"
@@ -462,17 +462,11 @@ export function OptimizedFloatingNav({
           <motion.div 
             layout
             className={cn(
-              "relative flex items-center gap-1 p-2 rounded-full",
-              "bg-background/20 backdrop-blur-3xl border border-white/10",
-              "shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]",
-              "before:absolute before:inset-0 before:rounded-full",
-              "before:bg-gradient-to-br before:from-white/20 before:via-white/5 before:to-transparent",
-              "before:backdrop-blur-sm before:-z-10",
-              "after:absolute after:inset-0 after:rounded-full",
-              "after:bg-gradient-to-t after:from-black/20 after:via-transparent after:to-white/10",
-              "after:-z-10",
+              "relative flex items-center gap-1 p-2 rounded-2xl",
+              "glass border border-border/50",
+              "shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]",
               isMobile 
-                ? "rounded-none border-x-0 border-b-0 px-4 py-3" 
+                ? "rounded-none border-x-0 border-b-0 px-4 py-3 bg-background/95" 
                 : (isExpanded ? "px-3" : "px-2")
             )}
             transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -492,7 +486,7 @@ export function OptimizedFloatingNav({
                       0unveiled
                     </span>
                   </div>
-                  <div className="w-px h-5 bg-white/20 mx-1" />
+                  <div className="w-px h-5 bg-border mx-1" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -522,7 +516,7 @@ export function OptimizedFloatingNav({
                   transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
                   className="flex items-center gap-1 overflow-hidden"
                 >
-                  {!isMobile && <div className="w-px h-5 bg-white/20 mx-1" />}
+                  {!isMobile && <div className="w-px h-5 bg-border mx-1" />}
                   <div className="flex items-center gap-1">
                     {renderAuthContent()}
                   </div>
@@ -533,7 +527,7 @@ export function OptimizedFloatingNav({
 
           {/* Glow effect */}
           <div className={cn(
-            "absolute inset-0 rounded-2xl bg-gradient-to-r from-background/20 to-background/10 blur-xl -z-20",
+            "absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/5 to-accent/5 blur-xl -z-20",
             isMobile ? "rounded-none" : ""
           )} />
         </motion.div>
