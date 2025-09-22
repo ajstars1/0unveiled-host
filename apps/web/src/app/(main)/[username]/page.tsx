@@ -61,17 +61,33 @@ export async function generateMetadata({
   const description = user.headline || user.bio || `Check out ${fullName}'s profile, projects, and skills on 0Unveiled.`
   const ogImageUrl = user.profilePicture || "/og-image.png"
 
-
   return {
     title: pageTitle,
     description: description,
+    keywords: [
+      user.username,
+      fullName,
+      "developer",
+      "profile",
+      "portfolio",
+      ...((user.skills?.map((s: any) => s.skill.name) || []).slice(0, 5))
+    ].filter(Boolean),
+    authors: [{ name: fullName }],
+    creator: fullName,
+    publisher: "0Unveiled",
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    metadataBase: new URL("https://0unveiled.com"),
     alternates: {
-      canonical: `/${username}`,
+      canonical: `/${user.username}`,
     },
     openGraph: {
       title: pageTitle,
       description: description,
-      url: `https://0unveiled.com/${username}`,
+      url: `https://0unveiled.com/${user.username}`,
       type: "profile",
       images: [
         {
@@ -81,12 +97,31 @@ export async function generateMetadata({
           alt: `${fullName}'s Profile Picture`,
         },
       ],
+      siteName: "0Unveiled",
+      locale: "en_US",
     },
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
       description: description,
       images: [ogImageUrl],
+      creator: "@0unveiled",
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+    other: {
+      "profile:username": user.username || "",
+      "profile:first_name": user.firstName || "",
+      "profile:last_name": user.lastName || "",
     },
   }
 }
@@ -124,6 +159,26 @@ async function ProfileDetail({
   const isOwnProfile = user.connectionStatus === 'SELF'
   const fullName = `${user.firstName} ${user.lastName || ''}`.trim()
 
+  // Generate structured data for the profile
+  const profileStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "mainEntity": {
+      "@type": "Person",
+      "name": fullName,
+      "alternateName": user.username,
+      "description": user.headline || user.bio || `Check out ${fullName}'s profile on 0Unveiled.`,
+      "image": user.profilePicture,
+      "url": `https://0unveiled.com/${user.username}`,
+      "knowsAbout": user.skills?.map((skill: any) => skill.skill.name) || [],
+      "hasOccupation": user.headline ? {
+        "@type": "Occupation",
+        "name": user.headline,
+        "occupationLocation": user.location
+      } : undefined
+    }
+  }
+
   // Prepare data for components
   // Transform user skills to match expected UserSkill type
   const transformedSkills = (user.skills || []).map(skill => ({
@@ -143,31 +198,50 @@ async function ProfileDetail({
   const allProjects = user.projectsOwned || [];
 
   return (
-    <div className="py-20 lg:py-24">
-      <div className="container mx-auto px-4 relative z-10 -mt-16 md:-mt-20">
-        {/* Profile Header Component */}
-        <ProfileHeader 
-          user={user}
-          fullName={fullName}
-          isOwnProfile={isOwnProfile}
-          username={username}
-        />
+    <div className="min-h-screen bg-background">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <ProfileSidebar
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(profileStructuredData),
+        }}
+      />
+
+      <div className="relative py-20 lg:py-24">
+        <div className="container mx-auto px-4 relative z-10 -mt-16 md:-mt-20">
+          {/* Profile Header Component */}
+          <ProfileHeader
             user={user}
+            fullName={fullName}
             isOwnProfile={isOwnProfile}
             username={username}
-            initialLeaderboardData={leaderboardData}
-            initialAiSkillsData={aiVerifiedSkillsData}
           />
 
-          <ProfileMain
-            pinnedItems={pinnedPortfolioItems as any}
-            allItems={allPortfolioItems as any}
-            isOwnProfile={isOwnProfile}
-            username={username}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mt-8">
+            <div className="lg:col-span-1">
+              <div className="sticky top-24">
+                <ProfileSidebar
+                  user={user}
+                  isOwnProfile={isOwnProfile}
+                  username={username}
+                  initialLeaderboardData={leaderboardData}
+                  initialAiSkillsData={aiVerifiedSkillsData}
+                />
+              </div>
+            </div>
+
+            <div className="lg:col-span-2">
+              <ProfileMain
+                pinnedItems={pinnedPortfolioItems as any}
+                allItems={allPortfolioItems as any}
+                isOwnProfile={isOwnProfile}
+                username={username}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
