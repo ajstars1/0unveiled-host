@@ -73,13 +73,14 @@ export function LeaderboardClient() {
   const hasPrevPage = currentPage > 1;
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+    <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
+      {/* Header */}
+      <div className="text-center mb-6 md:mb-8">
+        <h1 className="text-2xl sm:text-3xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text md:text-4xl font-bold tracking-tight text-transparent">
           Leaderboards
         </h1>
-        <p className="mt-3 text-base md:text-lg text-muted-foreground">
-          Explore top builders across stacks and domains — powered by CRUISM scores
+        <p className="mt-2 md:mt-3 text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
+          Discover top developers and their achievements
         </p>
       </div>
 
@@ -98,76 +99,84 @@ export function LeaderboardClient() {
 
       {/* Loading state */}
       {isLoading && (
-        <Card>
-          <CardContent className="p-4 md:p-6">
-            <div className="space-y-4">
-              <Skeleton className="h-9 w-40" />
-              <div className="space-y-3">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+        <div className="space-y-3 md:space-y-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg">
+              <div className="w-6 h-6 md:w-8 md:h-8 bg-muted rounded animate-pulse" />
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-muted rounded-full animate-pulse" />
+              <div className="flex-1 space-y-1 md:space-y-2">
+                <div className="h-3 md:h-4 bg-muted rounded animate-pulse w-1/3" />
+                <div className="h-2 md:h-3 bg-muted rounded animate-pulse w-1/4" />
               </div>
+              <div className="h-4 md:h-6 bg-muted rounded animate-pulse w-12 md:w-16" />
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
       )}
 
       {/* Error state */}
       {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Failed to load leaderboards</AlertTitle>
-          <AlertDescription>
-            An error occurred while fetching data. Please adjust filters or try again.
-          </AlertDescription>
-        </Alert>
+        <div className="text-center py-8 md:py-12">
+          <p className="text-muted-foreground mb-4 text-sm md:text-base">Failed to load leaderboard data</p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+            size="sm"
+            className="text-sm"
+          >
+            Try Again
+          </Button>
+        </div>
       )}
 
       {/* Empty state */}
-      {data && data.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="p-10 text-center">
-            <h3 className="text-lg font-medium">No results</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Try changing the leaderboard type, category, or search query.
-            </p>
-          </CardContent>
-        </Card>
+      {data && data.length === 0 && !isLoading && (
+        <div className="text-center py-8 md:py-12">
+          <p className="text-muted-foreground text-sm md:text-base">No results found</p>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">
+            Try adjusting your filters or search terms
+          </p>
+        </div>
       )}
 
-      {/* Table + Pagination */}
+      {/* Results */}
       {data && data.length > 0 && (
-        <Card>
-          <CardContent className="p-0 overflow-hidden">
-            <LeaderboardTable data={data} />
-          </CardContent>
-          <CardFooter className="flex items-center justify-between gap-4 p-4 border-t">
-            <p className="text-sm text-muted-foreground">
-              Page {currentPage} · {data.length} results
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => prev - 1)}
-                disabled={!hasPrevPage}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((prev) => prev + 1)}
-                disabled={!hasNextPage}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+        <div className="space-y-1">
+          <LeaderboardTable data={data} />
+
+          {/* Pagination */}
+          {(hasNextPage || hasPrevPage) && (
+            <div className="flex items-center justify-between pt-4 md:pt-6 mt-6 md:mt-8 border-t">
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Page {currentPage}
+              </p>
+              <div className="flex gap-1 md:gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  disabled={!hasPrevPage}
+                  className="text-xs md:text-sm px-2 md:px-3 h-8 md:h-9"
+                >
+                  <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                  <span className="hidden sm:inline">Previous</span>
+                  <span className="sm:hidden">Prev</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  disabled={!hasNextPage}
+                  className="text-xs md:text-sm px-2 md:px-3 h-8 md:h-9"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <span className="sm:hidden">Next</span>
+                  <ChevronRight className="h-3 w-3 md:h-4 md:w-4 ml-1" />
+                </Button>
+              </div>
             </div>
-          </CardFooter>
-        </Card>
+          )}
+        </div>
       )}
     </div>
   );

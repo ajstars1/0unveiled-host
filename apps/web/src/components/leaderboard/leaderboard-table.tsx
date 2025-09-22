@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trophy, Medal, Award } from 'lucide-react';
 
 interface LeaderboardEntry {
@@ -18,9 +17,9 @@ interface LeaderboardEntry {
 
 export function LeaderboardTable({ data }: { data: LeaderboardEntry[] }) {
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />;
-    if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (rank === 3) return <Award className="h-5 w-5 text-amber-600" />;
+    if (rank === 1) return <Trophy className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />;
+    if (rank === 2) return <Medal className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />;
+    if (rank === 3) return <Award className="h-4 w-4 md:h-5 md:w-5 text-amber-600" />;
     return null;
   };
 
@@ -51,83 +50,66 @@ export function LeaderboardTable({ data }: { data: LeaderboardEntry[] }) {
   };
 
   const getScoreColor = (score: number) => {
-    // Scores are now in 0-10000 range, so adjust thresholds accordingly
-    if (score >= 8000) return 'text-green-600';
-    if (score >= 6000) return 'text-blue-600';
-    if (score >= 4000) return 'text-yellow-600';
-    return 'text-red-600';
+    // Use theme colors for better psychological impact
+    if (score >= 8000) return "text-accent font-bold"; // Success - accent color
+    return "text-orange-600 font-medium"; // Needs improvement - warm orange instead of harsh red
   };
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-20">Rank</TableHead>
-            <TableHead>Developer</TableHead>
-            <TableHead>Username</TableHead>
-            <TableHead className="text-right">Score</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((entry, index) => (
-            <TableRow key={`${entry.user.id}-${entry.rank}-${index}`} className="hover:bg-muted/50">
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {getRankIcon(entry.rank)}
-                  <Badge variant={getRankBadgeVariant(entry.rank)} className="w-8 h-6 justify-center">
-                    {entry.rank}
-                  </Badge>
-                </div>
-              </TableCell>
-              
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage 
-                      src={entry.user.profilePicture || undefined} 
-                      alt={getDisplayName(entry.user)}
-                    />
-                    <AvatarFallback>
-                      {getInitials(entry.user.firstName, entry.user.lastName, entry.user.username)}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex flex-col">
-                    <Link 
-                      href={`/${entry.user.username || entry.user.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {getDisplayName(entry.user)}
-                    </Link>
-                  </div>
-                </div>
-              </TableCell>
-              
-              <TableCell>
-                {entry.user.username ? (
-                  <Link 
-                    href={`/${entry.user.username}`}
-                    className="text-muted-foreground hover:underline"
-                  >
-                    @{entry.user.username}
-                  </Link>
-                ) : (
-                  <span className="text-muted-foreground">No username</span>
-                )}
-              </TableCell>
-              
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <span className={`font-bold text-lg ${getScoreColor(entry.score)}`}>
-                    {(entry.score)}
-                  </span>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="space-y-2 md:space-y-3">
+      {data.map((entry, index) => (
+        <div
+          key={`${entry.user.id}-${entry.rank}-${index}`}
+          className="flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+        >
+          {/* Rank */}
+          <div className="flex items-center gap-2 min-w-0">
+            {getRankIcon(entry.rank)}
+            <Badge
+              variant={getRankBadgeVariant(entry.rank)}
+              className="w-6 h-6 md:w-8 md:h-6 justify-center text-xs md:text-sm flex-shrink-0"
+            >
+              {entry.rank}
+            </Badge>
+          </div>
+
+          {/* Avatar */}
+          <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
+            <AvatarImage
+              src={entry.user.profilePicture || undefined}
+              alt={getDisplayName(entry.user)}
+            />
+            <AvatarFallback className="text-xs md:text-sm">
+              {getInitials(entry.user.firstName, entry.user.lastName, entry.user.username)}
+            </AvatarFallback>
+          </Avatar>
+
+          {/* User Info */}
+          <div className="flex-1 min-w-0">
+            <Link
+              href={`/${entry.user.username || entry.user.id}`}
+              className="font-medium hover:underline text-sm md:text-base truncate block"
+            >
+              {getDisplayName(entry.user)}
+            </Link>
+            {entry.user.username && (
+              <Link
+                href={`/${entry.user.username}`}
+                className="text-xs md:text-sm text-muted-foreground hover:underline truncate block"
+              >
+                @{entry.user.username}
+              </Link>
+            )}
+          </div>
+
+          {/* Score */}
+          <div className="flex-shrink-0">
+            <span className={`font-bold text-sm md:text-lg ${getScoreColor(entry.score)}`}>
+              {entry.score.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
