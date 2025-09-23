@@ -53,7 +53,7 @@ export function ProfileSidebar({ user, isOwnProfile, username, initialLeaderboar
     <div className="lg:col-span-1 space-y-6">
       {/* Leaderboard Card */}
       <Card className="overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow duration-200">
-        <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent">
+        <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center gap-2 text-foreground">
             <Trophy className="h-5 w-5 text-primary" />
             Leaderboard
