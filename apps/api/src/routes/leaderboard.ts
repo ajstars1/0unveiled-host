@@ -25,6 +25,8 @@ router.get("/", async (req, res, next) => {
       isNotNull(users.username),
       ne(users.username, ""),
       eq(users.onboarded, true),
+      // Exclude seed/test users from leaderboard
+      ne(users.username, "seed_user_1746410303039"),
     ];
 
     if (query.type === "TECH_STACK" && query.techStack) {
@@ -33,28 +35,25 @@ router.get("/", async (req, res, next) => {
       conditions.push(eq(leaderboardScores.domain, query.domain));
     }
 
-    // Add search functionality
+    // Add search functionality with optimized query
     if (query.search) {
-      const searchTerm = `%${query.search}%`;
-      const searchConditions = [
+      const searchTerm = `%${query.search.toLowerCase()}%`;
+      // Use a more efficient search by combining conditions
+      const searchCondition = or(
         like(users.firstName, searchTerm),
         like(users.lastName, searchTerm),
         like(users.username, searchTerm)
-      ].filter(Boolean) as SQL<unknown>[];
-      
-      if (searchConditions.length > 0) {
-        const orCondition = or(...searchConditions);
-        if (orCondition) {
-          conditions.push(orCondition);
-        }
+      );
+      if (searchCondition) {
+        conditions.push(searchCondition);
       }
     }
 
+    // Single optimized query with proper ordering and pagination
     const data = await db
       .select({
         rank: leaderboardScores.rank,
         score: leaderboardScores.score,
-        userId: leaderboardScores.userId, // Include userId to help with uniqueness
         user: {
           id: users.id,
           username: users.username,
@@ -63,51 +62,27 @@ router.get("/", async (req, res, next) => {
           profilePicture: users.profilePicture,
         },
       })
-  .from(leaderboardScores)
-  .innerJoin(users, eq(leaderboardScores.userId, users.id))
-  .where(and(...conditions))
-      .orderBy(desc(leaderboardScores.score), leaderboardScores.rank)
+      .from(leaderboardScores)
+      .innerJoin(users, eq(leaderboardScores.userId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(leaderboardScores.score), desc(leaderboardScores.rank))
       .limit(query.limit)
       .offset(query.offset);
 
-    // Ensure unique users (remove potential duplicates)
-    // Define interfaces for type safety
-    interface User {
-      id: string;
-      username: string;
-      firstName: string;
-      lastName: string;
-      profilePicture: string | null;
-    }
+    // Remove duplicates more efficiently using a Map
+    const uniqueUsers = new Map<string, typeof data[0]>();
 
-    interface LeaderboardItem {
-      rank: number;
-      score: number;
-      userId: string;
-      user: User;
-    }
+    for (const item of data) {
+      const userId = item.user.id;
+      const existing = uniqueUsers.get(userId);
 
-    interface LeaderboardItemWithoutUserId {
-      rank: number;
-      score: number;
-      user: User;
-    }
-
-    const uniqueData = data.reduce((acc: LeaderboardItemWithoutUserId[], current: LeaderboardItem) => {
-      const existingIndex = acc.findIndex(item => item.user.id === current.user.id);
-      if (existingIndex === -1) {
-        // Remove the userId field from the response
-        const { userId, ...rest } = current;
-        acc.push(rest);
-      } else {
-        // Keep the entry with the higher score if duplicate found
-        if (current.score > acc[existingIndex].score) {
-          const { userId, ...rest } = current;
-          acc[existingIndex] = rest;
-        }
+      // Keep the entry with the higher score if duplicate found
+      if (!existing || item.score > existing.score) {
+        uniqueUsers.set(userId, item);
       }
-      return acc;
-    }, [] as LeaderboardItemWithoutUserId[]);
+    }
+
+    const uniqueData = Array.from(uniqueUsers.values());
 
     res.json({ success: true, data: uniqueData });
   } catch (error) {
@@ -129,6 +104,7 @@ router.get("/options", async (req, res, next) => {
           isNotNull(leaderboardScores.techStack),
           isNotNull(users.username),
           ne(users.username, ""),
+          ne(users.username, "seed_user_1746410303039"),
           eq(users.onboarded, true)
         )
       );
@@ -144,6 +120,7 @@ router.get("/options", async (req, res, next) => {
           isNotNull(leaderboardScores.domain),
           isNotNull(users.username),
           ne(users.username, ""),
+          ne(users.username, "seed_user_1746410303039"),
           eq(users.onboarded, true)
         )
       );

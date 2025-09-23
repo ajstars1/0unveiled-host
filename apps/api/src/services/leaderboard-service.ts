@@ -1,10 +1,267 @@
 import { db } from "@0unveiled/database";
-import { users, showcasedItems, projects, leaderboardScores, NewLeaderboardScore, leaderboardTypeEnum } from "@0unveiled/database";
-import { eq, and, desc, isNotNull, ne } from "drizzle-orm";
+import { users, showcasedItems, projects, leaderboardScores, NewLeaderboardScore, leaderboardTypeEnum, notifications, notificationTypeEnum, type User } from "@0unveiled/database";
+import { eq, and, desc, isNotNull, ne, sql, inArray } from "drizzle-orm";
+import { Resend } from "resend";
 
-// Import notification function from web app
-// Note: This creates a dependency on the web app, but since this is a monorepo, it should work
-import { sendLeaderboardRankNotification } from "../../../web/src/actions/notifications";
+// Temporary: inline notification functions until workspace resolution is fixed
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+/**
+ * Sends an email notification using Resend
+ */
+const sendEmailNotification = async (
+  recipient: User,
+  type: typeof notificationTypeEnum.enumValues[number],
+  content: string,
+  linkUrl?: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> => {
+  if (!recipient.email) {
+    return { success: false, error: "Recipient has no email address" };
+  }
+
+  try {
+    let subject: string;
+    let htmlContent: string;
+
+    // Customize email content based on notification type
+    switch (type) {
+      case 'LEADERBOARD_RANK_UPDATE':
+        subject = "Your Leaderboard Rank Updated!";
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Leaderboard Update</h2>
+            <p>${content}</p>
+            ${linkUrl ? `<p><a href="${linkUrl}" style="background-color: #fb923c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Leaderboard</a></p>` : ""}
+            <p style="color: #666; font-size: 12px;">You're receiving this because you have leaderboard notifications enabled.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 11px; text-align: center; margin-top: 20px;">For any help, contact us at <a href="mailto:ayush@0unveiled.com" style="color: #fb923c;">ayush@0unveiled.com</a></p>
+          </div>
+        `;
+        break;
+      default:
+        subject = "0Unveiled Notification";
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">New Notification</h2>
+            <p>${content}</p>
+            ${linkUrl ? `<p><a href="${linkUrl}">View Details</a></p>` : ""}
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 11px; text-align: center; margin-top: 20px;">For any help, contact us at <a href="mailto:ayush@0unveiled.com" style="color: #fb923c;">ayush@0unveiled.com</a></p>
+          </div>
+        `;
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: "0Unveiled <notifications@support.0unveiled.com>",
+      to: recipient.email,
+      subject,
+      html: htmlContent,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error("Email sending error:", error);
+    return { success: false, error: "Failed to send email" };
+  }
+};
+
+/**
+ * Creates a notification for a specific user, respecting their preferences.
+ * Also sends email notifications if the user has enabled them and forceSkipEmail is not true.
+ */
+const createNotification = async (
+  userId: string,
+  type: typeof notificationTypeEnum.enumValues[number],
+  content: string,
+  linkUrl?: string,
+  forceSkipEmail?: boolean
+): Promise<{ success: boolean; notification?: any; error?: string }> => {
+  if (!userId || !type || !content) {
+    return { success: false, error: 'Missing required notification data.' };
+  }
+
+  try {
+    // 1. Fetch Recipient User's Settings including email preferences
+    const recipient = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: {
+        id: true,
+        email: true,
+        firstName: true,
+        emailFrequency: true,
+        notifyMessages: true,
+        notifyConnections: true,
+        notifyProjects: true,
+        notifyAchievements: true,
+        notifyEvents: true,
+      }
+    });
+
+    if (!recipient) {
+      console.warn(`createNotification: Recipient user ${userId} not found.`);
+      return { success: true };
+    }
+
+    // 2. Check Preference based on NotificationType
+    let shouldCreateNotification = false;
+    switch (type) {
+      case 'NEW_MESSAGE':
+        shouldCreateNotification = recipient.notifyMessages;
+        break;
+      case 'CONNECTION_REQUEST_RECEIVED':
+      case 'CONNECTION_REQUEST_ACCEPTED':
+        shouldCreateNotification = recipient.notifyConnections;
+        break;
+      case 'PROJECT_INVITE':
+      case 'PROJECT_UPDATE':
+      case 'APPLICATION_RECEIVED':
+      case 'APPLICATION_STATUS_UPDATE':
+      case 'TASK_ASSIGNED':
+      case 'TASK_UPDATED':
+        shouldCreateNotification = recipient.notifyProjects;
+        break;
+      case 'SYSTEM_ALERT':
+      case 'NEW_FOLLOWER':
+      case 'INTEGRATION_UPDATE':
+      case 'LEADERBOARD_RANK_UPDATE':
+      default:
+        shouldCreateNotification = true;
+    }
+
+    // 3. Conditional Creation
+    if (!shouldCreateNotification) {
+      console.info(`Notification of type ${type} suppressed for user ${userId} due to preferences.`);
+      return { success: true };
+    }
+
+    // --- Proceed with creation if check passed ---
+    const [newNotification] = await db.insert(notifications).values({
+      userId: userId,
+      type: type,
+      content: content,
+      linkUrl: linkUrl,
+      isRead: false,
+    }).returning();
+
+    // 4. Send email notification if enabled and not forced to skip
+    if (!forceSkipEmail) {
+      try {
+        const emailResult = await sendEmailNotification(
+          recipient,
+          type,
+          content,
+          linkUrl
+        );
+
+        if (!emailResult.success && emailResult.error) {
+          console.error(`Failed to send email notification: ${emailResult.error}`);
+          // Don't fail the entire operation if email fails
+        } else if (emailResult.messageId) {
+          console.info(`Email notification sent successfully. Message ID: ${emailResult.messageId}`);
+        }
+      } catch (emailError) {
+        console.error('Email notification error (non-blocking):', emailError);
+        // Email failure shouldn't prevent notification creation
+      }
+    }
+
+    return { success: true, notification: newNotification };
+
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    return { success: false, error: 'Failed to create notification.' };
+  }
+};
+
+/**
+ * Sends a leaderboard rank update notification to a user.
+ */
+const sendLeaderboardRankNotification = async (
+  userId: string,
+  newRank: number,
+  leaderboardType: string,
+  previousRank?: number
+): Promise<{ success: boolean; error?: string }> => {
+  if (!userId || !newRank || !leaderboardType) {
+    return { success: false, error: 'Missing required leaderboard notification data.' };
+  }
+
+  try {
+    // Skip notifications for ranks below top 100 to avoid spam
+    if (newRank > 100 && (!previousRank || previousRank > 100)) {
+      return { success: true }; // Not an error, just not sending
+    }
+
+    // Get user's current score to check if they qualify for email notifications
+    const userScore = await db
+      .select({ score: leaderboardScores.score })
+      .from(leaderboardScores)
+      .where(
+        and(
+          eq(leaderboardScores.userId, userId),
+          eq(leaderboardScores.leaderboardType, 'GENERAL')
+        )
+      )
+      .limit(1);
+
+    const currentScore = userScore[0]?.score || 0;
+
+    // Only send email notifications to users with score above 1000
+    const shouldSendEmail = currentScore > 1000;
+
+    let content: string;
+    let linkUrl = 'https://0unveiled.com/leaderboard'; // Link to leaderboard page
+
+    if (!previousRank) {
+      // New to leaderboard
+      content = `🎉 Welcome to the ${leaderboardType.toLowerCase()} leaderboard! Your current rank is #${newRank}.`;
+    } else if (previousRank > newRank) {
+      // Rank improved
+      const improvement = previousRank - newRank;
+      if (improvement === 1) {
+        content = `🚀 Congratulations! You moved up 1 position on the ${leaderboardType.toLowerCase()} leaderboard. Your new rank is #${newRank}!`;
+      } else {
+        content = `🚀 Congratulations! You moved up ${improvement} positions on the ${leaderboardType.toLowerCase()} leaderboard. Your new rank is #${newRank}!`;
+      }
+    } else if (previousRank < newRank) {
+      // Rank dropped
+      const drop = newRank - previousRank;
+      if (drop === 1) {
+        content = `📉 Your rank on the ${leaderboardType.toLowerCase()} leaderboard has dropped to #${newRank} (down 1 position).`;
+      } else {
+        content = `📉 Your rank on the ${leaderboardType.toLowerCase()} leaderboard has dropped to #${newRank} (down ${drop} positions).`;
+      }
+    } else {
+      // This shouldn't happen since we check for changes, but just in case
+      console.warn(`Unexpected: sendLeaderboardRankNotification called with same rank ${newRank} for user ${userId}`);
+      return { success: true };
+    }
+
+    // Create the notification using the createNotification function
+    const result = await createNotification(
+      userId,
+      'LEADERBOARD_RANK_UPDATE',
+      content,
+      linkUrl,
+      !shouldSendEmail // Skip email if user doesn't qualify based on score
+    );
+
+    if (!result.success) {
+      return { success: false, error: result.error || 'Failed to create leaderboard notification.' };
+    }
+
+    console.info(`Leaderboard notification sent for ${leaderboardType} (rank: ${newRank}, score: ${currentScore})`);
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error sending leaderboard rank notification:', error);
+    return { success: false, error: 'Failed to send leaderboard rank notification.' };
+  }
+};
 
 interface RepositoryMetadata {
   repository?: {
@@ -230,136 +487,174 @@ const calculateBasicQualityScore = (repo: any): number => {
 };
 
 export const updateLeaderboards = async () => {
+  console.time('leaderboard-update-total');
+
   // Only process users who are onboarded (i.e., have a non-empty username)
   const allUsers = await db
-    .select()
+    .select({
+      id: users.id,
+      username: users.username
+    })
     .from(users)
     .where(and(isNotNull(users.username), ne(users.username, "")));
 
-  for (const user of allUsers) {
-    const userShowcasedItems = await db
-      .select()
-      .from(showcasedItems)
-      .where(eq(showcasedItems.userId, user.id));
+  console.log(`Processing ${allUsers.length} users for leaderboard update`);
 
-    const techStackScores: { [key: string]: number[] } = {};
-    const domainScores: { [key: string]: number[] } = {};
+  // Filter out seed users early
+  interface UserBasic {
+    id: string;
+    username: string;
+  }
 
-    for (const item of userShowcasedItems) {
+  const validUsers: UserBasic[] = allUsers.filter((user: UserBasic) => user.username !== 'seed_user_1746410303039');
+  console.log(`Filtered to ${validUsers.length} valid users (excluded seed users)`);
+
+  if (validUsers.length === 0) {
+    console.log('No valid users to process');
+    return;
+  }
+
+  // Batch fetch all showcased items for all users at once (single query)
+  console.time('fetch-showcased-items');
+  const allShowcasedItems = await db
+    .select({
+      id: showcasedItems.id,
+      userId: showcasedItems.userId,
+      metadata: showcasedItems.metadata
+    })
+    .from(showcasedItems)
+    .where(and(
+      isNotNull(showcasedItems.metadata),
+      inArray(showcasedItems.userId, validUsers.map(u => u.id))
+    ));
+  console.timeEnd('fetch-showcased-items');
+  console.log(`Fetched ${allShowcasedItems.length} showcased items`);
+
+  // Group items by user for efficient processing
+  const itemsByUser = new Map<string, typeof allShowcasedItems>();
+  for (const item of allShowcasedItems) {
+    if (!itemsByUser.has(item.userId)) {
+      itemsByUser.set(item.userId, []);
+    }
+    itemsByUser.get(item.userId)!.push(item);
+  }
+
+  // Pre-compute all scores to avoid redundant calculations
+  console.time('calculate-scores');
+  const scoreCache = new Map<string, { score: number; techStack: string | null; domain: string | null }>();
+
+  for (const item of allShowcasedItems) {
+    const cacheKey = item.id;
+    if (!scoreCache.has(cacheKey)) {
       const score = calculateAdvancedScore(item.metadata);
       const { techStack, domain } = getTechStackAndDomain(item.metadata);
+      scoreCache.set(cacheKey, { score, techStack, domain });
+    }
+  }
+  console.timeEnd('calculate-scores');
 
-      if (techStack) {
-        if (!techStackScores[techStack]) techStackScores[techStack] = [];
-        techStackScores[techStack].push(score);
+  // Prepare bulk operations data
+  const leaderboardInserts: NewLeaderboardScore[] = [];
+  const leaderboardUpdates: Array<{ id: string; score: number; updatedAt: Date }> = [];
+
+  console.time('process-users');
+  for (const user of validUsers) {
+    const userItems = itemsByUser.get(user.id) || [];
+
+    if (userItems.length === 0) continue;
+
+    // Calculate scores for this user
+    const techStackScores: { [key: string]: number[] } = {};
+    const domainScores: { [key: string]: number[] } = {};
+    let generalScores: number[] = [];
+
+    for (const item of userItems) {
+      const cached = scoreCache.get(item.id)!;
+      generalScores.push(cached.score);
+
+      if (cached.techStack) {
+        if (!techStackScores[cached.techStack]) techStackScores[cached.techStack] = [];
+        techStackScores[cached.techStack].push(cached.score);
       }
 
-      if (domain) {
-        if (!domainScores[domain]) domainScores[domain] = [];
-        domainScores[domain].push(score);
+      if (cached.domain) {
+        if (!domainScores[cached.domain]) domainScores[cached.domain] = [];
+        domainScores[cached.domain].push(cached.score);
       }
     }
 
+    // Prepare GENERAL leaderboard entry
+    const generalScore = generalScores.length > 0
+      ? Math.round(generalScores.reduce((acc, score) => acc + score, 0) / generalScores.length)
+      : 0;
+
+    leaderboardInserts.push({
+      userId: user.id,
+      leaderboardType: 'GENERAL',
+      score: generalScore,
+      rank: 0,
+      updatedAt: new Date(),
+    });
+
+    // Prepare TECH_STACK leaderboard entries
     for (const techStack in techStackScores) {
       const scores = techStackScores[techStack];
-      const totalScore = scores.length > 0 ? scores.reduce((acc, score) => acc + score, 0) / scores.length : 0;
-      const newScore: NewLeaderboardScore = {
+      const avgScore = scores.length > 0
+        ? Math.round(scores.reduce((acc, score) => acc + score, 0) / scores.length)
+        : 0;
+
+      leaderboardInserts.push({
         userId: user.id,
         leaderboardType: 'TECH_STACK',
-        score: Math.round(totalScore || 0),
+        score: avgScore,
         rank: 0,
         updatedAt: new Date(),
         techStack,
-      };
-      // Check if record exists
-      const existing = await db
-        .select()
-        .from(leaderboardScores)
-        .where(
-          and(
-            eq(leaderboardScores.userId, user.id),
-            eq(leaderboardScores.leaderboardType, 'TECH_STACK'),
-            eq(leaderboardScores.techStack, techStack)
-          )
-        )
-        .limit(1);
-
-      if (existing.length > 0) {
-        await db
-          .update(leaderboardScores)
-          .set({ score: newScore.score, updatedAt: newScore.updatedAt })
-          .where(eq(leaderboardScores.id, existing[0].id));
-      } else {
-        await db.insert(leaderboardScores).values(newScore);
-      }
+      });
     }
 
+    // Prepare DOMAIN leaderboard entries
     for (const domain in domainScores) {
       const scores = domainScores[domain];
-      const totalScore = scores.length > 0 ? scores.reduce((acc, score) => acc + score, 0) / scores.length : 0;
-      const newScore: NewLeaderboardScore = {
+      const avgScore = scores.length > 0
+        ? Math.round(scores.reduce((acc, score) => acc + score, 0) / scores.length)
+        : 0;
+
+      leaderboardInserts.push({
         userId: user.id,
         leaderboardType: 'DOMAIN',
-        score: Math.round(totalScore || 0),
+        score: avgScore,
         rank: 0,
         updatedAt: new Date(),
         domain,
-      };
-      // Check if record exists
-      const existing = await db
-        .select()
-        .from(leaderboardScores)
-        .where(
-          and(
-            eq(leaderboardScores.userId, user.id),
-            eq(leaderboardScores.leaderboardType, 'DOMAIN'),
-            eq(leaderboardScores.domain, domain)
-          )
-        )
-        .limit(1);
-
-      if (existing.length > 0) {
-        await db
-          .update(leaderboardScores)
-          .set({ score: newScore.score, updatedAt: newScore.updatedAt })
-          .where(eq(leaderboardScores.id, existing[0].id));
-      } else {
-        await db.insert(leaderboardScores).values(newScore);
-      }
-    }
-
-    const scores: number[] = userShowcasedItems.map((item: any) => calculateAdvancedScore(item.metadata as RepositoryMetadata));
-    const totalScore = scores.length > 0 ? scores.reduce((acc, score) => acc + score, 0) / scores.length : 0;
-
-    const newScore: NewLeaderboardScore = {
-      userId: user.id,
-      leaderboardType: 'GENERAL',
-      score: Math.round(totalScore || 0),
-      rank: 0, // will be updated later
-      updatedAt: new Date(),
-    };
-
-    // Check if record exists
-    const existing = await db
-      .select()
-      .from(leaderboardScores)
-      .where(
-        and(
-          eq(leaderboardScores.userId, user.id),
-          eq(leaderboardScores.leaderboardType, 'GENERAL')
-        )
-      )
-      .limit(1);
-
-    if (existing.length > 0) {
-      await db
-        .update(leaderboardScores)
-        .set({ score: newScore.score, updatedAt: newScore.updatedAt })
-        .where(eq(leaderboardScores.id, existing[0].id));
-    } else {
-      await db.insert(leaderboardScores).values(newScore);
+      });
     }
   }
+  console.timeEnd('process-users');
+
+  // Batch database operations
+  console.time('batch-db-operations');
+
+  // Use ON CONFLICT to handle upserts efficiently
+  if (leaderboardInserts.length > 0) {
+    // Insert all new scores, update existing ones
+    await db.insert(leaderboardScores).values(leaderboardInserts)
+      .onConflictDoUpdate({
+        target: [
+          leaderboardScores.userId,
+          leaderboardScores.leaderboardType,
+          leaderboardScores.techStack,
+          leaderboardScores.domain
+        ],
+        set: {
+          score: sql`${sql.placeholder('excluded_score')}`,
+          updatedAt: sql`${sql.placeholder('excluded_updatedAt')}`
+        }
+      });
+  }
+
+  console.timeEnd('batch-db-operations');
+  console.log(`Processed ${leaderboardInserts.length} leaderboard entries`);
 
   // Capture current ranks before updating them (for notifications)
   const [previousGeneralRanks, previousTechStackRanks, previousDomainRanks] = await Promise.all([
@@ -443,16 +738,30 @@ export const updateLeaderboards = async () => {
         .where(eq(leaderboardScores.id, sortedData[i].id));
     }
 
-    // Send notifications for rank changes
-    const notificationPromises = rankChanges.map(({ userId, newRank, previousRank, displayName }) =>
-      sendLeaderboardRankNotification(userId, newRank, displayName, previousRank)
-        .catch(error => {
-          console.error(`Failed to send ${leaderboardType} leaderboard notification for user ${userId}:`, error);
-          return null; // Don't fail the entire operation
-        })
-    );
+    // Send notifications for rank changes with rate limiting
+    // Process in batches of 2 every second to respect Resend's rate limit
+    const batchSize = 2;
+    const delayBetweenBatches = 1000; // 1 second
 
-    await Promise.allSettled(notificationPromises);
+    for (let i = 0; i < rankChanges.length; i += batchSize) {
+      const batch = rankChanges.slice(i, i + batchSize);
+
+      // Process batch
+      const batchPromises = batch.map(({ userId, newRank, previousRank, displayName }) =>
+        sendLeaderboardRankNotification(userId, newRank, displayName, previousRank)
+          .catch(error => {
+            console.error(`Failed to send ${leaderboardType} leaderboard notification for user ${userId}:`, error);
+            return null; // Don't fail the entire operation
+          })
+      );
+
+      await Promise.allSettled(batchPromises);
+
+      // Wait before next batch (except for the last batch)
+      if (i + batchSize < rankChanges.length) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+      }
+    }
   };
 
   // Update GENERAL leaderboard ranks

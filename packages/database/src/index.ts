@@ -15,20 +15,21 @@ export function createDatabase() {
 
   // Configure postgres with optimized connection pooling
   const client = postgres(connectionString, {
-    max: 5, // Reduced max connections to prevent pool exhaustion
-    idle_timeout: 10, // Close idle connections after 10 seconds
-    connect_timeout: 30, // Timeout for new connections
+    max: 10, // Increased max connections for better concurrent performance
+    idle_timeout: 20, // Slightly longer idle timeout
+    connect_timeout: 10, // Faster connection timeout
     prepare: false, // Disable prepared statements for better compatibility
     transform: {
       undefined: null // Transform undefined to null for database compatibility
     },
     onnotice: () => {}, // Suppress notices to reduce noise
     debug: false, // Disable debug logging in production
+    max_lifetime: 60 * 60 * 1000, // 1 hour max lifetime
   });
   
   return drizzle(client, { 
     schema,
-    logger: process.env.NODE_ENV === 'development' // Only log in development
+    logger: process.env.NODE_ENV === 'development'
   });
 }
 

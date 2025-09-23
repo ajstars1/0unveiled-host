@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   pgTable,
   text,
@@ -166,7 +167,7 @@ export const users = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     supabaseId: text("supabaseId").notNull().unique(),
     email: text("email").notNull().unique(),
     username: text("username").unique(),
@@ -210,7 +211,7 @@ export const accounts = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     provider: text("provider").notNull(),
     providerAccountId: text("providerAccountId").notNull(),
@@ -237,7 +238,7 @@ export const skills = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     name: text("name").notNull().unique(),
     description: text("description"),
     category: text("category"),
@@ -268,7 +269,7 @@ export const projects = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     title: text("title").notNull(),
     description: text("description").notNull(),
     status: projectStatusEnum("status").notNull().default("PLANNING"),
@@ -329,7 +330,7 @@ export const projectApplications = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     projectId: text("projectId").notNull(),
     message: text("message"),
@@ -357,7 +358,7 @@ export const clubs = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     name: text("name").notNull().unique(),
     description: text("description"),
     ownerId: text("ownerId").notNull(),
@@ -393,7 +394,7 @@ export const channels = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     name: text("name"),
     type: channelTypeEnum("type").notNull(),
     projectId: text("projectId"),
@@ -431,7 +432,7 @@ export const messages = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     content: text("content").notNull(),
     channelId: text("channelId").notNull(),
     authorId: text("authorId").notNull(),
@@ -455,7 +456,7 @@ export const notifications = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     type: notificationTypeEnum("type").notNull(),
     content: text("content").notNull(),
@@ -476,7 +477,7 @@ export const verificationTokens = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     email: text("email").notNull(),
     token: text("token").notNull().unique(),
     expires: timestamp("expires").notNull(),
@@ -495,7 +496,7 @@ export const posts = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     title: text("title").notNull(),
     content: text("content").notNull(),
     authorId: text("authorId").notNull(),
@@ -523,7 +524,7 @@ export const huddles = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     title: text("title").notNull(),
     description: text("description"),
     startTime: timestamp("startTime").notNull(),
@@ -562,7 +563,7 @@ export const education = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     institution: text("institution").notNull(),
     degree: text("degree"),
@@ -585,7 +586,7 @@ export const experience = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     companyName: text("companyName").notNull(),
     jobTitle: text("jobTitle").notNull(),
@@ -606,7 +607,7 @@ export const experience = pgTable(
 export const badges = pgTable("Badge", {
   id: text("id")
     .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+    .$defaultFn(() => randomUUID()),
   name: text("name").notNull().unique(),
   description: text("description").notNull(),
   iconUrl: text("iconUrl"),
@@ -625,7 +626,7 @@ export const userBadges = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     badgeId: text("badgeId").notNull(),
     verificationRequestId: text("verificationRequestId"), // Link to verification request
@@ -648,7 +649,7 @@ export const companies = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     name: text("name").notNull(),
     description: text("description"),
     website: text("website"),
@@ -671,7 +672,7 @@ export const companyMembers = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     companyId: text("companyId").notNull(),
     userId: text("userId").notNull(),
     role: text("role").notNull().default("RECRUITER"), // ADMIN, RECRUITER, MEMBER
@@ -691,7 +692,7 @@ export const jobPostings = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     companyId: text("companyId").notNull(),
     recruiterId: text("recruiterId").notNull(),
     title: text("title").notNull(),
@@ -720,7 +721,7 @@ export const candidateMatches = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     jobPostingId: text("jobPostingId").notNull(),
     candidateId: text("candidateId").notNull(),
     aiMatchScore: integer("aiMatchScore").notNull(), // 0-100 match percentage
@@ -745,7 +746,7 @@ export const messageTemplates = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     recruiterId: text("recruiterId").notNull(),
     companyId: text("companyId").notNull(),
     name: text("name").notNull(),
@@ -770,7 +771,7 @@ export const outreachCampaigns = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     recruiterId: text("recruiterId").notNull(),
     jobPostingId: text("jobPostingId").notNull(),
     name: text("name").notNull(),
@@ -795,7 +796,7 @@ export const outreachActivities = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     campaignId: text("campaignId").notNull(),
     candidateId: text("candidateId").notNull(),
     messageTemplateId: text("messageTemplateId").notNull(),
@@ -825,7 +826,7 @@ export const verificationRequests = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     verificationType: verificationTypeEnum("verificationType").notNull(),
     status: verificationStatusEnum("status").notNull().default("PENDING"),
@@ -850,7 +851,7 @@ export const achievements = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     achievementType: text("achievementType").notNull(),
     achievementData: json("achievementData"),
@@ -870,7 +871,7 @@ export const connectionRequests = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     requesterId: text("requesterId").notNull(),
     recipientId: text("recipientId").notNull(),
     status: connectionStatusEnum("status").notNull().default("PENDING"),
@@ -912,7 +913,7 @@ export const projectRoles = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     title: text("title").notNull(),
     description: text("description"),
     projectId: text("projectId").notNull(),
@@ -946,7 +947,7 @@ export const tasks = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     title: text("title").notNull(),
     description: text("description"),
     status: taskStatusEnum("status").notNull().default("TODO"),
@@ -977,7 +978,7 @@ export const showcasedItems = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     provider: integrationProviderEnum("provider").notNull(),
     externalId: text("externalId").notNull(),
@@ -1009,7 +1010,7 @@ export const showcasedItems = pgTable(
 export const knowledgeArticles = pgTable("KnowledgeArticle", {
   id: text("id")
     .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+    .$defaultFn(() => randomUUID()),
   title: text("title").notNull(),
   sourceUrl: text("sourceUrl"),
   content: text("content").notNull(),
@@ -1024,7 +1025,7 @@ export const aiVerifiedSkills = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     skillName: text("skillName").notNull(),
     skillType: text("skillType").notNull(), // 'LANGUAGE', 'FRAMEWORK', 'LIBRARY', 'TOOL', 'DATABASE', 'CLOUD'
@@ -1059,7 +1060,7 @@ export const leaderboardScores = pgTable(
   {
     id: text("id")
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+      .$defaultFn(() => randomUUID()),
     userId: text("userId").notNull(),
     leaderboardType: leaderboardTypeEnum("leaderboardType").notNull(),
     score: integer("score").notNull(),
